@@ -117,8 +117,8 @@
 ├── README.md                               # プロジェクト概要
 ├── components.json                         # shadcn/ui設定
 ├── directorystructure.md                   # このファイル
-├── jest.config.ts                          # Jest設定
-├── jest.setup.ts                           # Jestセットアップ
+├── vitest.config.ts                        # Vitest設定
+├── vitest.setup.ts                         # Vitestセットアップ
 ├── middleware.ts                           # Next.js ミドルウェア（Clerk認証）
 ├── next-env.d.ts                          # Next.js 型定義
 ├── next.config.ts                         # Next.js設定
@@ -162,8 +162,8 @@
 
 - **`middleware.ts`**: Clerk認証ミドルウェア
 - **`components.json`**: shadcn/ui設定
-- **`jest.config.ts`**: Jest設定（Next.js統合）
-- **`jest.setup.ts`**: Jest環境セットアップ
+- **`vitest.config.ts`**: Vitest設定（高速テスト実行）
+- **`vitest.setup.ts`**: Vitest環境セットアップ
 - **`.prettierrc`**: Prettierコードフォーマット設定
 - **`CLAUDE.md`**: Claude Code用プロジェクト設定
 - **`.cursor/rules/`**: Cursor IDE用開発ルール
@@ -178,5 +178,5 @@
 - **TypeScript**: 型安全な開発
 - **next-themes**: ダークモード対応
 - **Prettier**: コードフォーマッター
-- **Jest + React Testing Library**: テストフレームワーク
+- **Vitest + React Testing Library**: テストフレームワーク（Jest互換・高速）
 - **convex-test**: Convex関数テスト
