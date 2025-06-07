@@ -117,16 +117,25 @@ export default function WorkspaceDetailPage() {
             title="Todo"
             tasks={groupedTasks.todo}
             color="border-blue-500"
+            workspaceId={workspaceId}
+            status="todo"
+            workspace={workspace}
           />
           <TaskColumn
             title="進行中"
             tasks={groupedTasks.inProgress}
             color="border-yellow-500"
+            workspaceId={workspaceId}
+            status="in_progress"
+            workspace={workspace}
           />
           <TaskColumn
             title="完了"
             tasks={groupedTasks.done}
             color="border-green-500"
+            workspaceId={workspaceId}
+            status="done"
+            workspace={workspace}
           />
         </div>
 
