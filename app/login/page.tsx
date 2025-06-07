@@ -1,16 +1,11 @@
-import { SignIn, SignedIn } from "@clerk/nextjs";
-import { redirect } from "next/navigation";
+import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   return (
     <>
-      <SignedIn>
-        {redirect("/dashboard")}
-      </SignedIn>
-      
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="w-full max-w-md space-y-8">
           {/* Back to Home */}
           <div className="text-center">
@@ -30,12 +25,12 @@ export default function LoginPage() {
             </p>
           </div>
           
-          <div className="mt-8 bg-white dark:bg-slate-800 py-8 px-4 shadow-xl ring-1 ring-slate-900/5 sm:rounded-lg sm:px-10">
+          <div className="mt-8 px-6">
             <SignIn 
               appearance={{
                 elements: {
                   formButtonPrimary: 
-                    "bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 transition-colors",
+                    "bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors",
                   card: "shadow-none",
                   headerTitle: "hidden",
                   headerSubtitle: "hidden",

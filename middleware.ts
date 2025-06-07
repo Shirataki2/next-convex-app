@@ -7,12 +7,26 @@ const isProtectedRoute = createRouteMatcher([
   "/api/protected(.*)",
 ]);
 
+// 公開ルート（認証不要）を定義
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/login(.*)",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+]);
+
 export default clerkMiddleware(async (auth, req) => {
+  // 公開ルートはスキップ
+  if (isPublicRoute(req)) {
+    return;
+  }
+  
   // 保護されたルートへのアクセスは認証が必要
   if (isProtectedRoute(req)) {
+    const origin = req.nextUrl.origin;
     await auth.protect({
-      // カスタムサインインページにリダイレクト
-      unauthenticatedUrl: "/login",
+      // カスタムサインインページにリダイレクト（絶対URL）
+      unauthenticatedUrl: `${origin}/login`,
     });
   }
 });
