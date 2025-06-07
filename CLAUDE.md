@@ -94,3 +94,20 @@ npx convex deploy
 - 新しいConvex関数を追加した場合は`npx convex dev`で再生成される
 - ClerkとConvexの統合にはClerkのwebhookとConvexのHTTPエンドポイントを使用
 - スキーマ変更時は`npx convex dev`で自動的に型定義が更新される
+
+### Cursorルール
+プロジェクトには`.cursor/rules/`ディレクトリに以下のルールファイルがあります：
+
+1. **00_general.mdc**: 一般的な開発ルール
+2. **01_application.mdc**: アプリケーション固有のルール
+3. **02_Convex Rules.mdc**: Convexの使用に関する詳細なガイドライン
+   - 新しい関数構文の使用方法
+   - HTTPエンドポイントの定義
+   - バリデーターの使用方法
+   - 関数登録と呼び出しのパターン
+   - ページネーション実装
+   - スキーマ定義のベストプラクティス
+   - TypeScriptの型定義
+   - ファイルストレージの扱い方
+
+これらのルールに従って開発を行ってください。
