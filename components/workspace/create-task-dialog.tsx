@@ -44,7 +44,7 @@ export function CreateTaskDialog({
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"high" | "medium" | "low">("medium");
-  const [assigneeId, setAssigneeId] = useState("");
+  const [assigneeId, setAssigneeId] = useState("unassigned");
   const [deadline, setDeadline] = useState("");
   const [isCreating, setIsCreating] = useState(false);
 
@@ -63,7 +63,8 @@ export function CreateTaskDialog({
         description: description.trim() || undefined,
         status: defaultStatus,
         workspaceId,
-        assigneeId: assigneeId.trim() || undefined,
+        assigneeId:
+          assigneeId && assigneeId !== "unassigned" ? assigneeId : undefined,
         deadline: deadline || undefined,
         priority,
         userId: user.id,
@@ -83,7 +84,7 @@ export function CreateTaskDialog({
     setTitle("");
     setDescription("");
     setPriority("medium");
-    setAssigneeId("");
+    setAssigneeId("unassigned");
     setDeadline("");
     setIsCreating(false);
   };
@@ -197,7 +198,7 @@ export function CreateTaskDialog({
                   <SelectValue placeholder="担当者を選択（任意）" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">未指定</SelectItem>
+                  <SelectItem value="unassigned">未指定</SelectItem>
                   {workspace?.members.map((memberId) => (
                     <SelectItem key={memberId} value={memberId}>
                       {memberId}
