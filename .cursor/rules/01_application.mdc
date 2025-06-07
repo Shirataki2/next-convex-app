@@ -1,0 +1,20 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+このプロジェクトは Next.js 14 + Convex + Clerk + shadcn/ui を使用したタスクボードアプリです。
+
+技術スタック:
+- Next.js 14 (App Router)
+- TypeScript
+- Convex (リアルタイムバックエンド)
+- Clerk (認証)
+- shadcn/ui (UIコンポーネント)
+- Tailwind CSS
+
+コーディング規約:
+- 関数コンポーネントを使用
+- カスタムフックでロジックを分離
+- ConvexのuseQuery/useMutationを適切に使用
+- エラーハンドリングを必ず実装
