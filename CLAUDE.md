@@ -63,8 +63,34 @@ npx convex deploy
 - 技術スタックのバージョンは変更せず、必要があれば承認を得る
 - UI/UXデザインの変更は事前承認が必要
 
+### データベーススキーマ
+`convex/schema.ts`で定義されている主要なテーブル：
+
+1. **workspaces**: ワークスペース管理
+   - `name`: ワークスペース名
+   - `ownerId`: オーナーのユーザーID（Clerk）
+   - `members`: メンバーのユーザーID配列
+
+2. **tasks**: タスク管理
+   - `title`: タスクタイトル
+   - `description`: タスク説明（オプション）
+   - `status`: ステータス（todo/in_progress/done等）
+   - `workspaceId`: 所属ワークスペース
+   - `assigneeId`: 担当者ID（オプション）
+   - `deadline`: 期限（オプション）
+   - `order`: 表示順序
+   - `priority`: 優先度（high/medium/low等）
+
+3. **taskActivities**: タスクの活動履歴
+   - `workspaceId`: ワークスペースID
+   - `userId`: 実行ユーザーID
+   - `taskId`: 対象タスクID
+   - `action`: アクション種別
+   - `timestamp`: タイムスタンプ
+
 ### 開発時の注意事項
 - Convex開発サーバーは別ターミナルで常時起動しておく
 - convex/_generated/内のファイルは自動生成のため編集しない
 - 新しいConvex関数を追加した場合は`npx convex dev`で再生成される
 - ClerkとConvexの統合にはClerkのwebhookとConvexのHTTPエンドポイントを使用
+- スキーマ変更時は`npx convex dev`で自動的に型定義が更新される
