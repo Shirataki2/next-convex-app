@@ -82,14 +82,14 @@ export default function WorkspacePage() {
                 href={`/workspace/${workspace._id}`}
                 className="block"
               >
-                <Card
-                  className="hover:shadow-lg transition-shadow cursor-pointer h-full"
-                >
+                <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
                   <CardHeader>
                     <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{workspace.name}</CardTitle>
-                      <Button 
-                        variant="ghost" 
+                      <CardTitle className="text-lg">
+                        {workspace.name}
+                      </CardTitle>
+                      <Button
+                        variant="ghost"
                         size="icon"
                         onClick={(e) => {
                           e.preventDefault();

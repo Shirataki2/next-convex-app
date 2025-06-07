@@ -5,9 +5,7 @@ import { mutation, query } from "./_generated/server";
 export const getUserWorkspaces = query({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
-    const workspaces = await ctx.db
-      .query("workspaces")
-      .collect();
+    const workspaces = await ctx.db.query("workspaces").collect();
 
     // フィルタリングをJavaScriptで行う（配列内の要素検索）
     return workspaces.filter(
