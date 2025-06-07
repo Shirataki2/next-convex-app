@@ -14,6 +14,7 @@ import { useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { CreateWorkspaceDialog } from "@/components/workspace/create-workspace-dialog";
+import Link from "next/link";
 
 export default function WorkspacePage() {
   const { user } = useUser();
@@ -76,35 +77,47 @@ export default function WorkspacePage() {
         {workspaces && workspaces.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {workspaces.map((workspace) => (
-              <Card
+              <Link
                 key={workspace._id}
-                className="hover:shadow-lg transition-shadow cursor-pointer"
+                href={`/workspace/${workspace._id}`}
+                className="block"
               >
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">{workspace.name}</CardTitle>
-                    <Button variant="ghost" size="icon">
-                      <Settings className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <CardDescription>
-                    {workspace.ownerId === user.id ? "オーナー" : "メンバー"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center text-sm text-slate-600 dark:text-slate-300">
-                      <Users className="mr-1 h-4 w-4" />
-                      <span>{workspace.members.length} メンバー</span>
+                <Card
+                  className="hover:shadow-lg transition-shadow cursor-pointer h-full"
+                >
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">{workspace.name}</CardTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          // TODO: 設定モーダルを開く
+                        }}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(workspace._creationTime).toLocaleDateString(
-                        "ja-JP"
-                      )}
+                    <CardDescription>
+                      {workspace.ownerId === user.id ? "オーナー" : "メンバー"}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-sm text-slate-600 dark:text-slate-300">
+                        <Users className="mr-1 h-4 w-4" />
+                        <span>{workspace.members.length} メンバー</span>
+                      </div>
+                      <div className="text-xs text-slate-500 dark:text-slate-400">
+                        {new Date(workspace._creationTime).toLocaleDateString(
+                          "ja-JP"
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
 
             {/* Create New Workspace Card */}
