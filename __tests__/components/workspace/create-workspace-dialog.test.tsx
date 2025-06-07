@@ -83,7 +83,9 @@ describe("CreateWorkspaceDialog", () => {
 
     expect(screen.getByText("新しいワークスペースを作成")).toBeInTheDocument();
     expect(
-      screen.getByText("新しいプロジェクトのワークスペースを作成します。 後でメンバーを招待することができます。")
+      screen.getByText(
+        "新しいプロジェクトのワークスペースを作成します。 後でメンバーを招待することができます。"
+      )
     ).toBeInTheDocument();
 
     // キャンセルボタンでダイアログを閉じる

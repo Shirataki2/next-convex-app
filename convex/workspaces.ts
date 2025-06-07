@@ -7,12 +7,13 @@ export const getUserWorkspaces = query({
   handler: async (ctx, { userId }) => {
     const workspaces = await ctx.db
       .query("workspaces")
-      .filter((q) =>
-        q.or(q.eq(q.field("ownerId"), userId), q.eq(q.field("members"), userId))
-      )
       .collect();
 
-    return workspaces;
+    // フィルタリングをJavaScriptで行う（配列内の要素検索）
+    return workspaces.filter(
+      (workspace) =>
+        workspace.ownerId === userId || workspace.members.includes(userId)
+    );
   },
 });
 

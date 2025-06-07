@@ -8,7 +8,7 @@ export const getWorkspaceTasks = query({
     const tasks = await ctx.db
       .query("tasks")
       .filter((q) => q.eq(q.field("workspaceId"), workspaceId))
-      .order("asc", "order")
+      .order("asc")
       .collect();
 
     return tasks;
@@ -189,7 +189,7 @@ export const getWorkspaceActivities = query({
     const activities = await ctx.db
       .query("taskActivities")
       .filter((q) => q.eq(q.field("workspaceId"), workspaceId))
-      .order("desc", "timestamp")
+      .order("desc")
       .take(limit);
 
     // タスク情報も一緒に取得
