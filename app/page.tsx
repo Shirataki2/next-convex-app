@@ -16,10 +16,7 @@ export default function Home() {
             <SignedOut>
               <div className="space-x-4">
                 <Link href="/login">
-                  <Button variant="ghost">ログイン</Button>
-                </Link>
-                <Link href="/login">
-                  <Button>始める</Button>
+                  <Button>ログイン</Button>
                 </Link>
               </div>
             </SignedOut>
