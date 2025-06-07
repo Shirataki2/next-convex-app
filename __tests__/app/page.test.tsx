@@ -21,6 +21,16 @@ jest.mock("@clerk/nextjs", () => ({
   ),
 }));
 
+// Mock the ClerkProvider globally for tests
+const MockClerkProvider = ({ children }: { children: React.ReactNode }) => (
+  <div>{children}</div>
+);
+
+// Wrapper component for testing
+const TestWrapper = ({ children }: { children: React.ReactNode }) => (
+  <MockClerkProvider>{children}</MockClerkProvider>
+);
+
 // Mock Next.js Link
 jest.mock("next/link", () => {
   return function MockedLink({
@@ -46,7 +56,11 @@ jest.mock("@/components/layout/landing-header", () => ({
 
 describe("ランディングページ", () => {
   it("基本的な要素が表示される", () => {
-    render(<Page />);
+    render(
+      <TestWrapper>
+        <Page />
+      </TestWrapper>
+    );
 
     // メインヘッダーの確認
     expect(screen.getByTestId("landing-header")).toBeInTheDocument();
@@ -147,9 +161,9 @@ describe("ランディングページ", () => {
   it("カードホバー効果のクラスが適用されている", () => {
     render(<Page />);
 
-    const featureCards = screen.getAllByRole("generic").filter((element) =>
-      element.className?.includes("hover:shadow-lg")
-    );
+    const featureCards = screen
+      .getAllByRole("generic")
+      .filter((element) => element.className?.includes("hover:shadow-lg"));
 
     expect(featureCards.length).toBeGreaterThan(0);
   });

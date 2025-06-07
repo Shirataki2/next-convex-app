@@ -223,11 +223,14 @@ describe("ワークスペース関数", () => {
       });
 
       // メンバーを削除
-      const result = await t.mutation(api.workspaces.removeMemberFromWorkspace, {
-        workspaceId,
-        memberId,
-        userId: ownerId,
-      });
+      const result = await t.mutation(
+        api.workspaces.removeMemberFromWorkspace,
+        {
+          workspaceId,
+          memberId,
+          userId: ownerId,
+        }
+      );
 
       expect(result.success).toBe(true);
 

@@ -22,6 +22,12 @@ yarn start
 
 # リンターの実行
 yarn lint
+
+# コードフォーマット
+yarn format
+
+# フォーマットチェック
+yarn format:check
 ```
 
 ### Convex開発
@@ -34,6 +40,19 @@ npx convex dev
 npx convex deploy
 ```
 
+### テスト
+
+```bash
+# テスト実行
+yarn test
+
+# テスト監視モード
+yarn test:watch
+
+# カバレッジ測定
+yarn test:coverage
+```
+
 ## アーキテクチャ構造
 
 ### 技術スタック
@@ -44,23 +63,43 @@ npx convex deploy
 - **shadcn/ui**: Radix UIベースのコンポーネントライブラリ
 - **Tailwind CSS v4**: スタイリング
 - **TypeScript**: 厳格モード有効
+- **next-themes**: ダークモード対応
+- **Prettier**: コードフォーマッター
+- **Jest + React Testing Library**: テストフレームワーク
+- **convex-test**: Convex関数テスト
 
 ### ディレクトリ構造
 
 - `app/`: Next.js App Routerのページとレイアウト
-- `components/ui/`: shadcn/uiコンポーネント（自動生成）
+  - `workspace/`: ワークスペース管理ページ
+  - `dashboard/`: ダッシュボードページ
+  - `login/`: 認証ページ
+- `components/`: Reactコンポーネント
+  - `ui/`: shadcn/uiコンポーネント（自動生成）
+  - `layout/`: レイアウトコンポーネント
+  - `workspace/`: ワークスペース関連コンポーネント
 - `convex/`: Convexバックエンド関数とスキーマ
   - `_generated/`: 自動生成ファイル（編集不可）
+  - `workspaces.ts`: ワークスペース管理関数
+  - `tasks.ts`: タスク管理関数
 - `hooks/`: カスタムReactフック
 - `lib/`: ユーティリティ関数
+- `__tests__/`: テストファイル
+  - `convex/`: Convex関数テスト
+  - `components/`: コンポーネントテスト
+  - `lib/`: ユーティリティテスト
+- `__mocks__/`: モックファイル
 
 ### 重要な設定
 
 - **エイリアス**: `@/*` → プロジェクトルート
 - **React**: v19（React Compilerに対応）
 - **Tailwind**: v4（PostCSS設定使用）
+- **テスト環境**: Jest + jsdom + TypeScript対応
+- **コードフォーマット**: Prettier（.prettierrc設定済み）
+- **ダークモード**: next-themes + システム設定対応
 
-### コーディング規約（Cursorルールより）
+### コーディング規約
 
 - 関数コンポーネントを使用
 - カスタムフックでロジックを分離
@@ -68,6 +107,9 @@ npx convex deploy
 - エラーハンドリングを必ず実装
 - 技術スタックのバージョンは変更せず、必要があれば承認を得る
 - UI/UXデザインの変更は事前承認が必要
+- 新機能実装時は必ずユニットテストを作成
+- Prettierでコードフォーマットを統一
+- TypeScript厳格モードを遵守
 
 ### データベーススキーマ
 
@@ -104,6 +146,8 @@ npx convex deploy
 - 新しいConvex関数を追加した場合は`npx convex dev`で再生成される
 - ClerkとConvexの統合にはClerkのwebhookとConvexのHTTPエンドポイントを使用
 - スキーマ変更時は`npx convex dev`で自動的に型定義が更新される
+- テスト実行前にはコードフォーマットを実行（`yarn format`）
+- 新機能のプルリクエスト前にテストが全て通ることを確認
 
 ### Cursorルール
 

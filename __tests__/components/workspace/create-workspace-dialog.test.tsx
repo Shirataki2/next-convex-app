@@ -81,9 +81,7 @@ describe("CreateWorkspaceDialog", () => {
     // ダイアログを開く
     await user.click(triggerButton);
 
-    expect(
-      screen.getByText("新しいワークスペースを作成")
-    ).toBeInTheDocument();
+    expect(screen.getByText("新しいワークスペースを作成")).toBeInTheDocument();
     expect(
       screen.getByText("新しいプロジェクトのワークスペースを作成します。")
     ).toBeInTheDocument();
@@ -165,7 +163,7 @@ describe("CreateWorkspaceDialog", () => {
 
   it("作成中は送信ボタンがローディング状態になる", async () => {
     const user = userEvent.setup();
-    
+
     // Promise を手動で解決するためのセットアップ
     let resolveCreateWorkspace: (value: string) => void;
     const createWorkspacePromise = new Promise<string>((resolve) => {
@@ -209,7 +207,7 @@ describe("CreateWorkspaceDialog", () => {
 
   it("ユーザーがサインインしていない場合、フォーム送信が実行されない", async () => {
     const user = userEvent.setup();
-    
+
     mockUseUser.mockReturnValue({
       user: null,
       isLoaded: true,
@@ -265,7 +263,7 @@ describe("CreateWorkspaceDialog", () => {
   it("エラーが発生した場合でもダイアログは開いたまま", async () => {
     const user = userEvent.setup();
     const consoleSpy = jest.spyOn(console, "error").mockImplementation();
-    
+
     mockCreateWorkspace.mockRejectedValue(new Error("作成に失敗しました"));
 
     render(<CreateWorkspaceDialog />);

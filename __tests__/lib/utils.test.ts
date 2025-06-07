@@ -78,7 +78,9 @@ describe("utils", () => {
         ["additional-class"]
       );
 
-      expect(result).toBe("base-class active-class primary-class additional-class");
+      expect(result).toBe(
+        "base-class active-class primary-class additional-class"
+      );
     });
 
     it("重複するクラスが除去される", () => {
@@ -116,9 +118,12 @@ describe("utils", () => {
           "h-11 px-8": size === "lg",
         },
         {
-          "bg-primary text-primary-foreground hover:bg-primary/90": variant === "default",
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90": variant === "destructive",
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground": variant === "outline",
+          "bg-primary text-primary-foreground hover:bg-primary/90":
+            variant === "default",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90":
+            variant === "destructive",
+          "border border-input bg-background hover:bg-accent hover:text-accent-foreground":
+            variant === "outline",
         },
         {
           "opacity-50 cursor-not-allowed": disabled,
