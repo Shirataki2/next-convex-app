@@ -17,7 +17,7 @@ export function Header({ title }: HeaderProps) {
           </h1>
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <UserButton 
+            <UserButton
               appearance={{
                 elements: {
                   avatarBox: "w-8 h-8",

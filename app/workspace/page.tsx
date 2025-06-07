@@ -2,7 +2,13 @@
 
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Plus, Users, Settings } from "lucide-react";
 import { useQuery } from "convex/react";
 import { useUser } from "@clerk/nextjs";
@@ -34,7 +40,7 @@ export default function WorkspacePage() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
       <Header title="ワークスペース" />
-      
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="flex items-center justify-between mb-8">
@@ -70,7 +76,10 @@ export default function WorkspacePage() {
         {workspaces && workspaces.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {workspaces.map((workspace) => (
-              <Card key={workspace._id} className="hover:shadow-lg transition-shadow cursor-pointer">
+              <Card
+                key={workspace._id}
+                className="hover:shadow-lg transition-shadow cursor-pointer"
+              >
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg">{workspace.name}</CardTitle>
@@ -89,13 +98,15 @@ export default function WorkspacePage() {
                       <span>{workspace.members.length} メンバー</span>
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400">
-                      {new Date(workspace._creationTime).toLocaleDateString('ja-JP')}
+                      {new Date(workspace._creationTime).toLocaleDateString(
+                        "ja-JP"
+                      )}
                     </div>
                   </div>
                 </CardContent>
               </Card>
             ))}
-            
+
             {/* Create New Workspace Card */}
             <Card className="border-dashed border-2 border-slate-300 dark:border-slate-600 hover:border-slate-400 dark:hover:border-slate-500 transition-colors">
               <CardContent className="flex flex-col items-center justify-center h-48 text-center">
@@ -113,9 +124,7 @@ export default function WorkspacePage() {
                   新しいプロジェクトを開始しましょう
                 </p>
                 <CreateWorkspaceDialog>
-                  <Button variant="outline">
-                    作成する
-                  </Button>
+                  <Button variant="outline">作成する</Button>
                 </CreateWorkspaceDialog>
               </CardContent>
             </Card>

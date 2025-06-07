@@ -1,7 +1,13 @@
 import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { LandingHeader } from "@/components/layout/landing-header";
 
 export default function Home() {
@@ -14,11 +20,14 @@ export default function Home() {
         <div className="text-center space-y-8 max-w-4xl mx-auto">
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-slate-900 dark:text-white">
             効率的な
-            <span className="text-blue-600 dark:text-blue-400"> タスク管理</span>
+            <span className="text-blue-600 dark:text-blue-400">
+              {" "}
+              タスク管理
+            </span>
             <br />
             リアルタイム同期
           </h1>
-          
+
           <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
             チームでのタスク管理を簡単に。リアルタイム同期でみんなの進捗を共有し、
             効率的なプロジェクト管理を実現します。
@@ -72,9 +81,7 @@ export default function Home() {
                 <span>🔒</span>
                 <span>セキュアな認証</span>
               </CardTitle>
-              <CardDescription>
-                Clerkによる安全なユーザー管理
-              </CardDescription>
+              <CardDescription>Clerkによる安全なユーザー管理</CardDescription>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-slate-600 dark:text-slate-300">

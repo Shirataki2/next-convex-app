@@ -20,7 +20,7 @@ export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) {
     return;
   }
-  
+
   // 保護されたルートへのアクセスは認証が必要
   if (isProtectedRoute(req)) {
     const origin = req.nextUrl.origin;

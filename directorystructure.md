@@ -102,6 +102,7 @@
 ## 主要なディレクトリの説明
 
 ### `/app` - Next.js App Router
+
 - **`page.tsx`**: ランディングページ（TaskFlow紹介）
 - **`login/page.tsx`**: 専用ログインページ
 - **`dashboard/page.tsx`**: ダッシュボード（要認証）
@@ -109,20 +110,24 @@
 - **`providers.tsx`**: ClerkProvider + ConvexProvider
 
 ### `/convex` - Convexバックエンド
+
 - **`schema.ts`**: データベーススキーマ（workspaces, tasks, taskActivities）
 - **`_generated/`**: Convexが自動生成するファイル群（編集禁止）
 
 ### `/components/ui` - shadcn/ui
+
 - 再利用可能なUIコンポーネント群
 - Radix UIベースのアクセシブルなコンポーネント
 
 ### 設定ファイル
+
 - **`middleware.ts`**: Clerk認証ミドルウェア
 - **`components.json`**: shadcn/ui設定
 - **`CLAUDE.md`**: Claude Code用プロジェクト設定
 - **`.cursor/rules/`**: Cursor IDE用開発ルール
 
 ## 技術スタック
+
 - **Next.js 15.3.3**: React フレームワーク
 - **Convex**: リアルタイムバックエンド・データベース
 - **Clerk**: 認証・ユーザー管理

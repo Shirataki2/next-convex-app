@@ -7,11 +7,8 @@ export const getUserWorkspaces = query({
   handler: async (ctx, { userId }) => {
     const workspaces = await ctx.db
       .query("workspaces")
-      .filter((q) => 
-        q.or(
-          q.eq(q.field("ownerId"), userId),
-          q.eq(q.field("members"), userId)
-        )
+      .filter((q) =>
+        q.or(q.eq(q.field("ownerId"), userId), q.eq(q.field("members"), userId))
       )
       .collect();
 
@@ -54,7 +51,7 @@ export const updateWorkspaceName = mutation({
   },
   handler: async (ctx, { workspaceId, name, userId }) => {
     const workspace = await ctx.db.get(workspaceId);
-    
+
     if (!workspace) {
       throw new Error("ワークスペースが見つかりません");
     }
@@ -78,7 +75,7 @@ export const addMemberToWorkspace = mutation({
   },
   handler: async (ctx, { workspaceId, memberId, userId }) => {
     const workspace = await ctx.db.get(workspaceId);
-    
+
     if (!workspace) {
       throw new Error("ワークスペースが見つかりません");
     }
@@ -95,7 +92,7 @@ export const addMemberToWorkspace = mutation({
 
     const updatedMembers = [...workspace.members, memberId];
     await ctx.db.patch(workspaceId, { members: updatedMembers });
-    
+
     return { success: true };
   },
 });
@@ -109,7 +106,7 @@ export const removeMemberFromWorkspace = mutation({
   },
   handler: async (ctx, { workspaceId, memberId, userId }) => {
     const workspace = await ctx.db.get(workspaceId);
-    
+
     if (!workspace) {
       throw new Error("ワークスペースが見つかりません");
     }
@@ -123,9 +120,9 @@ export const removeMemberFromWorkspace = mutation({
       throw new Error("オーナーは削除できません");
     }
 
-    const updatedMembers = workspace.members.filter(id => id !== memberId);
+    const updatedMembers = workspace.members.filter((id) => id !== memberId);
     await ctx.db.patch(workspaceId, { members: updatedMembers });
-    
+
     return { success: true };
   },
 });
@@ -138,7 +135,7 @@ export const deleteWorkspace = mutation({
   },
   handler: async (ctx, { workspaceId, userId }) => {
     const workspace = await ctx.db.get(workspaceId);
-    
+
     if (!workspace) {
       throw new Error("ワークスペースが見つかりません");
     }
@@ -170,7 +167,7 @@ export const deleteWorkspace = mutation({
 
     // ワークスペースを削除
     await ctx.db.delete(workspaceId);
-    
+
     return { success: true };
   },
 });

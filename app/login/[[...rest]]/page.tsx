@@ -10,7 +10,7 @@ export default function LoginPage() {
   const { theme, systemTheme } = useTheme();
 
   const currentTheme = theme === "system" ? systemTheme : theme;
-  
+
   return (
     <>
       <div className="min-h-screen flex items-center justify-center">
@@ -32,9 +32,9 @@ export default function LoginPage() {
               アカウントにサインインしてタスク管理を始めましょう
             </p>
           </div>
-          
+
           <div className="mt-8 px-6">
-            <SignIn 
+            <SignIn
               appearance={{
                 baseTheme: currentTheme === "dark" ? dark : undefined,
               }}
@@ -42,7 +42,7 @@ export default function LoginPage() {
               signUpForceRedirectUrl="/dashboard"
             />
           </div>
-          
+
           <div className="text-center">
             <p className="text-sm text-slate-500 dark:text-slate-400">
               アカウントをお持ちでない方は、サインアップからご登録ください

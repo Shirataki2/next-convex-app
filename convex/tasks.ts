@@ -29,7 +29,7 @@ export const createTask = mutation({
   },
   handler: async (ctx, args) => {
     const { userId, ...taskData } = args;
-    
+
     // ワークスペースへのアクセス権をチェック
     const workspace = await ctx.db.get(args.workspaceId);
     if (!workspace) {
@@ -45,8 +45,8 @@ export const createTask = mutation({
       .query("tasks")
       .filter((q) => q.eq(q.field("workspaceId"), args.workspaceId))
       .collect();
-    
-    const maxOrder = Math.max(...existingTasks.map(task => task.order), 0);
+
+    const maxOrder = Math.max(...existingTasks.map((task) => task.order), 0);
 
     const taskId = await ctx.db.insert("tasks", {
       ...taskData,
@@ -181,7 +181,7 @@ export const updateTaskOrder = mutation({
 
 // ワークスペースのアクティビティを取得
 export const getWorkspaceActivities = query({
-  args: { 
+  args: {
     workspaceId: v.id("workspaces"),
     limit: v.optional(v.number()),
   },

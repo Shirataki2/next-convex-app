@@ -1,6 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Briefcase, Users, BarChart3 } from "lucide-react";
 import Link from "next/link";
@@ -15,7 +21,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Header title="ダッシュボード" />
-      
+
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
@@ -58,9 +64,7 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">5</div>
-              <p className="text-xs text-muted-foreground">
-                コラボレーター
-              </p>
+              <p className="text-xs text-muted-foreground">コラボレーター</p>
               <Button variant="outline" size="sm" className="w-full mt-4">
                 メンバーを招待
               </Button>
@@ -69,16 +73,12 @@ export default async function DashboardPage() {
 
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader className="flex flex-row items-center space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                完了タスク
-              </CardTitle>
+              <CardTitle className="text-sm font-medium">完了タスク</CardTitle>
               <BarChart3 className="h-4 w-4 text-muted-foreground ml-auto" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">12</div>
-              <p className="text-xs text-muted-foreground">
-                今週完了
-              </p>
+              <p className="text-xs text-muted-foreground">今週完了</p>
               <Button variant="outline" size="sm" className="w-full mt-4">
                 詳細を確認
               </Button>
@@ -90,9 +90,7 @@ export default async function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>最近のアクティビティ</CardTitle>
-            <CardDescription>
-              チームの最新の活動状況
-            </CardDescription>
+            <CardDescription>チームの最新の活動状況</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

@@ -22,7 +22,9 @@ interface CreateWorkspaceDialogProps {
   children?: React.ReactNode;
 }
 
-export function CreateWorkspaceDialog({ children }: CreateWorkspaceDialogProps) {
+export function CreateWorkspaceDialog({
+  children,
+}: CreateWorkspaceDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -31,7 +33,7 @@ export function CreateWorkspaceDialog({ children }: CreateWorkspaceDialogProps) 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user || !name.trim()) return;
 
     setIsCreating(true);
@@ -40,7 +42,7 @@ export function CreateWorkspaceDialog({ children }: CreateWorkspaceDialogProps) 
         name: name.trim(),
         ownerId: user.id,
       });
-      
+
       setName("");
       setOpen(false);
     } catch (error) {
@@ -57,12 +59,15 @@ export function CreateWorkspaceDialog({ children }: CreateWorkspaceDialogProps) 
   };
 
   return (
-    <Dialog open={open} onOpenChange={(newOpen) => {
-      setOpen(newOpen);
-      if (!newOpen) {
-        resetForm();
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        setOpen(newOpen);
+        if (!newOpen) {
+          resetForm();
+        }
+      }}
+    >
       <DialogTrigger asChild>
         {children || (
           <Button>
@@ -97,7 +102,12 @@ export function CreateWorkspaceDialog({ children }: CreateWorkspaceDialogProps) 
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isCreating}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+              disabled={isCreating}
+            >
               キャンセル
             </Button>
             <Button type="submit" disabled={isCreating || !name.trim()}>
