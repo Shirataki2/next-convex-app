@@ -1,8 +1,16 @@
+"use client";
+
 import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useTheme } from "next-themes";
+import { dark } from "@clerk/themes";
 
 export default function LoginPage() {
+  const { theme, systemTheme } = useTheme();
+
+  const currentTheme = theme === "system" ? systemTheme : theme;
+  
   return (
     <>
       <div className="min-h-screen flex items-center justify-center">
@@ -28,13 +36,7 @@ export default function LoginPage() {
           <div className="mt-8 px-6">
             <SignIn 
               appearance={{
-                elements: {
-                  formButtonPrimary: 
-                    "bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors",
-                  card: "shadow-none",
-                  headerTitle: "hidden",
-                  headerSubtitle: "hidden",
-                },
+                baseTheme: currentTheme === "dark" ? dark : undefined,
               }}
               forceRedirectUrl="/dashboard"
               signUpForceRedirectUrl="/dashboard"
