@@ -3,20 +3,43 @@ import { resolve } from 'path'
 
 export default defineConfig({
   test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./vitest.setup.ts'],
-    include: [
-      '**/__tests__/**/*.(ts|tsx|js|jsx)',
-      '**/*.(test|spec).(ts|tsx|js|jsx)',
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'next.js',
+          environment: 'jsdom',
+          include: [
+            '**/__tests__/app/*.(ts|tsx|js|jsx)',
+            '**/__tests__/components/*.(ts|tsx|js|jsx)',
+            '**/__tests__/lib/*.(ts|tsx|js|jsx)',
+            '**/__tests__/hooks/*.(ts|tsx|js|jsx)',
+          ],
+          setupFiles: ['./vitest.setup.ts'],
+        },
+        esbuild: {
+          jsxInject: `import React from 'react'`,
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'convex',
+          environment: 'edge-runtime',
+          include: [
+            '**/__tests__/convex/*.(ts|tsx|js|jsx)',
+          ],
+          server: { deps: { inline: ["convex-test"] } },
+        }
+      }
     ],
+    globals: true,
     exclude: [
       '**/node_modules/**',
       '**/dist/**',
       '**/.next/**',
       '**/convex/_generated/**',
       '**/__tests__/utils/test-wrapper.tsx', // ヘルパーファイルを除外
-      '**/__tests__/convex/**', // Convexテストを一時的に除外（import.meta.glob問題）
     ],
     alias: {
       '@': resolve(__dirname, './'),
@@ -36,9 +59,6 @@ export default defineConfig({
         '**/convex/_generated/**',
       ],
     },
-  },
-  esbuild: {
-    jsxInject: `import React from 'react'`,
   },
   resolve: {
     alias: {

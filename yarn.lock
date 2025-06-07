@@ -149,6 +149,18 @@
   resolved "https://registry.yarnpkg.com/@date-fns/tz/-/tz-1.2.0.tgz#81cb3211693830babaf3b96aff51607e143030a6"
   integrity sha512-LBrd7MiJZ9McsOgxqWX7AaxrDjcFVjWH/tIKJd7pnR7McaslGYOP1QmmiBXdJH/H/yLCT+rcQ7FaPBUxRGUtrg==
 
+"@edge-runtime/primitives@6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@edge-runtime/primitives/-/primitives-6.0.0.tgz#7ca59111605d72b6789b55e6d9c264afb656a5b1"
+  integrity sha512-FqoxaBT+prPBHBwE1WXS1ocnu/VLTQyZ6NMUBAdbP7N2hsFTTxMC/jMu2D/8GAlMQfxeuppcPuCUk/HO3fpIvA==
+
+"@edge-runtime/vm@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@edge-runtime/vm/-/vm-5.0.0.tgz#0db56607125248bb58d53470a4388c738e4f9bf4"
+  integrity sha512-NKBGBSIKUG584qrS1tyxVpX/AKJKQw5HgjYEnPLC0QsTw79JrGn+qUr8CXFb955Iy7GUdiiUv1rJ6JBGvaKb6w==
+  dependencies:
+    "@edge-runtime/primitives" "6.0.0"
+
 "@emnapi/core@^1.4.3":
   version "1.4.3"
   resolved "https://registry.yarnpkg.com/@emnapi/core/-/core-1.4.3.tgz#9ac52d2d5aea958f67e52c40a065f51de59b77d6"

@@ -43,7 +43,7 @@ npx convex deploy
 ### テスト
 
 ```bash
-# テスト実行
+# テスト実行（全プロジェクト）
 yarn test
 
 # テスト監視モード
@@ -54,6 +54,10 @@ yarn test:coverage
 
 # テストUI（ブラウザ）
 yarn test:ui
+
+# 特定プロジェクトのテスト実行
+npx vitest --project=next.js    # Next.jsコンポーネント
+npx vitest --project=convex     # Convex関数
 ```
 
 ## アーキテクチャ構造
@@ -68,8 +72,8 @@ yarn test:ui
 - **TypeScript**: 厳格モード有効
 - **next-themes**: ダークモード対応
 - **Prettier**: コードフォーマッター
-- **Vitest + React Testing Library**: テストフレームワーク
-- **convex-test**: Convex関数テスト（現在は`import.meta.glob`の問題により一時的に無効化）
+- **Vitest + React Testing Library**: テストフレームワーク（プロジェクト分割設定）
+- **convex-test**: Convex関数テスト（edge-runtime環境で動作）
 
 ### ディレクトリ構造
 
@@ -98,7 +102,7 @@ yarn test:ui
 - **エイリアス**: `@/*` → プロジェクトルート
 - **React**: v19（React Compilerに対応）
 - **Tailwind**: v4（PostCSS設定使用）
-- **テスト環境**: Jest + jsdom + TypeScript対応
+- **テスト環境**: Vitest + プロジェクト分割（Next.js: jsdom環境、Convex: edge-runtime環境）
 - **コードフォーマット**: Prettier（.prettierrc設定済み）
 - **ダークモード**: next-themes + システム設定対応
 
@@ -142,6 +146,38 @@ yarn test:ui
    - `action`: アクション種別
    - `timestamp`: タイムスタンプ
 
+### テスト環境の詳細
+
+#### プロジェクト分割設定
+
+Vitestはプロジェクト分割設定を使用し、異なる環境で実行されます：
+
+1. **Next.jsプロジェクト**（`jsdom`環境）
+   - Reactコンポーネントテスト
+   - フックテスト
+   - ユーティリティ関数テスト
+   - 対象: `__tests__/app/`, `__tests__/components/`, `__tests__/lib/`, `__tests__/hooks/`
+
+2. **Convexプロジェクト**（`edge-runtime`環境）
+   - Convex関数テスト
+   - スキーマ検証テスト
+   - 対象: `__tests__/convex/`
+   - 依存関係: `@edge-runtime/vm`, `convex-test`
+
+#### テスト実行コマンド
+
+```bash
+# 全テスト実行
+yarn test
+
+# 特定プロジェクトのみ
+npx vitest --project=next.js
+npx vitest --project=convex
+
+# 監視モード（特定プロジェクト）
+npx vitest --project=next.js --watch
+```
+
 ### 開発時の注意事項
 
 - Convex開発サーバーは別ターミナルで常時起動しておく
@@ -151,6 +187,7 @@ yarn test:ui
 - スキーマ変更時は`npx convex dev`で自動的に型定義が更新される
 - テスト実行前にはコードフォーマットを実行（`yarn format`）
 - 新機能のプルリクエスト前にテストが全て通ることを確認
+- Convexテストは`edge-runtime`環境で実行されるため、Node.js固有のAPIは使用不可
 
 ### Cursorルール
 
