@@ -6,22 +6,22 @@ GitHub Repository > Settings > Secrets and variables > Actions で以下を設�
 
 ### **Repository Secrets**
 
-| シークレット名 | 説明 | 取得方法 |
-|---|---|---|
-| `CONVEX_DEPLOY_KEY` | Convex本番デプロイキー | Convex Dashboard > Settings > Deploy Keys |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk本番Publishable Key | Clerk Dashboard > API Keys |
-| `CLERK_SECRET_KEY` | Clerk本番Secret Key | Clerk Dashboard > API Keys |
-| `VERCEL_TOKEN` | Vercel デプロイトークン (任意) | Vercel Dashboard > Settings > Tokens |
-| `VERCEL_ORG_ID` | Vercel組織ID (任意) | Vercel CLI: `vercel env pull` |
-| `VERCEL_PROJECT_ID` | VercelプロジェクトID (任意) | Vercel CLI: `vercel env pull` |
+| シークレット名                      | 説明                           | 取得方法                                  |
+| ----------------------------------- | ------------------------------ | ----------------------------------------- |
+| `CONVEX_DEPLOY_KEY`                 | Convex本番デプロイキー         | Convex Dashboard > Settings > Deploy Keys |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk本番Publishable Key       | Clerk Dashboard > API Keys                |
+| `CLERK_SECRET_KEY`                  | Clerk本番Secret Key            | Clerk Dashboard > API Keys                |
+| `VERCEL_TOKEN`                      | Vercel デプロイトークン (任意) | Vercel Dashboard > Settings > Tokens      |
+| `VERCEL_ORG_ID`                     | Vercel組織ID (任意)            | Vercel CLI: `vercel env pull`             |
+| `VERCEL_PROJECT_ID`                 | VercelプロジェクトID (任意)    | Vercel CLI: `vercel env pull`             |
 
 ### **Repository Variables**
 
-| 変数名 | 説明 | 値例 |
-|---|---|---|
-| `DEPLOY_TO_VERCEL` | Vercel自動デプロイの有効化 | `true` または `false` |
-| `RUN_E2E_TESTS` | E2Eテストの実行 | `true` または `false` |
-| `NEXT_PUBLIC_CONVEX_URL` | 本番ConvexURL | `https://your-app.convex.cloud` |
+| 変数名                   | 説明                       | 値例                            |
+| ------------------------ | -------------------------- | ------------------------------- |
+| `DEPLOY_TO_VERCEL`       | Vercel自動デプロイの有効化 | `true` または `false`           |
+| `RUN_E2E_TESTS`          | E2Eテストの実行            | `true` または `false`           |
+| `NEXT_PUBLIC_CONVEX_URL` | 本番ConvexURL              | `https://your-app.convex.cloud` |
 
 ## デプロイメント手順
 
@@ -42,6 +42,7 @@ npx convex deploy
 ### 2. **Clerk認証の設定**
 
 1. **Clerk Dashboard**で本番環境を設定：
+
    - Production instanceを作成
    - Domain settingsで本番ドメインを追加
    - API Keysから本番用キーを取得
@@ -64,6 +65,7 @@ npx convex env list --prod
 ### 4. **継続的デプロイ**
 
 mainブランチにpushすると自動的に：
+
 1. テストが実行される
 2. Convexバックエンドがデプロイされる
 3. フロントエンドがビルドされる
@@ -88,14 +90,17 @@ CONVEX_DEPLOY_KEY=staging_key npx convex deploy
 ### **よくある問題**
 
 1. **CONVEX_DEPLOY_KEY が見つからない**
+
    - Convex Dashboard > Settings > Deploy Keys でキーを生成
    - GitHubシークレットに正しく設定されているか確認
 
 2. **Clerk認証エラー**
-   - 本番用キー（pk_live_, sk_live_）を使用しているか確認
+
+   - 本番用キー（pk*live*, sk*live*）を使用しているか確認
    - Clerk Dashboardで許可ドメインが設定されているか確認
 
 3. **ビルドエラー**
+
    - 環境変数が正しく設定されているか確認
    - `yarn test` と `yarn lint` がローカルで通るか確認
 
@@ -137,10 +142,12 @@ npx convex logs --function-name functionName
 ## セキュリティ対策
 
 1. **環境変数の管理**
+
    - 本番のシークレットをソースコードに含めない
    - 定期的にAPIキーをローテーション
 
 2. **アクセス制御**
+
    - Convex関数での適切な認証チェック
    - Clerkでのユーザー権限管理
 
