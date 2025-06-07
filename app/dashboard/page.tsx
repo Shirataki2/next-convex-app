@@ -1,5 +1,5 @@
-import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
+import { Header } from "@/components/layout/header";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
@@ -10,22 +10,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-              ダッシュボード
-            </h1>
-            <UserButton 
-              appearance={{
-                elements: {
-                  avatarBox: "w-8 h-8",
-                },
-              }}
-            />
-          </div>
-        </div>
-      </header>
+      <Header title="ダッシュボード" />
       
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         <div className="rounded-lg bg-white dark:bg-gray-800 px-5 py-6 shadow sm:px-6">
