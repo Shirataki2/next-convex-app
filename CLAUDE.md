@@ -51,6 +51,9 @@ yarn test:watch
 
 # カバレッジ測定
 yarn test:coverage
+
+# テストUI（ブラウザ）
+yarn test:ui
 ```
 
 ## アーキテクチャ構造
@@ -65,8 +68,8 @@ yarn test:coverage
 - **TypeScript**: 厳格モード有効
 - **next-themes**: ダークモード対応
 - **Prettier**: コードフォーマッター
-- **Jest + React Testing Library**: テストフレームワーク
-- **convex-test**: Convex関数テスト
+- **Vitest + React Testing Library**: テストフレームワーク
+- **convex-test**: Convex関数テスト（現在は`import.meta.glob`の問題により一時的に無効化）
 
 ### ディレクトリ構造
 
