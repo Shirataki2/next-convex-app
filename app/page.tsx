@@ -2,32 +2,12 @@ import { SignedIn, SignedOut } from "@clerk/nextjs";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { LandingHeader } from "@/components/layout/landing-header";
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-slate-900/80">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <div className="text-xl font-bold text-slate-900 dark:text-white">
-              TaskFlow
-            </div>
-            <SignedOut>
-              <div className="space-x-4">
-                <Link href="/login">
-                  <Button>ログイン</Button>
-                </Link>
-              </div>
-            </SignedOut>
-            <SignedIn>
-              <Link href="/dashboard">
-                <Button>ダッシュボードへ</Button>
-              </Link>
-            </SignedIn>
-          </div>
-        </div>
-      </header>
+      <LandingHeader />
 
       {/* Hero Section */}
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
