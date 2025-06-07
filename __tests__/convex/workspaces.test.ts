@@ -1,5 +1,5 @@
 import { convexTest } from "convex-test";
-import { describe, it, expect, beforeEach } from "@jest/globals";
+import { describe, it, expect, beforeEach } from "vitest";
 import { api } from "@/convex/_generated/api";
 import schema from "@/convex/schema";
 

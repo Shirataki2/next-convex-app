@@ -1,21 +1,21 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, it, expect, jest, beforeEach } from "@jest/globals";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CreateWorkspaceDialog } from "@/components/workspace/create-workspace-dialog";
 
 // Mock Convex hooks
-jest.mock("convex/react", () => ({
-  useMutation: jest.fn(),
+vi.mock("convex/react", () => ({
+  useMutation: vi.fn(),
 }));
 
 // Mock Clerk
-jest.mock("@clerk/nextjs", () => ({
-  useUser: jest.fn(),
+vi.mock("@clerk/nextjs", () => ({
+  useUser: vi.fn(),
 }));
 
 // Mock API
-jest.mock("@/convex/_generated/api", () => ({
+vi.mock("@/convex/_generated/api", () => ({
   api: {
     workspaces: {
       createWorkspace: "workspaces:createWorkspace",
@@ -26,11 +26,11 @@ jest.mock("@/convex/_generated/api", () => ({
 import { useMutation } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 
-const mockUseMutation = useMutation as jest.MockedFunction<typeof useMutation>;
-const mockUseUser = useUser as jest.MockedFunction<typeof useUser>;
+const mockUseMutation = useMutation as ReturnType<typeof vi.fn>;
+const mockUseUser = useUser as ReturnType<typeof vi.fn>;
 
 describe("CreateWorkspaceDialog", () => {
-  const mockCreateWorkspace = jest.fn();
+  const mockCreateWorkspace = vi.fn();
   const mockUser = {
     id: "user123",
     firstName: "Test",
@@ -38,7 +38,7 @@ describe("CreateWorkspaceDialog", () => {
   };
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     mockUseMutation.mockReturnValue(mockCreateWorkspace);
     mockUseUser.mockReturnValue({
       user: mockUser,
@@ -83,7 +83,7 @@ describe("CreateWorkspaceDialog", () => {
 
     expect(screen.getByText("新しいワークスペースを作成")).toBeInTheDocument();
     expect(
-      screen.getByText("新しいプロジェクトのワークスペースを作成します。")
+      screen.getByText("新しいプロジェクトのワークスペースを作成します。 後でメンバーを招待することができます。")
     ).toBeInTheDocument();
 
     // キャンセルボタンでダイアログを閉じる
@@ -262,7 +262,7 @@ describe("CreateWorkspaceDialog", () => {
 
   it("エラーが発生した場合でもダイアログは開いたまま", async () => {
     const user = userEvent.setup();
-    const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+    const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     mockCreateWorkspace.mockRejectedValue(new Error("作成に失敗しました"));
 

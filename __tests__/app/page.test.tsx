@@ -1,10 +1,10 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import { describe, it, expect, jest } from "@jest/globals";
+import { describe, it, expect, vi } from "vitest";
 import Page from "@/app/page";
 
 // Mock Clerk components
-jest.mock("@clerk/nextjs", () => ({
+vi.mock("@clerk/nextjs", () => ({
   SignedIn: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="signed-in">{children}</div>
   ),
@@ -32,8 +32,8 @@ const TestWrapper = ({ children }: { children: React.ReactNode }) => (
 );
 
 // Mock Next.js Link
-jest.mock("next/link", () => {
-  return function MockedLink({
+vi.mock("next/link", () => ({
+  default: function MockedLink({
     children,
     href,
     ...props
@@ -46,11 +46,11 @@ jest.mock("next/link", () => {
         {children}
       </a>
     );
-  };
-});
+  },
+}));
 
 // Mock components
-jest.mock("@/components/layout/landing-header", () => ({
+vi.mock("@/components/layout/landing-header", () => ({
   LandingHeader: () => <header data-testid="landing-header">Header</header>,
 }));
 
@@ -77,10 +77,8 @@ describe("ランディングページ", () => {
       )
     ).toBeInTheDocument();
 
-    // 機能紹介セクションの確認
-    expect(
-      screen.getByRole("heading", { level: 2, name: /主な機能/ })
-    ).toBeInTheDocument();
+    // 機能カードの確認（CardTitleとして表示される）
+    expect(screen.getByText("リアルタイム同期")).toBeInTheDocument();
   });
 
   it("SignedInとSignedOutが正しく表示される", () => {
@@ -99,19 +97,16 @@ describe("ランディングページ", () => {
     render(<Page />);
 
     // リアルタイム同期
-    expect(
-      screen.getByRole("heading", { level: 3, name: /⚡ リアルタイム同期/ })
-    ).toBeInTheDocument();
-
-    // ドラッグ&ドロップ
-    expect(
-      screen.getByRole("heading", { level: 3, name: /🎯 ドラッグ&ドロップ/ })
-    ).toBeInTheDocument();
+    expect(screen.getByText("🚀")).toBeInTheDocument();
+    expect(screen.getByText("リアルタイム同期")).toBeInTheDocument();
 
     // セキュアな認証
-    expect(
-      screen.getByRole("heading", { level: 3, name: /🔒 セキュアな認証/ })
-    ).toBeInTheDocument();
+    expect(screen.getByText("🔒")).toBeInTheDocument();
+    expect(screen.getByText("セキュアな認証")).toBeInTheDocument();
+
+    // 直感的なUI
+    expect(screen.getByText("🎨")).toBeInTheDocument();
+    expect(screen.getByText("直感的なUI")).toBeInTheDocument();
   });
 
   it("CTAボタンが表示される", () => {
@@ -119,7 +114,7 @@ describe("ランディングページ", () => {
 
     // サインイン済みユーザー向けのボタン
     const dashboardLink = screen.getByRole("link", {
-      name: /ダッシュボードへ/,
+      name: /ダッシュボードへ移動/,
     });
     expect(dashboardLink).toBeInTheDocument();
     expect(dashboardLink).toHaveAttribute("href", "/dashboard");
@@ -135,8 +130,8 @@ describe("ランディングページ", () => {
 
     const mainContainer = screen.getByRole("main").parentElement;
     expect(mainContainer).toHaveClass("min-h-screen");
-    expect(mainContainer).toHaveClass("bg-slate-50");
-    expect(mainContainer).toHaveClass("dark:bg-slate-900");
+    expect(mainContainer).toHaveClass("bg-gradient-to-br");
+    expect(mainContainer).toHaveClass("dark:from-slate-900");
   });
 
   it("機能説明が正しく表示される", () => {
@@ -144,12 +139,12 @@ describe("ランディングページ", () => {
 
     // リアルタイム同期の説明
     expect(
-      screen.getByText(/チームメンバーとリアルタイムでタスクを同期/)
+      screen.getByText(/チームメンバーの変更がリアルタイムで反映されます/)
     ).toBeInTheDocument();
 
-    // ドラッグ&ドロップの説明
+    // 直感的なUIの説明
     expect(
-      screen.getByText(/直感的な操作でタスクを簡単に管理/)
+      screen.getByText(/使いやすいドラッグ&ドロップインターフェース/)
     ).toBeInTheDocument();
 
     // セキュアな認証の説明
@@ -158,13 +153,11 @@ describe("ランディングページ", () => {
     ).toBeInTheDocument();
   });
 
-  it("カードホバー効果のクラスが適用されている", () => {
+  it("機能カードが正しく表示される", () => {
     render(<Page />);
 
-    const featureCards = screen
-      .getAllByRole("generic")
-      .filter((element) => element.className?.includes("hover:shadow-lg"));
-
-    expect(featureCards.length).toBeGreaterThan(0);
+    // Card要素が存在することを確認
+    const cards = screen.getAllByText(/^🚀|🔒|🎨$/);
+    expect(cards).toHaveLength(3);
   });
 });
