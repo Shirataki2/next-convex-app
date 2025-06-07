@@ -16,7 +16,13 @@ export default async function DashboardPage() {
             <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
               ダッシュボード
             </h1>
-            <UserButton />
+            <UserButton 
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8",
+                },
+              }}
+            />
           </div>
         </div>
       </header>

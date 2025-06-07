@@ -1,58 +1,131 @@
-import { SignIn, SignedOut, SignedIn, UserButton } from "@clerk/nextjs";
-import { redirect } from "next/navigation";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <SignedOut>
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
-              ようこそ
-            </h1>
-            <p className="mt-3 text-lg text-slate-600 dark:text-slate-300">
-              タスク管理アプリケーションへ
-            </p>
-          </div>
-          
-          <div className="mt-8 bg-white dark:bg-slate-800 py-8 px-4 shadow-xl ring-1 ring-slate-900/5 sm:rounded-lg sm:px-10">
-            <SignIn 
-              appearance={{
-                elements: {
-                  formButtonPrimary: 
-                    "bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 transition-colors",
-                  card: "shadow-none",
-                  headerTitle: "hidden",
-                  headerSubtitle: "hidden",
-                },
-              }}
-              forceRedirectUrl="/dashboard"
-              signUpForceRedirectUrl="/dashboard"
-            />
-          </div>
-          
-          <div className="text-center">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              アカウントをお持ちでない方は、サインアップからご登録ください
-            </p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      {/* Header */}
+      <header className="border-b bg-white/80 backdrop-blur-sm dark:bg-slate-900/80">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <div className="text-xl font-bold text-slate-900 dark:text-white">
+              TaskFlow
+            </div>
+            <SignedOut>
+              <div className="space-x-4">
+                <Link href="/login">
+                  <Button variant="ghost">ログイン</Button>
+                </Link>
+                <Link href="/login">
+                  <Button>始める</Button>
+                </Link>
+              </div>
+            </SignedOut>
+            <SignedIn>
+              <Link href="/dashboard">
+                <Button>ダッシュボードへ</Button>
+              </Link>
+            </SignedIn>
           </div>
         </div>
-      </SignedOut>
-      
-      <SignedIn>
-        <div className="text-center space-y-4">
-          <h2 className="text-2xl font-semibold text-slate-900 dark:text-white">
-            ログイン済みです
-          </h2>
-          <p className="text-slate-600 dark:text-slate-300">
-            ダッシュボードへリダイレクトしています...
+      </header>
+
+      {/* Hero Section */}
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center space-y-8 max-w-4xl mx-auto">
+          <h1 className="text-5xl sm:text-6xl font-bold tracking-tight text-slate-900 dark:text-white">
+            効率的な
+            <span className="text-blue-600 dark:text-blue-400"> タスク管理</span>
+            <br />
+            リアルタイム同期
+          </h1>
+          
+          <p className="text-xl text-slate-600 dark:text-slate-300 max-w-2xl mx-auto">
+            チームでのタスク管理を簡単に。リアルタイム同期でみんなの進捗を共有し、
+            効率的なプロジェクト管理を実現します。
           </p>
-          <div className="flex justify-center">
-            <UserButton />
-          </div>
-          {redirect("/dashboard")}
+
+          <SignedOut>
+            <div className="space-x-4">
+              <Link href="/login">
+                <Button size="lg" className="px-8 py-3">
+                  今すぐ始める
+                </Button>
+              </Link>
+              <Button variant="outline" size="lg" className="px-8 py-3">
+                詳細を見る
+              </Button>
+            </div>
+          </SignedOut>
+
+          <SignedIn>
+            <Link href="/dashboard">
+              <Button size="lg" className="px-8 py-3">
+                ダッシュボードへ移動
+              </Button>
+            </Link>
+          </SignedIn>
         </div>
-      </SignedIn>
+
+        {/* Features */}
+        <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>🚀</span>
+                <span>リアルタイム同期</span>
+              </CardTitle>
+              <CardDescription>
+                チームメンバーの変更がリアルタイムで反映されます
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                Convexを使用したリアルタイムデータベースで、
+                タスクの変更が即座に全メンバーに共有されます。
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>🔒</span>
+                <span>セキュアな認証</span>
+              </CardTitle>
+              <CardDescription>
+                Clerkによる安全なユーザー管理
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                業界標準のセキュリティプラクティスに基づいた
+                認証システムで安心してご利用いただけます。
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <span>🎨</span>
+                <span>直感的なUI</span>
+              </CardTitle>
+              <CardDescription>
+                使いやすいドラッグ&ドロップインターフェース
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-slate-600 dark:text-slate-300">
+                shadcn/uiを使用したモダンで美しいインターフェースで、
+                ストレスフリーなタスク管理を実現します。
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </main>
     </div>
   );
 }

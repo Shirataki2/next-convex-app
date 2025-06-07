@@ -10,7 +10,10 @@ const isProtectedRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   // 保護されたルートへのアクセスは認証が必要
   if (isProtectedRoute(req)) {
-    await auth.protect();
+    await auth.protect({
+      // カスタムサインインページにリダイレクト
+      unauthenticatedUrl: "/login",
+    });
   }
 });
 

@@ -1,0 +1,58 @@
+import { SignIn, SignedIn } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+export default function LoginPage() {
+  return (
+    <>
+      <SignedIn>
+        {redirect("/dashboard")}
+      </SignedIn>
+      
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+        <div className="w-full max-w-md space-y-8">
+          {/* Back to Home */}
+          <div className="text-center">
+            <Link href="/">
+              <Button variant="ghost" size="sm">
+                ← ホームに戻る
+              </Button>
+            </Link>
+          </div>
+
+          <div className="text-center">
+            <h1 className="text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+              TaskFlowへログイン
+            </h1>
+            <p className="mt-3 text-lg text-slate-600 dark:text-slate-300">
+              アカウントにサインインしてタスク管理を始めましょう
+            </p>
+          </div>
+          
+          <div className="mt-8 bg-white dark:bg-slate-800 py-8 px-4 shadow-xl ring-1 ring-slate-900/5 sm:rounded-lg sm:px-10">
+            <SignIn 
+              appearance={{
+                elements: {
+                  formButtonPrimary: 
+                    "bg-blue-600 hover:bg-blue-700 text-white rounded-md px-4 py-2 transition-colors",
+                  card: "shadow-none",
+                  headerTitle: "hidden",
+                  headerSubtitle: "hidden",
+                },
+              }}
+              forceRedirectUrl="/dashboard"
+              signUpForceRedirectUrl="/dashboard"
+            />
+          </div>
+          
+          <div className="text-center">
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              アカウントをお持ちでない方は、サインアップからご登録ください
+            </p>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
