@@ -202,4 +202,3 @@ export function EditTaskDialog({ task, workspace }: EditTaskDialogProps) {
     </Dialog>
   );
 }
-

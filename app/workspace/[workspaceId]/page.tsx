@@ -42,9 +42,9 @@ export default function WorkspaceDetailPage() {
     if (tasks) {
       console.log("タスクが更新されました:", {
         tasksCount: tasks.length,
-        todoCount: tasks.filter(t => t.status === "todo").length,
-        inProgressCount: tasks.filter(t => t.status === "in_progress").length,
-        doneCount: tasks.filter(t => t.status === "done").length,
+        todoCount: tasks.filter((t) => t.status === "todo").length,
+        inProgressCount: tasks.filter((t) => t.status === "in_progress").length,
+        doneCount: tasks.filter((t) => t.status === "done").length,
       });
     }
   }, [tasks]);
@@ -79,8 +79,8 @@ export default function WorkspaceDetailPage() {
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
     const taskId = active.id as Id<"tasks">;
-    const task = tasks?.find(task => task._id === taskId);
-    
+    const task = tasks?.find((task) => task._id === taskId);
+
     console.log("ドラッグ開始:", { taskId, task: task?.title });
     setActiveTask(task || null);
   };
@@ -89,10 +89,10 @@ export default function WorkspaceDetailPage() {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    console.log("ドラッグ終了:", { 
-      activeId: active.id, 
+    console.log("ドラッグ終了:", {
+      activeId: active.id,
       overId: over?.id,
-      overData: over?.data?.current
+      overData: over?.data?.current,
     });
 
     if (!over || !user) {
@@ -102,18 +102,18 @@ export default function WorkspaceDetailPage() {
 
     const taskId = active.id as Id<"tasks">;
     let newStatus: "todo" | "in_progress" | "done";
-    
+
     // データ属性を使用してドロップ先を判別
-    if (over.data?.current?.type === 'column') {
+    if (over.data?.current?.type === "column") {
       // カラムにドロップした場合
       newStatus = over.data.current.status as "todo" | "in_progress" | "done";
       console.log("カラムにドロップ:", { columnStatus: newStatus });
-    } else if (over.data?.current?.type === 'task') {
+    } else if (over.data?.current?.type === "task") {
       // タスクカードにドロップした場合
       newStatus = over.data.current.status as "todo" | "in_progress" | "done";
-      console.log("タスクカードにドロップ:", { 
-        overTaskId: over.data.current.taskId, 
-        taskStatus: newStatus 
+      console.log("タスクカードにドロップ:", {
+        overTaskId: over.data.current.taskId,
+        taskStatus: newStatus,
       });
     } else {
       // フォールバック: over.idから判別（後方互換性のため）
@@ -121,7 +121,7 @@ export default function WorkspaceDetailPage() {
       if (validStatuses.includes(over.id as string)) {
         newStatus = over.id as "todo" | "in_progress" | "done";
       } else {
-        const overTask = tasks?.find(task => task._id === over.id);
+        const overTask = tasks?.find((task) => task._id === over.id);
         if (!overTask) {
           console.error("ドロップ先が特定できません:", over.id);
           return;
@@ -132,7 +132,7 @@ export default function WorkspaceDetailPage() {
     }
 
     // 現在のタスクを取得
-    const currentTask = tasks?.find(task => task._id === taskId);
+    const currentTask = tasks?.find((task) => task._id === taskId);
     if (!currentTask) {
       console.error("タスクが見つかりません:", taskId);
       return;
@@ -140,15 +140,18 @@ export default function WorkspaceDetailPage() {
 
     // 同じステータスにドロップした場合は何もしない（順序の変更は今後実装）
     if (currentTask.status === newStatus) {
-      console.log("同じステータスにドロップ:", { current: currentTask.status, new: newStatus });
+      console.log("同じステータスにドロップ:", {
+        current: currentTask.status,
+        new: newStatus,
+      });
       return;
     }
 
-    console.log("タスク更新開始:", { 
-      taskId, 
-      currentStatus: currentTask.status, 
+    console.log("タスク更新開始:", {
+      taskId,
+      currentStatus: currentTask.status,
       newStatus,
-      taskTitle: currentTask.title 
+      taskTitle: currentTask.title,
     });
 
     // タスクのステータスを更新
@@ -288,7 +291,7 @@ export default function WorkspaceDetailPage() {
               workspace={workspace}
             />
           </div>
-          
+
           <DragOverlay>
             {activeTask ? (
               <TaskCardOverlay task={activeTask} workspace={workspace} />

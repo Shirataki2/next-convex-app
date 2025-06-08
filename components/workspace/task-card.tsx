@@ -23,13 +23,13 @@ export function TaskCard({ task, workspace }: TaskCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ 
+  } = useSortable({
     id: task._id,
     data: {
-      type: 'task',
+      type: "task",
       status: task.status,
-      taskId: task._id
-    }
+      taskId: task._id,
+    },
   });
 
   const style = {

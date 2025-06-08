@@ -19,20 +19,24 @@ vi.mock("convex/react", () => ({
 }));
 
 // シンプルなドラッグ対応コンポーネントのテスト
-const MockDraggableCard = ({ id, children }: { id: string; children: React.ReactNode }) => {
-  return (
-    <div data-testid={`draggable-${id}`}>
-      {children}
-    </div>
-  );
+const MockDraggableCard = ({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) => {
+  return <div data-testid={`draggable-${id}`}>{children}</div>;
 };
 
-const MockDropZone = ({ id, children }: { id: string; children: React.ReactNode }) => {
-  return (
-    <div data-testid={`droppable-${id}`}>
-      {children}
-    </div>
-  );
+const MockDropZone = ({
+  id,
+  children,
+}: {
+  id: string;
+  children: React.ReactNode;
+}) => {
+  return <div data-testid={`droppable-${id}`}>{children}</div>;
 };
 
 describe("ドラッグ&ドロップ機能", () => {

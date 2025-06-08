@@ -151,4 +151,3 @@ describe("EditTaskDialog", () => {
     consoleErrorSpy.mockRestore();
   });
 });
-

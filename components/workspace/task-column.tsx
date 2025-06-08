@@ -4,7 +4,10 @@ import { TaskCard } from "./task-card";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 
 interface TaskColumnProps {
   title: string;
@@ -26,9 +29,9 @@ export function TaskColumn({
   const { isOver, setNodeRef } = useDroppable({
     id: status,
     data: {
-      type: 'column',
-      status: status
-    }
+      type: "column",
+      status: status,
+    },
   });
 
   const taskIds = tasks.map((task) => task._id);
@@ -45,10 +48,7 @@ export function TaskColumn({
         ref={setNodeRef}
         className={`min-h-[200px] space-y-3 p-4 rounded-lg transition-colors ${isOver ? "bg-muted/50" : ""}`}
       >
-        <SortableContext
-          items={taskIds}
-          strategy={verticalListSortingStrategy}
-        >
+        <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
             <TaskCard key={task._id} task={task} workspace={workspace} />
           ))}

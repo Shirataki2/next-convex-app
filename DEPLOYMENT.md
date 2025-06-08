@@ -67,11 +67,13 @@ npx convex env list --prod
 デプロイ前に以下を確認してください：
 
 1. **コードの品質**
+
    - `yarn lint` が通ること
    - `yarn test` が全て成功すること
    - `yarn format:check` でフォーマットが整っていること
 
 2. **UI動作確認（Playwright MCP）**
+
    - 新規・変更したUI機能の動作確認
    - `mcp__playwright__browser_navigate` でページアクセス
    - `mcp__playwright__browser_snapshot` で構造確認

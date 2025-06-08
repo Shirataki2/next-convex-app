@@ -74,6 +74,7 @@ npx vitest --project=convex     # Convex関数
 - **Prettier**: コードフォーマッター
 - **Vitest + React Testing Library**: テストフレームワーク（プロジェクト分割設定）
 - **convex-test**: Convex関数テスト（edge-runtime環境で動作）
+- **@dnd-kit**: ドラッグ&ドロップ機能（core, sortable, utilities）
 
 ### ディレクトリ構造
 
@@ -85,6 +86,9 @@ npx vitest --project=convex     # Convex関数
   - `ui/`: shadcn/uiコンポーネント（自動生成）
   - `layout/`: レイアウトコンポーネント
   - `workspace/`: ワークスペース関連コンポーネント
+    - `task-card.tsx`: ドラッグ可能なタスクカード
+    - `task-card-overlay.tsx`: ドラッグ中のオーバーレイ表示
+    - `task-column.tsx`: ドロップ可能なカンバンカラム
 - `convex/`: Convexバックエンド関数とスキーマ
   - `_generated/`: 自動生成ファイル（編集不可）
   - `workspaces.ts`: ワークスペース管理関数
@@ -133,12 +137,14 @@ mcp__playwright__browser_take_screenshot
 #### 動作確認手順
 
 1. **開発サーバーの起動**
+
    ```bash
    yarn dev
    npx convex dev  # 別ターミナル
    ```
 
 2. **Playwright MCPでブラウザ操作**
+
    - `mcp__playwright__browser_navigate`で対象ページにアクセス
    - `mcp__playwright__browser_snapshot`でページ構造を確認
    - `mcp__playwright__browser_click`でUI要素をクリック
@@ -179,6 +185,55 @@ mcp__playwright__browser_take_screenshot
    - `taskId`: 対象タスクID
    - `action`: アクション種別
    - `timestamp`: タイムスタンプ
+
+### ドラッグ&ドロップ機能
+
+#### 概要
+
+@dnd-kitライブラリを使用して、カンバンボード上でタスクをドラッグ&ドロップできる機能を実装しています。
+
+#### 主要コンポーネント
+
+1. **DndContext**: ドラッグ&ドロップの環境を提供
+
+   - マウス・タッチセンサーの設定
+   - 衝突検出（closestCenter）
+   - ドラッグ開始・終了・キャンセルイベントの処理
+
+2. **TaskCard（useSortable）**: ドラッグ可能なタスクカード
+
+   - ドラッグハンドル（GripVertical アイコン）
+   - ドラッグ中の視覚的フィードバック（透明度変更）
+   - データ属性：`{ type: 'task', status, taskId }`
+
+3. **TaskColumn（useDroppable）**: ドロップ可能なカラム
+
+   - SortableContextでソート機能を提供
+   - ドロップ時の視覚的フィードバック（背景色変更）
+   - データ属性：`{ type: 'column', status }`
+
+4. **TaskCardOverlay**: ドラッグ中のオーバーレイ表示
+   - DragOverlayで元カードとは独立して表示
+   - ドラッグ中にタスクが見えなくなることを防止
+
+#### ドロップ先判別ロジック
+
+```javascript
+if (over.data?.current?.type === "column") {
+  // カラムにドロップ
+  newStatus = over.data.current.status;
+} else if (over.data?.current?.type === "task") {
+  // タスクカードにドロップ（同じカラム内）
+  newStatus = over.data.current.status;
+}
+```
+
+#### 実装上の注意点
+
+- 同じステータスへのドロップは無視（将来的に順序変更機能を実装予定）
+- データ属性を使用してドロップ先を明確に識別
+- リアルタイムでConvexデータベースに反映
+- エラーハンドリングと詳細なデバッグログを実装
 
 ### テスト環境の詳細
 
