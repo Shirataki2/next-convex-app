@@ -23,7 +23,14 @@ export function TaskCard({ task, workspace }: TaskCardProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task._id });
+  } = useSortable({ 
+    id: task._id,
+    data: {
+      type: 'task',
+      status: task.status,
+      taskId: task._id
+    }
+  });
 
   const style = {
     transform: CSS.Transform.toString(transform),

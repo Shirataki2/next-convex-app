@@ -25,6 +25,10 @@ export function TaskColumn({
 }: TaskColumnProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: status,
+    data: {
+      type: 'column',
+      status: status
+    }
   });
 
   const taskIds = tasks.map((task) => task._id);

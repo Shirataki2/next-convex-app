@@ -89,7 +89,11 @@ export default function WorkspaceDetailPage() {
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    console.log("ドラッグ終了:", { active: active.id, over: over?.id });
+    console.log("ドラッグ終了:", { 
+      activeId: active.id, 
+      overId: over?.id,
+      overData: over?.data?.current
+    });
 
     if (!over || !user) {
       console.log("ドラッグキャンセル:", { hasOver: !!over, hasUser: !!user });
@@ -97,7 +101,35 @@ export default function WorkspaceDetailPage() {
     }
 
     const taskId = active.id as Id<"tasks">;
-    const newStatus = over.id as "todo" | "in_progress" | "done";
+    let newStatus: "todo" | "in_progress" | "done";
+    
+    // データ属性を使用してドロップ先を判別
+    if (over.data?.current?.type === 'column') {
+      // カラムにドロップした場合
+      newStatus = over.data.current.status as "todo" | "in_progress" | "done";
+      console.log("カラムにドロップ:", { columnStatus: newStatus });
+    } else if (over.data?.current?.type === 'task') {
+      // タスクカードにドロップした場合
+      newStatus = over.data.current.status as "todo" | "in_progress" | "done";
+      console.log("タスクカードにドロップ:", { 
+        overTaskId: over.data.current.taskId, 
+        taskStatus: newStatus 
+      });
+    } else {
+      // フォールバック: over.idから判別（後方互換性のため）
+      const validStatuses = ["todo", "in_progress", "done"];
+      if (validStatuses.includes(over.id as string)) {
+        newStatus = over.id as "todo" | "in_progress" | "done";
+      } else {
+        const overTask = tasks?.find(task => task._id === over.id);
+        if (!overTask) {
+          console.error("ドロップ先が特定できません:", over.id);
+          return;
+        }
+        newStatus = overTask.status as "todo" | "in_progress" | "done";
+      }
+      console.log("フォールバック処理でステータスを推定:", { newStatus });
+    }
 
     // 現在のタスクを取得
     const currentTask = tasks?.find(task => task._id === taskId);
@@ -106,7 +138,7 @@ export default function WorkspaceDetailPage() {
       return;
     }
 
-    // 同じステータスにドロップした場合は何もしない
+    // 同じステータスにドロップした場合は何もしない（順序の変更は今後実装）
     if (currentTask.status === newStatus) {
       console.log("同じステータスにドロップ:", { current: currentTask.status, new: newStatus });
       return;
