@@ -31,7 +31,7 @@ export function TaskColumn({
       </div>
       <div className="space-y-3">
         {tasks.map((task) => (
-          <TaskCard key={task._id} task={task} />
+          <TaskCard key={task._id} task={task} workspace={workspace} />
         ))}
 
         {/* タスク追加ボタン */}

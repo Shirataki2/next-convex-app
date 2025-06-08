@@ -5,12 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar } from "lucide-react";
 import { Doc } from "@/convex/_generated/dataModel";
+import { EditTaskDialog } from "./edit-task-dialog";
+import { DeleteTaskDialog } from "./delete-task-dialog";
 
 interface TaskCardProps {
   task: Doc<"tasks">;
+  workspace?: Doc<"workspaces">;
 }
 
-export function TaskCard({ task }: TaskCardProps) {
+export function TaskCard({ task, workspace }: TaskCardProps) {
   const priorityColors = {
     high: "destructive",
     medium: "secondary",
@@ -24,17 +27,23 @@ export function TaskCard({ task }: TaskCardProps) {
   } as const;
 
   return (
-    <Card className="mb-3 hover:shadow-md transition-shadow cursor-pointer">
+    <Card className="mb-3 hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
-          <Badge
-            variant={
-              priorityColors[task.priority as keyof typeof priorityColors]
-            }
-          >
-            {priorityLabels[task.priority as keyof typeof priorityLabels]}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={
+                priorityColors[task.priority as keyof typeof priorityColors]
+              }
+            >
+              {priorityLabels[task.priority as keyof typeof priorityLabels]}
+            </Badge>
+            <div className="flex items-center gap-1">
+              <EditTaskDialog task={task} workspace={workspace} />
+              <DeleteTaskDialog task={task} />
+            </div>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="pb-2">
