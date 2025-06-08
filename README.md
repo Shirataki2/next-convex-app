@@ -143,6 +143,33 @@ npx convex deploy --cmd "yarn build"  # フロントエンド込みデプロイ
 - [ ] キャッシュ最適化
 - [ ] SEO対応
 
+## 🧪 UI動作確認（Playwright MCP）
+
+新しいUI機能を追加した際は、Playwright MCPを使用して動作確認を行います：
+
+### 使用方法
+
+```bash
+# 開発サーバー起動
+yarn dev
+npx convex dev  # 別ターミナル
+
+# Playwright MCPでの動作確認例
+mcp__playwright__browser_navigate  # localhost:3000にアクセス
+mcp__playwright__browser_snapshot  # ページ構造確認
+mcp__playwright__browser_click     # UI要素クリック
+mcp__playwright__browser_type      # フォーム入力
+mcp__playwright__browser_take_screenshot  # スクリーンショット取得
+```
+
+### 確認項目
+
+- UIコンポーネントの表示
+- インタラクティブ要素の動作
+- レスポンシブデザイン
+- エラー状態の表示
+- アクセシビリティ
+
 ## 📁 プロジェクト構造
 
 ```

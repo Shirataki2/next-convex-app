@@ -118,6 +118,40 @@ npx vitest --project=convex     # Convex関数
 - Prettierでコードフォーマットを統一
 - TypeScript厳格モードを遵守
 
+### UI動作確認
+
+新しいUI機能を追加した場合は、必ずPlaywright MCPを使用して動作確認を行ってください：
+
+```bash
+# Playwright MCPを使用してブラウザを操作
+# localhost:3000にアクセスして動作確認
+mcp__playwright__browser_navigate
+mcp__playwright__browser_snapshot
+mcp__playwright__browser_take_screenshot
+```
+
+#### 動作確認手順
+
+1. **開発サーバーの起動**
+   ```bash
+   yarn dev
+   npx convex dev  # 別ターミナル
+   ```
+
+2. **Playwright MCPでブラウザ操作**
+   - `mcp__playwright__browser_navigate`で対象ページにアクセス
+   - `mcp__playwright__browser_snapshot`でページ構造を確認
+   - `mcp__playwright__browser_click`でUI要素をクリック
+   - `mcp__playwright__browser_type`でフォーム入力をテスト
+   - `mcp__playwright__browser_take_screenshot`でスクリーンショット取得
+
+3. **確認項目**
+   - UIコンポーネントの表示が正しいか
+   - インタラクティブな要素が期待通り動作するか
+   - レスポンシブデザインが適切か
+   - エラー状態の表示が正しいか
+   - アクセシビリティが保たれているか
+
 ### データベーススキーマ
 
 `convex/schema.ts`で定義されている主要なテーブル：
@@ -189,6 +223,8 @@ npx vitest --project=next.js --watch
 - テスト実行前にはコードフォーマットを実行（`yarn format`）
 - 新機能のプルリクエスト前にテストが全て通ることを確認
 - Convexテストは`edge-runtime`環境で実行されるため、Node.js固有のAPIは使用不可
+- UI機能を追加・変更した場合は、Playwright MCPを使用して必ず動作確認を実施
+- Playwright MCPでの動作確認時は、開発サーバーが起動していることを確認
 
 ### Cursorルール
 

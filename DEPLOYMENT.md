@@ -62,7 +62,28 @@ npx convex env list
 npx convex env list --prod
 ```
 
-### 4. **継続的デプロイ**
+### 4. **デプロイ前の確認事項**
+
+デプロイ前に以下を確認してください：
+
+1. **コードの品質**
+   - `yarn lint` が通ること
+   - `yarn test` が全て成功すること
+   - `yarn format:check` でフォーマットが整っていること
+
+2. **UI動作確認（Playwright MCP）**
+   - 新規・変更したUI機能の動作確認
+   - `mcp__playwright__browser_navigate` でページアクセス
+   - `mcp__playwright__browser_snapshot` で構造確認
+   - クリックやフォーム入力のテスト
+   - レスポンシブデザインの確認
+
+3. **機能テスト**
+   - 主要機能が正常に動作すること
+   - エラー処理が適切であること
+   - リアルタイム同期が機能すること
+
+### 5. **継続的デプロイ**
 
 mainブランチにpushすると自動的に：
 
@@ -72,7 +93,7 @@ mainブランチにpushすると自動的に：
 4. （設定により）Vercelにデプロイされる
 5. （設定により）E2Eテストが実行される
 
-### 5. **手動デプロイ**
+### 6. **手動デプロイ**
 
 ```bash
 # Convexのみデプロイ
@@ -103,6 +124,7 @@ CONVEX_DEPLOY_KEY=staging_key npx convex deploy
 
    - 環境変数が正しく設定されているか確認
    - `yarn test` と `yarn lint` がローカルで通るか確認
+   - Playwright MCPでUI動作確認が完了しているか確認
 
 4. **デプロイが失敗する**
    - GitHub Actionsのログを確認
