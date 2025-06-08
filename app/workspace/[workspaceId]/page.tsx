@@ -5,19 +5,46 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, User } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { TaskColumn } from "@/components/workspace/task-column";
 import { Id } from "@/convex/_generated/dataModel";
 import { useMemo } from "react";
+import {
+  DndContext,
+  DragEndEvent,
+  closestCenter,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { useUser } from "@clerk/nextjs";
 
 export default function WorkspaceDetailPage() {
   const params = useParams();
   const workspaceId = params.workspaceId as Id<"workspaces">;
+  const { user } = useUser();
+  const updateTask = useMutation(api.tasks.updateTask);
 
   // ワークスペース情報とタスクを取得
   const workspace = useQuery(api.workspaces.getWorkspace, { workspaceId });
   const tasks = useQuery(api.tasks.getWorkspaceTasks, { workspaceId });
+
+  // センサーの設定（マウスとタッチに対応）
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
+      },
+    })
+  );
 
   // タスクをステータス別にグループ化
   const groupedTasks = useMemo(() => {
@@ -29,6 +56,27 @@ export default function WorkspaceDetailPage() {
       done: tasks.filter((task) => task.status === "done"),
     };
   }, [tasks]);
+
+  // ドラッグ終了時の処理
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || !user) return;
+
+    const taskId = active.id as Id<"tasks">;
+    const newStatus = over.id as "todo" | "in_progress" | "done";
+
+    // タスクのステータスを更新
+    try {
+      await updateTask({
+        taskId,
+        updates: { status: newStatus },
+        userId: user.id,
+      });
+    } catch (error) {
+      console.error("タスクの更新に失敗しました:", error);
+    }
+  };
 
   // 統計情報を計算
   const stats = useMemo(() => {
@@ -112,32 +160,38 @@ export default function WorkspaceDetailPage() {
         </div>
 
         {/* Kanbanボード */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <TaskColumn
-            title="Todo"
-            tasks={groupedTasks.todo}
-            color="border-blue-500"
-            workspaceId={workspaceId}
-            status="todo"
-            workspace={workspace}
-          />
-          <TaskColumn
-            title="進行中"
-            tasks={groupedTasks.inProgress}
-            color="border-yellow-500"
-            workspaceId={workspaceId}
-            status="in_progress"
-            workspace={workspace}
-          />
-          <TaskColumn
-            title="完了"
-            tasks={groupedTasks.done}
-            color="border-green-500"
-            workspaceId={workspaceId}
-            status="done"
-            workspace={workspace}
-          />
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <TaskColumn
+              title="Todo"
+              tasks={groupedTasks.todo}
+              color="border-blue-500"
+              workspaceId={workspaceId}
+              status="todo"
+              workspace={workspace}
+            />
+            <TaskColumn
+              title="進行中"
+              tasks={groupedTasks.inProgress}
+              color="border-yellow-500"
+              workspaceId={workspaceId}
+              status="in_progress"
+              workspace={workspace}
+            />
+            <TaskColumn
+              title="完了"
+              tasks={groupedTasks.done}
+              color="border-green-500"
+              workspaceId={workspaceId}
+              status="done"
+              workspace={workspace}
+            />
+          </div>
+        </DndContext>
 
         {/* 統計情報 */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6">

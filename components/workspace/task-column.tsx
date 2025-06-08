@@ -3,6 +3,8 @@
 import { TaskCard } from "./task-card";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { Doc, Id } from "@/convex/_generated/dataModel";
+import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 
 interface TaskColumnProps {
   title: string;
@@ -21,6 +23,12 @@ export function TaskColumn({
   status,
   workspace,
 }: TaskColumnProps) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: status,
+  });
+
+  const taskIds = tasks.map((task) => task._id);
+
   return (
     <div className="flex-1">
       <div className={`mb-4 pb-2 border-b-2 ${color}`}>
@@ -29,10 +37,18 @@ export function TaskColumn({
           <span className="text-sm text-muted-foreground">{tasks.length}</span>
         </div>
       </div>
-      <div className="space-y-3">
-        {tasks.map((task) => (
-          <TaskCard key={task._id} task={task} workspace={workspace} />
-        ))}
+      <div
+        ref={setNodeRef}
+        className={`min-h-[200px] space-y-3 p-4 rounded-lg transition-colors ${isOver ? "bg-muted/50" : ""}`}
+      >
+        <SortableContext
+          items={taskIds}
+          strategy={verticalListSortingStrategy}
+        >
+          {tasks.map((task) => (
+            <TaskCard key={task._id} task={task} workspace={workspace} />
+          ))}
+        </SortableContext>
 
         {/* タスク追加ボタン */}
         <div className="pt-2">
