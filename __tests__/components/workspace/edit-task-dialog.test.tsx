@@ -6,8 +6,10 @@ import { vi } from "vitest";
 
 // Convex Reactのモック
 const mockUpdateTask = vi.fn();
+const mockGetWorkspaceMembers = vi.fn();
 vi.mock("convex/react", () => ({
   useMutation: () => mockUpdateTask,
+  useAction: () => mockGetWorkspaceMembers,
 }));
 
 // Clerk Nextのモック
@@ -49,6 +51,24 @@ const mockWorkspace: Doc<"workspaces"> = {
 describe("EditTaskDialog", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetWorkspaceMembers.mockResolvedValue([
+      {
+        id: "owner1",
+        firstName: "Owner",
+        lastName: "User",
+        imageUrl: "",
+        username: "owner",
+        emailAddress: "owner@example.com",
+      },
+      {
+        id: "member1",
+        firstName: "Member",
+        lastName: "One",
+        imageUrl: "",
+        username: "member1",
+        emailAddress: "member1@example.com",
+      },
+    ]);
   });
 
   it("編集ダイアログが正しくレンダリングされる", () => {

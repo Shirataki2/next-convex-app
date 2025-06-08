@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useMutation } from "convex/react";
+import { useState, useEffect } from "react";
+import { useMutation, useAction } from "convex/react";
 import { useUser } from "@clerk/nextjs";
 import {
   Dialog,
@@ -23,9 +23,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Plus } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import { Doc, Id } from "@/convex/_generated/dataModel";
+
+// ユーザー情報の型定義
+type WorkspaceMember = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string;
+  username: string | null;
+  emailAddress?: string;
+};
 
 interface CreateTaskDialogProps {
   workspaceId: Id<"workspaces">;
@@ -49,9 +60,37 @@ export function CreateTaskDialog({
   const [assigneeId, setAssigneeId] = useState("unassigned");
   const [deadline, setDeadline] = useState("");
   const [isCreating, setIsCreating] = useState(false);
+  const [workspaceMembers, setWorkspaceMembers] = useState<WorkspaceMember[]>(
+    []
+  );
+  const [isLoadingMembers, setIsLoadingMembers] = useState(false);
 
   const { user } = useUser();
   const createTask = useMutation(api.tasks.createTask);
+  const getWorkspaceMembers = useAction(api.tasks.getWorkspaceMembers);
+
+  // ワークスペースメンバー情報を取得
+  useEffect(() => {
+    const fetchMembers = async () => {
+      if (!workspaceId) return;
+
+      try {
+        setIsLoadingMembers(true);
+        const members = await getWorkspaceMembers({ workspaceId });
+        setWorkspaceMembers(members);
+      } catch (error) {
+        console.error("Failed to fetch workspace members:", error);
+        // フォールバック：基本のID表示
+        setWorkspaceMembers([]);
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    };
+
+    if (open) {
+      fetchMembers();
+    }
+  }, [workspaceId, open, getWorkspaceMembers]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +133,23 @@ export function CreateTaskDialog({
     setAssigneeId("unassigned");
     setDeadline("");
     setIsCreating(false);
+  };
+
+  // ユーザー名を表示するヘルパー関数
+  const getUserDisplayName = (member: WorkspaceMember) => {
+    if (member.firstName && member.lastName) {
+      return `${member.firstName} ${member.lastName}`;
+    }
+    return member.username || member.emailAddress || "Unknown User";
+  };
+
+  // アバターのフォールバック文字を取得するヘルパー関数
+  const getAvatarFallback = (member: WorkspaceMember) => {
+    const firstName = member.firstName || member.username || "U";
+    const lastName = member.lastName || "";
+    return (
+      firstName.slice(0, 1).toUpperCase() + lastName.slice(0, 1).toUpperCase()
+    );
   };
 
   const getStatusLabel = (status: string) => {
@@ -199,24 +255,42 @@ export function CreateTaskDialog({
               <Select
                 value={assigneeId}
                 onValueChange={(value) => setAssigneeId(value)}
-                disabled={isCreating}
+                disabled={isCreating || isLoadingMembers}
               >
                 <SelectTrigger className="col-span-3">
-                  <SelectValue placeholder="担当者を選択（任意）" />
+                  <SelectValue
+                    placeholder={
+                      isLoadingMembers
+                        ? "メンバー情報を読み込み中..."
+                        : "担当者を選択（任意）"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">未指定</SelectItem>
-                  {workspace?.members.map((memberId) => (
-                    <SelectItem key={memberId} value={memberId}>
-                      {memberId}
+                  {workspaceMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          {member.imageUrl ? (
+                            <img
+                              src={member.imageUrl}
+                              alt={getUserDisplayName(member)}
+                              className="h-6 w-6 rounded-full object-cover"
+                            />
+                          ) : (
+                            <AvatarFallback className="text-xs">
+                              {getAvatarFallback(member)}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <span className="text-sm">
+                          {getUserDisplayName(member)}
+                          {workspace?.ownerId === member.id && " (オーナー)"}
+                        </span>
+                      </div>
                     </SelectItem>
                   ))}
-                  {workspace?.ownerId &&
-                    !workspace.members.includes(workspace.ownerId) && (
-                      <SelectItem value={workspace.ownerId}>
-                        {workspace.ownerId} (オーナー)
-                      </SelectItem>
-                    )}
                 </SelectContent>
               </Select>
             </div>

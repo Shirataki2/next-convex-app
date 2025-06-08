@@ -27,6 +27,16 @@ type AssigneeUser = {
   emailAddress?: string;
 } | null;
 
+// ワークスペースメンバーの型定義（null不許可）
+type WorkspaceMemberInfo = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string;
+  username: string | null;
+  emailAddress?: string;
+};
+
 // ユーザー情報付きタスクの型定義
 type TaskWithUser = {
   assigneeUser: AssigneeUser;
@@ -247,6 +257,76 @@ export const updateTaskOrder = mutation({
     await ctx.db.patch(taskId, { order: newOrder });
 
     return { success: true };
+  },
+});
+
+// ワークスペースメンバーのユーザー情報を取得
+export const getWorkspaceMembers = action({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, { workspaceId }): Promise<WorkspaceMemberInfo[]> => {
+    // ワークスペース情報を取得
+    const workspace: any = await ctx.runQuery(api.workspaces.getWorkspace, {
+      workspaceId,
+    });
+
+    if (!workspace) {
+      throw new Error("ワークスペースが見つかりません");
+    }
+
+    // CLERK_SECRET_KEYがない場合は、ユーザー情報なしで返す
+    if (!process.env.CLERK_SECRET_KEY) {
+      console.warn(
+        "CLERK_SECRET_KEY is not set. User information will not be fetched."
+      );
+      const memberIds: string[] = [workspace.ownerId, ...workspace.members];
+      return memberIds.map((memberId: string) => ({
+        id: memberId,
+        firstName: null,
+        lastName: null,
+        imageUrl: "",
+        username: null,
+        emailAddress: undefined,
+      }));
+    }
+
+    // ClerkClientを初期化
+    const clerk = createClerkClient({
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
+
+    // オーナーとメンバーの重複を除去
+    const allMemberIds = Array.from(
+      new Set([workspace.ownerId, ...workspace.members])
+    );
+
+    // 各メンバーのユーザー情報を取得
+    const membersWithUserInfo: WorkspaceMemberInfo[] = await Promise.all(
+      allMemberIds.map(async (memberId) => {
+        try {
+          const user = await clerk.users.getUser(memberId);
+          return {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            imageUrl: user.imageUrl,
+            username: user.username,
+            emailAddress: user.emailAddresses?.[0]?.emailAddress,
+          };
+        } catch (error) {
+          console.error(`Failed to fetch user ${memberId}:`, error);
+          return {
+            id: memberId,
+            firstName: null,
+            lastName: null,
+            imageUrl: "",
+            username: null,
+            emailAddress: undefined,
+          };
+        }
+      })
+    );
+
+    return membersWithUserInfo;
   },
 });
 

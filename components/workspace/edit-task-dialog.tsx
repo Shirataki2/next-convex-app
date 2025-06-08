@@ -27,15 +27,26 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Pencil } from "lucide-react";
 import { ja } from "date-fns/locale";
-import { useMutation } from "convex/react";
+import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
+
+// ユーザー情報の型定義
+type WorkspaceMember = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string;
+  username: string | null;
+  emailAddress?: string;
+};
 
 interface EditTaskDialogProps {
   task: Doc<"tasks">;
@@ -51,6 +62,7 @@ export function EditTaskDialog({
   const [open, setOpen] = React.useState(false);
   const { user } = useUser();
   const updateTask = useMutation(api.tasks.updateTask);
+  const getWorkspaceMembers = useAction(api.tasks.getWorkspaceMembers);
 
   const [title, setTitle] = React.useState(task.title);
   const [description, setDescription] = React.useState(task.description || "");
@@ -62,6 +74,52 @@ export function EditTaskDialog({
     task.deadline ? new Date(task.deadline) : undefined
   );
   const [status, setStatus] = React.useState(task.status);
+  const [workspaceMembers, setWorkspaceMembers] = React.useState<
+    WorkspaceMember[]
+  >([]);
+  const [isLoadingMembers, setIsLoadingMembers] = React.useState(false);
+
+  // ワークスペースメンバー情報を取得
+  React.useEffect(() => {
+    const fetchMembers = async () => {
+      if (!workspace) return;
+
+      try {
+        setIsLoadingMembers(true);
+        const members = await getWorkspaceMembers({
+          workspaceId: workspace._id,
+        });
+        setWorkspaceMembers(members);
+      } catch (error) {
+        console.error("Failed to fetch workspace members:", error);
+        // フォールバック：基本のID表示
+        setWorkspaceMembers([]);
+      } finally {
+        setIsLoadingMembers(false);
+      }
+    };
+
+    if (open && workspace) {
+      fetchMembers();
+    }
+  }, [workspace, open, getWorkspaceMembers]);
+
+  // ユーザー名を表示するヘルパー関数
+  const getUserDisplayName = (member: WorkspaceMember) => {
+    if (member.firstName && member.lastName) {
+      return `${member.firstName} ${member.lastName}`;
+    }
+    return member.username || member.emailAddress || "Unknown User";
+  };
+
+  // アバターのフォールバック文字を取得するヘルパー関数
+  const getAvatarFallback = (member: WorkspaceMember) => {
+    const firstName = member.firstName || member.username || "U";
+    const lastName = member.lastName || "";
+    return (
+      firstName.slice(0, 1).toUpperCase() + lastName.slice(0, 1).toUpperCase()
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,20 +214,43 @@ export function EditTaskDialog({
             </div>
             <div className="grid gap-2">
               <Label htmlFor="assignee">担当者</Label>
-              <Select value={assigneeId} onValueChange={setAssigneeId}>
+              <Select
+                value={assigneeId}
+                onValueChange={setAssigneeId}
+                disabled={isLoadingMembers}
+              >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue
+                    placeholder={
+                      isLoadingMembers
+                        ? "メンバー情報を読み込み中..."
+                        : "担当者を選択（任意）"
+                    }
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="unassigned">未指定</SelectItem>
-                  {workspace && workspace.ownerId && (
-                    <SelectItem value={workspace.ownerId}>
-                      {workspace.ownerId} (オーナー)
-                    </SelectItem>
-                  )}
-                  {workspace?.members?.map((memberId) => (
-                    <SelectItem key={memberId} value={memberId}>
-                      {memberId}
+                  {workspaceMembers.map((member) => (
+                    <SelectItem key={member.id} value={member.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          {member.imageUrl ? (
+                            <img
+                              src={member.imageUrl}
+                              alt={getUserDisplayName(member)}
+                              className="h-6 w-6 rounded-full object-cover"
+                            />
+                          ) : (
+                            <AvatarFallback className="text-xs">
+                              {getAvatarFallback(member)}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <span className="text-sm">
+                          {getUserDisplayName(member)}
+                          {workspace?.ownerId === member.id && " (オーナー)"}
+                        </span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
