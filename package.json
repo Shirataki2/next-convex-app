@@ -19,6 +19,7 @@
     "test:e2e:debug": "playwright test --debug"
   },
   "dependencies": {
+    "@clerk/localizations": "^3.16.4",
     "@clerk/nextjs": "^6.21.0",
     "@clerk/themes": "^2.2.49",
     "@dnd-kit/core": "^6.3.1",

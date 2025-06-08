@@ -70,6 +70,13 @@
     "@clerk/types" "^4.60.0"
     tslib "2.8.1"
 
+"@clerk/localizations@^3.16.4":
+  version "3.16.4"
+  resolved "https://registry.yarnpkg.com/@clerk/localizations/-/localizations-3.16.4.tgz#6a39c82ae6037d477731112a9fab4f0dc5806c24"
+  integrity sha512-tIBNVtd1PvJVs+8/hMDobOtg6LW7sYpMczu+TlNvoxyQUbUzWzFCso2Tue+TekXDmgYlXH+jVbnYq4XbIi2rdA==
+  dependencies:
+    "@clerk/types" "^4.60.0"
+
 "@clerk/nextjs@^6.21.0":
   version "6.21.0"
   resolved "https://registry.yarnpkg.com/@clerk/nextjs/-/nextjs-6.21.0.tgz#452a7e99be0206bfcc97955fe460659c38b34b5d"
