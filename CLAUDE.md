@@ -67,6 +67,9 @@ npx vitest --project=convex     # Convex関数
 - **Next.js 15.3.3**: App Router使用、React 19対応
 - **Convex**: リアルタイムバックエンド、データベース、サーバーレス関数
 - **Clerk**: 認証・ユーザー管理
+  - **@clerk/nextjs**: Next.js統合
+  - **@clerk/backend**: サーバーサイドユーザー情報取得
+  - **@clerk/localizations**: 日本語化サポート（jaJP）
 - **shadcn/ui**: Radix UIベースのコンポーネントライブラリ
 - **Tailwind CSS v4**: スタイリング
 - **TypeScript**: 厳格モード有効
@@ -86,13 +89,22 @@ npx vitest --project=convex     # Convex関数
   - `ui/`: shadcn/uiコンポーネント（自動生成）
   - `layout/`: レイアウトコンポーネント
   - `workspace/`: ワークスペース関連コンポーネント
-    - `task-card.tsx`: ドラッグ可能なタスクカード
+    - `task-card.tsx`: ドラッグ可能なタスクカード（ユーザー情報表示対応）
     - `task-card-overlay.tsx`: ドラッグ中のオーバーレイ表示
     - `task-column.tsx`: ドロップ可能なカンバンカラム
+    - `create-task-dialog.tsx`: タスク作成ダイアログ（ユーザー選択対応）
+    - `edit-task-dialog.tsx`: タスク編集ダイアログ（ユーザー選択対応）
+    - `delete-task-dialog.tsx`: タスク削除確認ダイアログ
+    - `create-workspace-dialog.tsx`: ワークスペース作成ダイアログ
 - `convex/`: Convexバックエンド関数とスキーマ
   - `_generated/`: 自動生成ファイル（編集不可）
   - `workspaces.ts`: ワークスペース管理関数
   - `tasks.ts`: タスク管理関数
+    - `getWorkspaceTasks`: ワークスペースのタスク一覧取得
+    - `getWorkspaceTasksWithUsers`: ユーザー情報付きタスク一覧取得
+    - `getWorkspaceMembers`: ワークスペースメンバーのClerkユーザー情報取得
+    - `createTask`, `updateTask`, `deleteTask`: タスクCRUD操作
+    - `getWorkspaceActivities`: タスクアクティビティ履歴取得
 - `hooks/`: カスタムReactフック
 - `lib/`: ユーティリティ関数
 - `__tests__/`: テストファイル
@@ -232,8 +244,109 @@ if (over.data?.current?.type === "column") {
 
 - 同じステータスへのドロップは無視（将来的に順序変更機能を実装予定）
 - データ属性を使用してドロップ先を明確に識別
+- 楽観的更新（Optimistic Update）でスムーズなUX実現
 - リアルタイムでConvexデータベースに反映
 - エラーハンドリングと詳細なデバッグログを実装
+
+#### 楽観的更新（Optimistic Update）
+
+ドラッグ&ドロップ操作では、ユーザー体験向上のため楽観的更新を実装：
+
+```javascript
+// 1. 即座にローカル状態を更新
+const updatedTasks = tasks.map((task) =>
+  task._id === taskId ? { ...task, status: newStatus } : task
+);
+setTasks(updatedTasks);
+
+// 2. バックエンド更新（非同期）
+try {
+  await updateTask({ taskId, updates: { status: newStatus }, userId });
+  await fetchTasksWithUsers(); // 最新データと同期
+} catch (error) {
+  setTasks(originalTasks); // エラー時はロールバック
+  alert("タスクの更新に失敗しました。再試行してください。");
+}
+```
+
+**利点:**
+
+- ドラッグ終了と同時にUIが更新される
+- ネットワーク待機時間によるUX悪化を防止
+- エラー時は自動でロールバック処理
+
+### Clerk統合とユーザー情報表示
+
+#### 日本語化対応
+
+Clerkの認証UIは日本語化されています：
+
+```tsx
+// app/providers.tsx
+import { jaJP } from "@clerk/localizations";
+
+export function Providers({ children }: { children: ReactNode }) {
+  return <ClerkProvider localization={jaJP}>{/* ... */}</ClerkProvider>;
+}
+```
+
+#### ユーザー情報表示機能
+
+タスクカードや担当者選択で、ClerkユーザーIDではなく実際のユーザー名・アバターを表示：
+
+##### 1. サーバーサイドユーザー情報取得
+
+```typescript
+// convex/tasks.ts
+export const getWorkspaceMembers = action({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, { workspaceId }): Promise<WorkspaceMemberInfo[]> => {
+    const clerk = createClerkClient({
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
+
+    const members = await Promise.all(
+      allMemberIds.map(async (memberId) => {
+        const user = await clerk.users.getUser(memberId);
+        return {
+          id: user.id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          imageUrl: user.imageUrl,
+          username: user.username,
+          emailAddress: user.emailAddresses?.[0]?.emailAddress,
+        };
+      })
+    );
+
+    return members;
+  },
+});
+```
+
+##### 2. UI表示
+
+- **TaskCard**: 担当者のアバターと名前を表示
+- **CreateTaskDialog/EditTaskDialog**: 担当者選択時にユーザー名とアバター表示
+- **フォールバック**: ユーザー情報取得失敗時はIDを表示
+
+##### 3. ユーザー名表示ロジック
+
+```typescript
+const getUserDisplayName = (member: WorkspaceMember) => {
+  if (member.firstName && member.lastName) {
+    return `${member.firstName} ${member.lastName}`;
+  }
+  return member.username || member.emailAddress || "Unknown User";
+};
+```
+
+**特徴:**
+
+- Clerkのプロフィール情報（名前、アバター、ユーザー名）を活用
+- サーバーサイドで情報を取得してセキュリティを確保
+- エラー時の適切なフォールバック処理
+- ローディング状態の表示とUX向上
 
 ### テスト環境の詳細
 
