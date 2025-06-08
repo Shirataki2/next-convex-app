@@ -9,10 +9,13 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { TaskColumn } from "@/components/workspace/task-column";
 import { Id } from "@/convex/_generated/dataModel";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   DndContext,
   DragEndEvent,
+  DragStartEvent,
+  DragCancelEvent,
+  DragOverlay,
   closestCenter,
   MouseSensor,
   TouchSensor,
@@ -20,16 +23,31 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { useUser } from "@clerk/nextjs";
+import { TaskCardOverlay } from "@/components/workspace/task-card-overlay";
+import { Doc } from "@/convex/_generated/dataModel";
 
 export default function WorkspaceDetailPage() {
   const params = useParams();
   const workspaceId = params.workspaceId as Id<"workspaces">;
   const { user } = useUser();
   const updateTask = useMutation(api.tasks.updateTask);
+  const [activeTask, setActiveTask] = useState<Doc<"tasks"> | null>(null);
 
   // ワークスペース情報とタスクを取得
   const workspace = useQuery(api.workspaces.getWorkspace, { workspaceId });
   const tasks = useQuery(api.tasks.getWorkspaceTasks, { workspaceId });
+
+  // デバッグ：タスクの変更を監視
+  useEffect(() => {
+    if (tasks) {
+      console.log("タスクが更新されました:", {
+        tasksCount: tasks.length,
+        todoCount: tasks.filter(t => t.status === "todo").length,
+        inProgressCount: tasks.filter(t => t.status === "in_progress").length,
+        doneCount: tasks.filter(t => t.status === "done").length,
+      });
+    }
+  }, [tasks]);
 
   // センサーの設定（マウスとタッチに対応）
   const sensors = useSensors(
@@ -57,14 +75,49 @@ export default function WorkspaceDetailPage() {
     };
   }, [tasks]);
 
+  // ドラッグ開始時の処理
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const taskId = active.id as Id<"tasks">;
+    const task = tasks?.find(task => task._id === taskId);
+    
+    console.log("ドラッグ開始:", { taskId, task: task?.title });
+    setActiveTask(task || null);
+  };
+
   // ドラッグ終了時の処理
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
-    if (!over || !user) return;
+    console.log("ドラッグ終了:", { active: active.id, over: over?.id });
+
+    if (!over || !user) {
+      console.log("ドラッグキャンセル:", { hasOver: !!over, hasUser: !!user });
+      return;
+    }
 
     const taskId = active.id as Id<"tasks">;
     const newStatus = over.id as "todo" | "in_progress" | "done";
+
+    // 現在のタスクを取得
+    const currentTask = tasks?.find(task => task._id === taskId);
+    if (!currentTask) {
+      console.error("タスクが見つかりません:", taskId);
+      return;
+    }
+
+    // 同じステータスにドロップした場合は何もしない
+    if (currentTask.status === newStatus) {
+      console.log("同じステータスにドロップ:", { current: currentTask.status, new: newStatus });
+      return;
+    }
+
+    console.log("タスク更新開始:", { 
+      taskId, 
+      currentStatus: currentTask.status, 
+      newStatus,
+      taskTitle: currentTask.title 
+    });
 
     // タスクのステータスを更新
     try {
@@ -73,9 +126,19 @@ export default function WorkspaceDetailPage() {
         updates: { status: newStatus },
         userId: user.id,
       });
+      console.log("タスク更新成功:", { taskId, newStatus });
     } catch (error) {
       console.error("タスクの更新に失敗しました:", error);
+    } finally {
+      // ドラッグ終了時にactiveTaskをクリア
+      setActiveTask(null);
     }
+  };
+
+  // ドラッグキャンセル時の処理
+  const handleDragCancel = () => {
+    console.log("ドラッグキャンセル");
+    setActiveTask(null);
   };
 
   // 統計情報を計算
@@ -163,7 +226,9 @@ export default function WorkspaceDetailPage() {
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
+          onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <TaskColumn
@@ -191,6 +256,12 @@ export default function WorkspaceDetailPage() {
               workspace={workspace}
             />
           </div>
+          
+          <DragOverlay>
+            {activeTask ? (
+              <TaskCardOverlay task={activeTask} workspace={workspace} />
+            ) : null}
+          </DragOverlay>
         </DndContext>
 
         {/* 統計情報 */}

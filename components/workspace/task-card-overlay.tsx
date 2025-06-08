@@ -5,31 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, GripVertical } from "lucide-react";
 import { Doc } from "@/convex/_generated/dataModel";
-import { EditTaskDialog } from "./edit-task-dialog";
-import { DeleteTaskDialog } from "./delete-task-dialog";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 
-interface TaskCardProps {
+interface TaskCardOverlayProps {
   task: Doc<"tasks">;
   workspace?: Doc<"workspaces">;
 }
 
-export function TaskCard({ task, workspace }: TaskCardProps) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: task._id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
+export function TaskCardOverlay({ task, workspace }: TaskCardOverlayProps) {
   const priorityColors = {
     high: "destructive",
     medium: "secondary",
@@ -43,21 +25,11 @@ export function TaskCard({ task, workspace }: TaskCardProps) {
   } as const;
 
   return (
-    <Card
-      ref={setNodeRef}
-      style={style}
-      className={`mb-3 hover:shadow-md transition-shadow ${
-        isDragging ? "opacity-30" : ""
-      }`}
-    >
+    <Card className="mb-3 shadow-lg opacity-90 bg-background">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-2">
-            <div
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing mt-1 text-muted-foreground hover:text-foreground"
-            >
+            <div className="mt-1 text-muted-foreground">
               <GripVertical className="h-4 w-4" />
             </div>
             <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
@@ -70,10 +42,6 @@ export function TaskCard({ task, workspace }: TaskCardProps) {
             >
               {priorityLabels[task.priority as keyof typeof priorityLabels]}
             </Badge>
-            <div className="flex items-center gap-1">
-              <EditTaskDialog task={task} workspace={workspace} />
-              <DeleteTaskDialog task={task} />
-            </div>
           </div>
         </div>
       </CardHeader>
