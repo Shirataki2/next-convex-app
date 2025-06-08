@@ -57,14 +57,11 @@ export default function WorkspaceDetailPage() {
     if (!workspaceId) return;
 
     try {
-      setIsLoadingTasks(true);
       const tasksWithUsers = await getTasksWithUsers({ workspaceId });
       setTasks(tasksWithUsers);
     } catch (error) {
       console.error("Failed to fetch tasks with user info:", error);
       // フォールバック：基本のタスク情報のみ取得（今後実装）
-    } finally {
-      setIsLoadingTasks(false);
     }
   };
 
@@ -120,7 +117,7 @@ export default function WorkspaceDetailPage() {
     setActiveTask(task || null);
   };
 
-  // ドラッグ終了時の処理
+  // ドラッグ終了時の処理（楽観的更新対応）
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -132,6 +129,7 @@ export default function WorkspaceDetailPage() {
 
     if (!over || !user) {
       console.log("ドラッグキャンセル:", { hasOver: !!over, hasUser: !!user });
+      setActiveTask(null);
       return;
     }
 
@@ -140,11 +138,9 @@ export default function WorkspaceDetailPage() {
 
     // データ属性を使用してドロップ先を判別
     if (over.data?.current?.type === "column") {
-      // カラムにドロップした場合
       newStatus = over.data.current.status as "todo" | "in_progress" | "done";
       console.log("カラムにドロップ:", { columnStatus: newStatus });
     } else if (over.data?.current?.type === "task") {
-      // タスクカードにドロップした場合
       newStatus = over.data.current.status as "todo" | "in_progress" | "done";
       console.log("タスクカードにドロップ:", {
         overTaskId: over.data.current.taskId,
@@ -159,6 +155,7 @@ export default function WorkspaceDetailPage() {
         const overTask = tasks?.find((task) => task._id === over.id);
         if (!overTask) {
           console.error("ドロップ先が特定できません:", over.id);
+          setActiveTask(null);
           return;
         }
         newStatus = overTask.status as "todo" | "in_progress" | "done";
@@ -170,41 +167,63 @@ export default function WorkspaceDetailPage() {
     const currentTask = tasks?.find((task) => task._id === taskId);
     if (!currentTask) {
       console.error("タスクが見つかりません:", taskId);
+      setActiveTask(null);
       return;
     }
 
-    // 同じステータスにドロップした場合は何もしない（順序の変更は今後実装）
+    // 同じステータスにドロップした場合は何もしない
     if (currentTask.status === newStatus) {
       console.log("同じステータスにドロップ:", {
         current: currentTask.status,
         new: newStatus,
       });
+      setActiveTask(null);
       return;
     }
 
-    console.log("タスク更新開始:", {
+    console.log("タスク更新開始（楽観的更新）:", {
       taskId,
       currentStatus: currentTask.status,
       newStatus,
       taskTitle: currentTask.title,
     });
 
-    // タスクのステータスを更新
+    // 楽観的更新: 即座にローカル状態を更新
+    const originalTasks = tasks;
+    if (tasks) {
+      const updatedTasks = tasks.map((task) =>
+        task._id === taskId ? { ...task, status: newStatus } : task
+      );
+      setTasks(updatedTasks);
+      console.log("楽観的更新完了:", { taskId, newStatus });
+    }
+
+    // ドラッグ終了時にactiveTaskをクリア（楽観的更新後すぐに）
+    setActiveTask(null);
+
+    // バックエンドでタスクのステータスを更新（非同期）
     try {
       await updateTask({
         taskId,
         updates: { status: newStatus },
         userId: user.id,
       });
-      console.log("タスク更新成功:", { taskId, newStatus });
+      console.log("バックエンド更新成功:", { taskId, newStatus });
 
-      // タスク更新後、最新のタスクリストを再取得
+      // バックエンド更新完了後、最新のデータを再取得して同期
       await fetchTasksWithUsers();
+      console.log("最新データ同期完了");
     } catch (error) {
-      console.error("タスクの更新に失敗しました:", error);
-    } finally {
-      // ドラッグ終了時にactiveTaskをクリア
-      setActiveTask(null);
+      console.error("バックエンド更新に失敗、ロールバック実行:", error);
+
+      // エラー時は楽観的更新をロールバック
+      if (originalTasks) {
+        setTasks(originalTasks);
+        console.log("楽観的更新をロールバックしました");
+      }
+
+      // ユーザーにエラーを通知（今後トースト等で実装）
+      alert("タスクの更新に失敗しました。再試行してください。");
     }
   };
 
