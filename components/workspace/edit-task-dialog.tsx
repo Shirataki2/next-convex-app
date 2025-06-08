@@ -33,7 +33,7 @@ import { CalendarIcon, Pencil } from "lucide-react";
 import { ja } from "date-fns/locale";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Doc, Id } from "@/convex/_generated/dataModel";
+import { Doc } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 

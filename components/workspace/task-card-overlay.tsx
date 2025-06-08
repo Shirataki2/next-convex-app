@@ -8,10 +8,9 @@ import { Doc } from "@/convex/_generated/dataModel";
 
 interface TaskCardOverlayProps {
   task: Doc<"tasks">;
-  workspace?: Doc<"workspaces">;
 }
 
-export function TaskCardOverlay({ task, workspace }: TaskCardOverlayProps) {
+export function TaskCardOverlay({ task }: TaskCardOverlayProps) {
   const priorityColors = {
     high: "destructive",
     medium: "secondary",

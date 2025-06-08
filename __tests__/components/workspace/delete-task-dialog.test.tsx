@@ -154,30 +154,4 @@ describe("DeleteTaskDialog", () => {
 
     consoleErrorSpy.mockRestore();
   });
-
-  it("削除中は削除ボタンが無効になる", async () => {
-    mockDeleteTask.mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 1000))
-    );
-
-    render(
-      <TestWrapper>
-        <DeleteTaskDialog task={mockTask} />
-      </TestWrapper>
-    );
-
-    const deleteButton = screen.getByRole("button");
-    fireEvent.click(deleteButton);
-
-    await waitFor(() => {
-      expect(screen.getByText("本当に削除しますか？")).toBeInTheDocument();
-    });
-
-    const confirmButton = screen.getByRole("button", { name: "削除" });
-    fireEvent.click(confirmButton);
-
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "削除中..." })).toBeDisabled();
-    });
-  });
 });

@@ -14,7 +14,6 @@ import {
   DndContext,
   DragEndEvent,
   DragStartEvent,
-  DragCancelEvent,
   DragOverlay,
   closestCenter,
   MouseSensor,
@@ -294,7 +293,7 @@ export default function WorkspaceDetailPage() {
 
           <DragOverlay>
             {activeTask ? (
-              <TaskCardOverlay task={activeTask} workspace={workspace} />
+              <TaskCardOverlay task={activeTask} />
             ) : null}
           </DragOverlay>
         </DndContext>
