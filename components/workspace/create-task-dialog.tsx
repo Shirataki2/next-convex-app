@@ -32,6 +32,7 @@ interface CreateTaskDialogProps {
   defaultStatus: "todo" | "in_progress" | "done";
   workspace?: Doc<"workspaces">;
   children?: React.ReactNode;
+  onTaskChange?: () => Promise<void>;
 }
 
 export function CreateTaskDialog({
@@ -39,6 +40,7 @@ export function CreateTaskDialog({
   defaultStatus,
   workspace,
   children,
+  onTaskChange,
 }: CreateTaskDialogProps) {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
@@ -69,6 +71,11 @@ export function CreateTaskDialog({
         priority,
         userId: user.id,
       });
+
+      // タスク作成後に親コンポーネントにタスクリストの更新を通知
+      if (onTaskChange) {
+        await onTaskChange();
+      }
 
       resetForm();
       setOpen(false);

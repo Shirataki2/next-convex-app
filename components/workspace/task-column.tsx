@@ -11,11 +11,21 @@ import {
 
 interface TaskColumnProps {
   title: string;
-  tasks: Doc<"tasks">[];
+  tasks: (Doc<"tasks"> & {
+    assigneeUser?: {
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      imageUrl: string;
+      username: string | null;
+      emailAddress?: string;
+    } | null;
+  })[];
   color: string;
   workspaceId: Id<"workspaces">;
   status: "todo" | "in_progress" | "done";
   workspace?: Doc<"workspaces">;
+  onTaskChange?: () => Promise<void>;
 }
 
 export function TaskColumn({
@@ -25,6 +35,7 @@ export function TaskColumn({
   workspaceId,
   status,
   workspace,
+  onTaskChange,
 }: TaskColumnProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: status,
@@ -50,7 +61,12 @@ export function TaskColumn({
       >
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
-            <TaskCard key={task._id} task={task} workspace={workspace} />
+            <TaskCard
+              key={task._id}
+              task={task}
+              workspace={workspace}
+              onTaskChange={onTaskChange}
+            />
           ))}
         </SortableContext>
 
@@ -60,6 +76,7 @@ export function TaskColumn({
             workspaceId={workspaceId}
             defaultStatus={status}
             workspace={workspace}
+            onTaskChange={onTaskChange}
           />
         </div>
       </div>

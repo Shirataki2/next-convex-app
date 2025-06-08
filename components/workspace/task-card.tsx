@@ -11,11 +11,21 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
 interface TaskCardProps {
-  task: Doc<"tasks">;
+  task: Doc<"tasks"> & {
+    assigneeUser?: {
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      imageUrl: string;
+      username: string | null;
+      emailAddress?: string;
+    } | null;
+  };
   workspace?: Doc<"workspaces">;
+  onTaskChange?: () => Promise<void>;
 }
 
-export function TaskCard({ task, workspace }: TaskCardProps) {
+export function TaskCard({ task, workspace, onTaskChange }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -78,8 +88,12 @@ export function TaskCard({ task, workspace }: TaskCardProps) {
               {priorityLabels[task.priority as keyof typeof priorityLabels]}
             </Badge>
             <div className="flex items-center gap-1">
-              <EditTaskDialog task={task} workspace={workspace} />
-              <DeleteTaskDialog task={task} />
+              <EditTaskDialog
+                task={task}
+                workspace={workspace}
+                onTaskChange={onTaskChange}
+              />
+              <DeleteTaskDialog task={task} onTaskChange={onTaskChange} />
             </div>
           </div>
         </div>
@@ -88,15 +102,36 @@ export function TaskCard({ task, workspace }: TaskCardProps) {
         <p className="text-xs text-muted-foreground mb-6">{task.description}</p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {task.assigneeId && (
+            {task.assigneeUser && (
               <>
                 <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {task.assigneeId.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
+                  {task.assigneeUser.imageUrl ? (
+                    <img
+                      src={task.assigneeUser.imageUrl}
+                      alt={`${task.assigneeUser.firstName || ""} ${task.assigneeUser.lastName || ""}`}
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <AvatarFallback className="text-xs">
+                      {(
+                        task.assigneeUser.firstName ||
+                        task.assigneeUser.username ||
+                        "U"
+                      )
+                        .slice(0, 1)
+                        .toUpperCase()}
+                      {(task.assigneeUser.lastName || "")
+                        .slice(0, 1)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <span className="text-xs text-muted-foreground">
-                  {task.assigneeId}
+                  {task.assigneeUser.firstName && task.assigneeUser.lastName
+                    ? `${task.assigneeUser.firstName} ${task.assigneeUser.lastName}`
+                    : task.assigneeUser.username ||
+                      task.assigneeUser.emailAddress ||
+                      "Unknown User"}
                 </span>
               </>
             )}

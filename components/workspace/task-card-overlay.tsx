@@ -7,7 +7,16 @@ import { Calendar, GripVertical } from "lucide-react";
 import { Doc } from "@/convex/_generated/dataModel";
 
 interface TaskCardOverlayProps {
-  task: Doc<"tasks">;
+  task: Doc<"tasks"> & {
+    assigneeUser?: {
+      id: string;
+      firstName: string | null;
+      lastName: string | null;
+      imageUrl: string;
+      username: string | null;
+      emailAddress?: string;
+    } | null;
+  };
 }
 
 export function TaskCardOverlay({ task }: TaskCardOverlayProps) {
@@ -48,15 +57,36 @@ export function TaskCardOverlay({ task }: TaskCardOverlayProps) {
         <p className="text-xs text-muted-foreground mb-6">{task.description}</p>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {task.assigneeId && (
+            {task.assigneeUser && (
               <>
                 <Avatar className="h-6 w-6">
-                  <AvatarFallback className="text-xs">
-                    {task.assigneeId.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
+                  {task.assigneeUser.imageUrl ? (
+                    <img
+                      src={task.assigneeUser.imageUrl}
+                      alt={`${task.assigneeUser.firstName || ""} ${task.assigneeUser.lastName || ""}`}
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  ) : (
+                    <AvatarFallback className="text-xs">
+                      {(
+                        task.assigneeUser.firstName ||
+                        task.assigneeUser.username ||
+                        "U"
+                      )
+                        .slice(0, 1)
+                        .toUpperCase()}
+                      {(task.assigneeUser.lastName || "")
+                        .slice(0, 1)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  )}
                 </Avatar>
                 <span className="text-xs text-muted-foreground">
-                  {task.assigneeId}
+                  {task.assigneeUser.firstName && task.assigneeUser.lastName
+                    ? `${task.assigneeUser.firstName} ${task.assigneeUser.lastName}`
+                    : task.assigneeUser.username ||
+                      task.assigneeUser.emailAddress ||
+                      "Unknown User"}
                 </span>
               </>
             )}

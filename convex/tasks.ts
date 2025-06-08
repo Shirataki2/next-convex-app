@@ -1,5 +1,7 @@
 import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, action } from "./_generated/server";
+import { api } from "./_generated/api";
+import { createClerkClient } from "@clerk/backend";
 
 // ワークスペースのタスク一覧を取得
 export const getWorkspaceTasks = query({
@@ -12,6 +14,75 @@ export const getWorkspaceTasks = query({
       .collect();
 
     return tasks;
+  },
+});
+
+// ユーザー情報の型定義
+type AssigneeUser = {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  imageUrl: string;
+  username: string | null;
+  emailAddress?: string;
+} | null;
+
+// ユーザー情報付きタスクの型定義
+type TaskWithUser = {
+  assigneeUser: AssigneeUser;
+} & any;
+
+// ユーザー情報付きでワークスペースのタスク一覧を取得
+export const getWorkspaceTasksWithUsers = action({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, { workspaceId }): Promise<TaskWithUser[]> => {
+    // 既存のクエリ関数を呼び出してタスクを取得
+    const tasks: any[] = await ctx.runQuery(api.tasks.getWorkspaceTasks, {
+      workspaceId,
+    });
+
+    // CLERK_SECRET_KEYがない場合は、ユーザー情報なしでタスクを返す
+    if (!process.env.CLERK_SECRET_KEY) {
+      console.warn(
+        "CLERK_SECRET_KEY is not set. User information will not be fetched."
+      );
+      return tasks.map((task: any) => ({ ...task, assigneeUser: null }));
+    }
+
+    // ClerkClientを初期化
+    const clerk = createClerkClient({
+      secretKey: process.env.CLERK_SECRET_KEY,
+    });
+
+    // assigneeIdがあるタスクに対してユーザー情報を取得
+    const tasksWithUsers: TaskWithUser[] = await Promise.all(
+      tasks.map(async (task: any) => {
+        if (!task.assigneeId) {
+          return { ...task, assigneeUser: null };
+        }
+
+        try {
+          // Clerk APIを呼び出してユーザー情報を取得
+          const user = await clerk.users.getUser(task.assigneeId);
+          return {
+            ...task,
+            assigneeUser: {
+              id: user.id,
+              firstName: user.firstName,
+              lastName: user.lastName,
+              imageUrl: user.imageUrl,
+              username: user.username,
+              emailAddress: user.emailAddresses?.[0]?.emailAddress,
+            },
+          };
+        } catch (error) {
+          console.error(`Failed to fetch user ${task.assigneeId}:`, error);
+          return { ...task, assigneeUser: null };
+        }
+      })
+    );
+
+    return tasksWithUsers;
   },
 });
 

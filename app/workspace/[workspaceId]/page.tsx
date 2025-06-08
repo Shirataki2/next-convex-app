@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, User } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { TaskColumn } from "@/components/workspace/task-column";
 import { Id } from "@/convex/_generated/dataModel";
@@ -25,16 +25,52 @@ import { useUser } from "@clerk/nextjs";
 import { TaskCardOverlay } from "@/components/workspace/task-card-overlay";
 import { Doc } from "@/convex/_generated/dataModel";
 
+// ユーザー情報付きタスクの型定義
+type TaskWithUser = Doc<"tasks"> & {
+  assigneeUser?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    imageUrl: string;
+    username: string | null;
+    emailAddress?: string;
+  } | null;
+};
+
 export default function WorkspaceDetailPage() {
   const params = useParams();
   const workspaceId = params.workspaceId as Id<"workspaces">;
   const { user } = useUser();
   const updateTask = useMutation(api.tasks.updateTask);
-  const [activeTask, setActiveTask] = useState<Doc<"tasks"> | null>(null);
+  const [activeTask, setActiveTask] = useState<TaskWithUser | null>(null);
+  const [tasks, setTasks] = useState<TaskWithUser[] | null>(null);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
-  // ワークスペース情報とタスクを取得
+  // ワークスペース情報を取得
   const workspace = useQuery(api.workspaces.getWorkspace, { workspaceId });
-  const tasks = useQuery(api.tasks.getWorkspaceTasks, { workspaceId });
+
+  // ユーザー情報付きタスクを取得するaction
+  const getTasksWithUsers = useAction(api.tasks.getWorkspaceTasksWithUsers);
+
+  // タスクとユーザー情報を取得
+  const fetchTasksWithUsers = async () => {
+    if (!workspaceId) return;
+
+    try {
+      setIsLoadingTasks(true);
+      const tasksWithUsers = await getTasksWithUsers({ workspaceId });
+      setTasks(tasksWithUsers);
+    } catch (error) {
+      console.error("Failed to fetch tasks with user info:", error);
+      // フォールバック：基本のタスク情報のみ取得（今後実装）
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasksWithUsers();
+  }, [workspaceId]);
 
   // デバッグ：タスクの変更を監視
   useEffect(() => {
@@ -161,6 +197,9 @@ export default function WorkspaceDetailPage() {
         userId: user.id,
       });
       console.log("タスク更新成功:", { taskId, newStatus });
+
+      // タスク更新後、最新のタスクリストを再取得
+      await fetchTasksWithUsers();
     } catch (error) {
       console.error("タスクの更新に失敗しました:", error);
     } finally {
@@ -188,7 +227,7 @@ export default function WorkspaceDetailPage() {
   }, [tasks, groupedTasks]);
 
   // ローディング状態
-  if (workspace === undefined || tasks === undefined) {
+  if (workspace === undefined || isLoadingTasks) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <Header title="タスク管理" />
@@ -272,6 +311,7 @@ export default function WorkspaceDetailPage() {
               workspaceId={workspaceId}
               status="todo"
               workspace={workspace}
+              onTaskChange={fetchTasksWithUsers}
             />
             <TaskColumn
               title="進行中"
@@ -280,6 +320,7 @@ export default function WorkspaceDetailPage() {
               workspaceId={workspaceId}
               status="in_progress"
               workspace={workspace}
+              onTaskChange={fetchTasksWithUsers}
             />
             <TaskColumn
               title="完了"
@@ -288,13 +329,12 @@ export default function WorkspaceDetailPage() {
               workspaceId={workspaceId}
               status="done"
               workspace={workspace}
+              onTaskChange={fetchTasksWithUsers}
             />
           </div>
 
           <DragOverlay>
-            {activeTask ? (
-              <TaskCardOverlay task={activeTask} />
-            ) : null}
+            {activeTask ? <TaskCardOverlay task={activeTask} /> : null}
           </DragOverlay>
         </DndContext>
 

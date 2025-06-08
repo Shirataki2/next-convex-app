@@ -22,9 +22,13 @@ import { toast } from "sonner";
 
 interface DeleteTaskDialogProps {
   task: Doc<"tasks">;
+  onTaskChange?: () => Promise<void>;
 }
 
-export function DeleteTaskDialog({ task }: DeleteTaskDialogProps) {
+export function DeleteTaskDialog({
+  task,
+  onTaskChange,
+}: DeleteTaskDialogProps) {
   const { user } = useUser();
   const deleteTask = useMutation(api.tasks.deleteTask);
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -38,6 +42,12 @@ export function DeleteTaskDialog({ task }: DeleteTaskDialogProps) {
         taskId: task._id,
         userId: user.id,
       });
+
+      // タスク削除後に親コンポーネントにタスクリストの更新を通知
+      if (onTaskChange) {
+        await onTaskChange();
+      }
+
       toast.success("タスクを削除しました");
     } catch (error) {
       console.error("タスクの削除に失敗しました:", error);

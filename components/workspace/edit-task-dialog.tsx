@@ -40,9 +40,14 @@ import { toast } from "sonner";
 interface EditTaskDialogProps {
   task: Doc<"tasks">;
   workspace?: Doc<"workspaces">;
+  onTaskChange?: () => Promise<void>;
 }
 
-export function EditTaskDialog({ task, workspace }: EditTaskDialogProps) {
+export function EditTaskDialog({
+  task,
+  workspace,
+  onTaskChange,
+}: EditTaskDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { user } = useUser();
   const updateTask = useMutation(api.tasks.updateTask);
@@ -75,6 +80,12 @@ export function EditTaskDialog({ task, workspace }: EditTaskDialogProps) {
         },
         userId: user.id,
       });
+
+      // タスク更新後に親コンポーネントにタスクリストの更新を通知
+      if (onTaskChange) {
+        await onTaskChange();
+      }
+
       toast.success("タスクを更新しました");
       setOpen(false);
     } catch (error) {
