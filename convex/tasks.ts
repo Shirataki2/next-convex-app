@@ -121,10 +121,11 @@ export const createTask = mutation({
       throw new Error("このワークスペースにタスクを作成する権限がありません");
     }
 
-    // 最大のorder値を取得して+1
+    // 同じステータスの最大のorder値を取得して+1
     const existingTasks = await ctx.db
       .query("tasks")
       .filter((q) => q.eq(q.field("workspaceId"), args.workspaceId))
+      .filter((q) => q.eq(q.field("status"), args.status))
       .collect();
 
     const maxOrder = Math.max(...existingTasks.map((task) => task.order), 0);
@@ -158,6 +159,7 @@ export const updateTask = mutation({
       assigneeId: v.optional(v.string()),
       deadline: v.optional(v.string()),
       priority: v.optional(v.string()),
+      order: v.optional(v.number()),
     }),
     userId: v.string(),
   },

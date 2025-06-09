@@ -107,9 +107,20 @@ describe("タスク関数", () => {
       });
 
       expect(tasks).toHaveLength(3);
-      expect(tasks[0].order).toBe(1);
-      expect(tasks[1].order).toBe(2);
-      expect(tasks[2].order).toBe(3);
+      // todoステータスのタスク（order 1, 2）
+      const todoTasks = tasks
+        .filter((task) => task.status === "todo")
+        .sort((a, b) => a.order - b.order);
+      expect(todoTasks).toHaveLength(2);
+      expect(todoTasks[0].order).toBe(1);
+      expect(todoTasks[1].order).toBe(2);
+
+      // in_progressステータスのタスク（order 1）
+      const inProgressTasks = tasks.filter(
+        (task) => task.status === "in_progress"
+      );
+      expect(inProgressTasks).toHaveLength(1);
+      expect(inProgressTasks[0].order).toBe(1);
     });
   });
 

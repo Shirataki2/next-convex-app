@@ -21,6 +21,7 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { arrayMove } from "@dnd-kit/sortable";
 import { useUser } from "@clerk/nextjs";
 import { TaskCardOverlay } from "@/components/workspace/task-card-overlay";
 import { Doc } from "@/convex/_generated/dataModel";
@@ -62,6 +63,8 @@ export default function WorkspaceDetailPage() {
     } catch (error) {
       console.error("Failed to fetch tasks with user info:", error);
       // フォールバック：基本のタスク情報のみ取得（今後実装）
+    } finally {
+      setIsLoadingTasks(false);
     }
   };
 
@@ -96,14 +99,20 @@ export default function WorkspaceDetailPage() {
     })
   );
 
-  // タスクをステータス別にグループ化
+  // タスクをステータス別にグループ化（order順にソート）
   const groupedTasks = useMemo(() => {
     if (!tasks) return { todo: [], inProgress: [], done: [] };
 
     return {
-      todo: tasks.filter((task) => task.status === "todo"),
-      inProgress: tasks.filter((task) => task.status === "in_progress"),
-      done: tasks.filter((task) => task.status === "done"),
+      todo: tasks
+        .filter((task) => task.status === "todo")
+        .sort((a, b) => a.order - b.order),
+      inProgress: tasks
+        .filter((task) => task.status === "in_progress")
+        .sort((a, b) => a.order - b.order),
+      done: tasks
+        .filter((task) => task.status === "done")
+        .sort((a, b) => a.order - b.order),
     };
   }, [tasks]);
 
@@ -135,6 +144,7 @@ export default function WorkspaceDetailPage() {
 
     const taskId = active.id as Id<"tasks">;
     let newStatus: "todo" | "in_progress" | "done";
+    let overTaskId: Id<"tasks"> | null = null;
 
     // データ属性を使用してドロップ先を判別
     if (over.data?.current?.type === "column") {
@@ -142,6 +152,7 @@ export default function WorkspaceDetailPage() {
       console.log("カラムにドロップ:", { columnStatus: newStatus });
     } else if (over.data?.current?.type === "task") {
       newStatus = over.data.current.status as "todo" | "in_progress" | "done";
+      overTaskId = over.data.current.taskId as Id<"tasks">;
       console.log("タスクカードにドロップ:", {
         overTaskId: over.data.current.taskId,
         taskStatus: newStatus,
@@ -159,6 +170,7 @@ export default function WorkspaceDetailPage() {
           return;
         }
         newStatus = overTask.status as "todo" | "in_progress" | "done";
+        overTaskId = overTask._id;
       }
       console.log("フォールバック処理でステータスを推定:", { newStatus });
     }
@@ -171,12 +183,95 @@ export default function WorkspaceDetailPage() {
       return;
     }
 
-    // 同じステータスにドロップした場合は何もしない
+    // 同じステータスにドロップした場合（順序変更の可能性）
     if (currentTask.status === newStatus) {
-      console.log("同じステータスにドロップ:", {
+      console.log("同じステータス内でのドロップ:", {
         current: currentTask.status,
         new: newStatus,
+        overTaskId,
       });
+
+      // タスクの上にドロップした場合は順序を変更
+      if (overTaskId && overTaskId !== taskId && tasks) {
+        const originalTasks = [...tasks];
+        const statusTasks = tasks.filter((task) => task.status === newStatus);
+        const oldIndex = statusTasks.findIndex((task) => task._id === taskId);
+        const newIndex = statusTasks.findIndex(
+          (task) => task._id === overTaskId
+        );
+
+        if (oldIndex !== -1 && newIndex !== -1) {
+          console.log("順序変更:", { oldIndex, newIndex });
+
+          // 楽観的更新: 即座にローカル状態を更新
+          const sortedStatusTasks = arrayMove(statusTasks, oldIndex, newIndex);
+
+          // 順序を再計算
+          const updatedStatusTasks = sortedStatusTasks.map((task, index) => ({
+            ...task,
+            order: index + 1,
+          }));
+
+          // 他のステータスのタスクと結合
+          const otherTasks = tasks.filter((task) => task.status !== newStatus);
+          const allUpdatedTasks = [...otherTasks, ...updatedStatusTasks].sort(
+            (a, b) => {
+              // ステータスごとにソート
+              const statusOrder = { todo: 0, in_progress: 1, done: 2 };
+              const statusDiff =
+                statusOrder[a.status as keyof typeof statusOrder] -
+                statusOrder[b.status as keyof typeof statusOrder];
+              if (statusDiff !== 0) return statusDiff;
+              // 同じステータスならorderでソート
+              return a.order - b.order;
+            }
+          );
+
+          setTasks(allUpdatedTasks);
+          console.log("楽観的更新（順序変更）完了");
+
+          // ドラッグ終了時にactiveTaskをクリア
+          setActiveTask(null);
+
+          // バックエンドで順序を更新（非同期）
+          try {
+            // 更新が必要なタスクのみを特定
+            const tasksToUpdate = updatedStatusTasks.filter((task, index) => {
+              const originalTask = statusTasks[index];
+              return originalTask && originalTask.order !== task.order;
+            });
+
+            // 順序が変更されたタスクを更新
+            await Promise.all(
+              tasksToUpdate.map((task) =>
+                updateTask({
+                  taskId: task._id,
+                  updates: { order: task.order },
+                  userId: user.id,
+                })
+              )
+            );
+
+            console.log("バックエンド更新成功（順序変更）:", {
+              updatedCount: tasksToUpdate.length,
+            });
+
+            // バックエンド更新完了後、最新のデータを再取得して同期
+            await fetchTasksWithUsers();
+            console.log("最新データ同期完了");
+          } catch (error) {
+            console.error("バックエンド更新に失敗、ロールバック実行:", error);
+
+            // エラー時は楽観的更新をロールバック
+            setTasks(originalTasks);
+            console.log("楽観的更新をロールバックしました");
+
+            // ユーザーにエラーを通知
+            alert("タスクの順序変更に失敗しました。再試行してください。");
+          }
+        }
+      }
+
       setActiveTask(null);
       return;
     }
@@ -191,11 +286,21 @@ export default function WorkspaceDetailPage() {
     // 楽観的更新: 即座にローカル状態を更新
     const originalTasks = tasks;
     if (tasks) {
+      // 新しいステータスの最大orderを計算
+      const newStatusTasks = tasks.filter((task) => task.status === newStatus);
+      const maxOrder = Math.max(...newStatusTasks.map((task) => task.order), 0);
+
       const updatedTasks = tasks.map((task) =>
-        task._id === taskId ? { ...task, status: newStatus } : task
+        task._id === taskId
+          ? { ...task, status: newStatus, order: maxOrder + 1 }
+          : task
       );
       setTasks(updatedTasks);
-      console.log("楽観的更新完了:", { taskId, newStatus });
+      console.log("楽観的更新完了:", {
+        taskId,
+        newStatus,
+        newOrder: maxOrder + 1,
+      });
     }
 
     // ドラッグ終了時にactiveTaskをクリア（楽観的更新後すぐに）
@@ -203,12 +308,21 @@ export default function WorkspaceDetailPage() {
 
     // バックエンドでタスクのステータスを更新（非同期）
     try {
+      // 新しいステータスの最大orderを計算（バックエンド用）
+      const newStatusTasks =
+        tasks?.filter((task) => task.status === newStatus) || [];
+      const maxOrder = Math.max(...newStatusTasks.map((task) => task.order), 0);
+
       await updateTask({
         taskId,
-        updates: { status: newStatus },
+        updates: { status: newStatus, order: maxOrder + 1 },
         userId: user.id,
       });
-      console.log("バックエンド更新成功:", { taskId, newStatus });
+      console.log("バックエンド更新成功:", {
+        taskId,
+        newStatus,
+        newOrder: maxOrder + 1,
+      });
 
       // バックエンド更新完了後、最新のデータを再取得して同期
       await fetchTasksWithUsers();
