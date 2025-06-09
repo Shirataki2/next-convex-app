@@ -363,7 +363,12 @@ export default function WorkspaceDetailPage() {
   if (workspace === undefined || isLoadingTasks) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header title="タスク管理" />
+        <Header
+          breadcrumbs={[
+            { label: "ワークスペース一覧", href: "/workspace" },
+            { label: "読み込み中..." },
+          ]}
+        />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="animate-pulse">
             <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4 w-1/3"></div>
@@ -386,7 +391,12 @@ export default function WorkspaceDetailPage() {
   if (!workspace) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <Header title="タスク管理" />
+        <Header
+          breadcrumbs={[
+            { label: "ワークスペース一覧", href: "/workspace" },
+            { label: "ワークスペースが見つかりません" },
+          ]}
+        />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-16">
             <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
@@ -403,7 +413,12 @@ export default function WorkspaceDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <Header title="タスク管理" />
+      <Header
+        breadcrumbs={[
+          { label: "ワークスペース一覧", href: "/workspace" },
+          { label: workspace.name },
+        ]}
+      />
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* ページヘッダー */}

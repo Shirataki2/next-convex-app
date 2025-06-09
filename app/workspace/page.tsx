@@ -26,7 +26,7 @@ export default function WorkspacePage() {
   if (!user) {
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-        <Header title="ワークスペース" />
+        <Header title="ワークスペース一覧" />
         <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-16">
             <p className="text-slate-600 dark:text-slate-300">
