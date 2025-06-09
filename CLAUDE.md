@@ -188,7 +188,7 @@ mcp__playwright__browser_take_screenshot
    - `workspaceId`: 所属ワークスペース
    - `assigneeId`: 担当者ID（オプション）
    - `deadline`: 期限（オプション）
-   - `order`: 表示順序
+   - `order`: ステータス内での表示順序（ステータス別独立管理）
    - `priority`: 優先度（high/medium/low等）
 
 3. **taskActivities**: タスクの活動履歴
@@ -240,28 +240,59 @@ if (over.data?.current?.type === "column") {
 }
 ```
 
+#### 順序変更機能の実装詳細
+
+**同一ステータス内の順序変更:**
+
+- タスクを同じカラム内の別のタスクの上にドロップして順序変更
+- `@dnd-kit/sortable`の`arrayMove`を使用した滑らかなアニメーション
+- 楽観的更新で即座にUIに反映
+
+**異なるステータス間の移動:**
+
+- 移動先ステータスの末尾に配置（最大order値+1）
+- ステータス変更と同時に適切なorder値を自動設定
+
+**ステータス別order管理:**
+
+- 各ステータス（todo/in_progress/done）で独立したorder値
+- 新規タスク作成時は該当ステータス内の最大order+1を設定
+- 順序変更時は該当ステータス内のタスクのみ影響
+
 #### 実装上の注意点
 
-- 同じステータスへのドロップは無視（将来的に順序変更機能を実装予定）
 - データ属性を使用してドロップ先を明確に識別
 - 楽観的更新（Optimistic Update）でスムーズなUX実現
 - リアルタイムでConvexデータベースに反映
 - エラーハンドリングと詳細なデバッグログを実装
+- 最小限のバックエンド更新で効率的な同期
 
 #### 楽観的更新（Optimistic Update）
 
 ドラッグ&ドロップ操作では、ユーザー体験向上のため楽観的更新を実装：
 
+##### ステータス変更時
+
 ```javascript
-// 1. 即座にローカル状態を更新
+// 1. 新しいステータスの最大orderを計算
+const newStatusTasks = tasks.filter((task) => task.status === newStatus);
+const maxOrder = Math.max(...newStatusTasks.map((task) => task.order), 0);
+
+// 2. 即座にローカル状態を更新
 const updatedTasks = tasks.map((task) =>
-  task._id === taskId ? { ...task, status: newStatus } : task
+  task._id === taskId
+    ? { ...task, status: newStatus, order: maxOrder + 1 }
+    : task
 );
 setTasks(updatedTasks);
 
-// 2. バックエンド更新（非同期）
+// 3. バックエンド更新（非同期）
 try {
-  await updateTask({ taskId, updates: { status: newStatus }, userId });
+  await updateTask({
+    taskId,
+    updates: { status: newStatus, order: maxOrder + 1 },
+    userId,
+  });
   await fetchTasksWithUsers(); // 最新データと同期
 } catch (error) {
   setTasks(originalTasks); // エラー時はロールバック
@@ -269,11 +300,42 @@ try {
 }
 ```
 
+##### 同一ステータス内順序変更時
+
+```javascript
+// 1. arrayMoveで順序変更
+const sortedStatusTasks = arrayMove(statusTasks, oldIndex, newIndex);
+
+// 2. 順序を再計算
+const updatedStatusTasks = sortedStatusTasks.map((task, index) => ({
+  ...task,
+  order: index + 1,
+}));
+
+// 3. 他のステータスのタスクと結合してローカル状態更新
+const allUpdatedTasks = [...otherTasks, ...updatedStatusTasks];
+setTasks(allUpdatedTasks);
+
+// 4. 変更されたタスクのみバックエンド更新
+const tasksToUpdate = updatedStatusTasks.filter((task, index) => {
+  const originalTask = statusTasks[index];
+  return originalTask && originalTask.order !== task.order;
+});
+
+await Promise.all(
+  tasksToUpdate.map((task) =>
+    updateTask({ taskId: task._id, updates: { order: task.order }, userId })
+  )
+);
+```
+
 **利点:**
 
 - ドラッグ終了と同時にUIが更新される
 - ネットワーク待機時間によるUX悪化を防止
 - エラー時は自動でロールバック処理
+- 同一ステータス内での直感的な順序変更
+- ステータス別の独立したorder管理で柔軟性向上
 
 ### Clerk統合とユーザー情報表示
 
