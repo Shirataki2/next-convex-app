@@ -26,4 +26,19 @@ export default defineSchema({
     action: v.string(),
     timestamp: v.number(),
   }),
+
+  workspaceInvitations: defineTable({
+    workspaceId: v.id("workspaces"),
+    inviterUserId: v.string(),
+    email: v.string(),
+    status: v.string(), // "pending" | "accepted" | "rejected" | "expired"
+    token: v.string(),
+    role: v.string(), // "member" | "admin"
+    createdAt: v.number(),
+    expiresAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_email", ["email"])
+    .index("by_token", ["token"])
+    .index("by_status", ["status"]),
 });

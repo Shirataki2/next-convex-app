@@ -3,7 +3,9 @@
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Clock, User, Users } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -433,6 +435,12 @@ export default function WorkspaceDetailPage() {
                 <User className="h-3 w-3 mr-1" />
                 チーム: {workspace.members.length}人
               </Badge>
+              <Link href={`/workspace/${workspaceId}/members`}>
+                <Button variant="outline" size="sm" className="gap-2">
+                  <Users className="h-4 w-4" />
+                  メンバー管理
+                </Button>
+              </Link>
             </div>
           </div>
           <p className="text-gray-600 dark:text-gray-300">
