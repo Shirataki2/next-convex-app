@@ -136,8 +136,12 @@ export default function WorkspaceDetailPage() {
       overData: over?.data?.current,
     });
 
-    if (!over || !user) {
-      console.log("ドラッグキャンセル:", { hasOver: !!over, hasUser: !!user });
+    if (!over || !user || !tasks) {
+      console.log("ドラッグキャンセル:", {
+        hasOver: !!over,
+        hasUser: !!user,
+        hasTasks: !!tasks,
+      });
       setActiveTask(null);
       return;
     }
@@ -163,7 +167,7 @@ export default function WorkspaceDetailPage() {
       if (validStatuses.includes(over.id as string)) {
         newStatus = over.id as "todo" | "in_progress" | "done";
       } else {
-        const overTask = tasks?.find((task) => task._id === over.id);
+        const overTask = tasks.find((task) => task._id === over.id);
         if (!overTask) {
           console.error("ドロップ先が特定できません:", over.id);
           setActiveTask(null);
@@ -176,7 +180,7 @@ export default function WorkspaceDetailPage() {
     }
 
     // 現在のタスクを取得
-    const currentTask = tasks?.find((task) => task._id === taskId);
+    const currentTask = tasks.find((task) => task._id === taskId);
     if (!currentTask) {
       console.error("タスクが見つかりません:", taskId);
       setActiveTask(null);
@@ -191,42 +195,41 @@ export default function WorkspaceDetailPage() {
         overTaskId,
       });
 
-      // タスクの上にドロップした場合は順序を変更
-      if (overTaskId && overTaskId !== taskId && tasks) {
+      // タスクの上にドロップした場合、または同じタスクでない場合は順序を変更
+      if (overTaskId && overTaskId !== taskId) {
         const originalTasks = [...tasks];
-        const statusTasks = tasks.filter((task) => task.status === newStatus);
-        const oldIndex = statusTasks.findIndex((task) => task._id === taskId);
-        const newIndex = statusTasks.findIndex(
+        const statusTasks = tasks
+          .filter((task) => task.status === newStatus)
+          .sort((a, b) => a.order - b.order);
+
+        const activeIndex = statusTasks.findIndex(
+          (task) => task._id === taskId
+        );
+        const overIndex = statusTasks.findIndex(
           (task) => task._id === overTaskId
         );
 
-        if (oldIndex !== -1 && newIndex !== -1) {
-          console.log("順序変更:", { oldIndex, newIndex });
+        if (
+          activeIndex !== -1 &&
+          overIndex !== -1 &&
+          activeIndex !== overIndex
+        ) {
+          console.log("順序変更実行:", { activeIndex, overIndex });
 
-          // 楽観的更新: 即座にローカル状態を更新
-          const sortedStatusTasks = arrayMove(statusTasks, oldIndex, newIndex);
+          // arrayMoveで配列を並び替え
+          const reorderedTasks = arrayMove(statusTasks, activeIndex, overIndex);
 
-          // 順序を再計算
-          const updatedStatusTasks = sortedStatusTasks.map((task, index) => ({
+          // 新しい順序を設定（1から開始）
+          const updatedStatusTasks = reorderedTasks.map((task, index) => ({
             ...task,
             order: index + 1,
           }));
 
           // 他のステータスのタスクと結合
           const otherTasks = tasks.filter((task) => task.status !== newStatus);
-          const allUpdatedTasks = [...otherTasks, ...updatedStatusTasks].sort(
-            (a, b) => {
-              // ステータスごとにソート
-              const statusOrder = { todo: 0, in_progress: 1, done: 2 };
-              const statusDiff =
-                statusOrder[a.status as keyof typeof statusOrder] -
-                statusOrder[b.status as keyof typeof statusOrder];
-              if (statusDiff !== 0) return statusDiff;
-              // 同じステータスならorderでソート
-              return a.order - b.order;
-            }
-          );
+          const allUpdatedTasks = [...otherTasks, ...updatedStatusTasks];
 
+          // 楽観的更新
           setTasks(allUpdatedTasks);
           console.log("楽観的更新（順序変更）完了");
 
@@ -235,28 +238,22 @@ export default function WorkspaceDetailPage() {
 
           // バックエンドで順序を更新（非同期）
           try {
-            // 更新が必要なタスクのみを特定
-            const tasksToUpdate = updatedStatusTasks.filter((task, index) => {
-              const originalTask = statusTasks[index];
-              return originalTask && originalTask.order !== task.order;
-            });
-
-            // 順序が変更されたタスクを更新
+            // 全ての順序を更新（simplifiedアプローチ）
             await Promise.all(
-              tasksToUpdate.map((task) =>
+              updatedStatusTasks.map((task, index) =>
                 updateTask({
                   taskId: task._id,
-                  updates: { order: task.order },
+                  updates: { order: index + 1 },
                   userId: user.id,
                 })
               )
             );
 
             console.log("バックエンド更新成功（順序変更）:", {
-              updatedCount: tasksToUpdate.length,
+              updatedCount: updatedStatusTasks.length,
             });
 
-            // バックエンド更新完了後、最新のデータを再取得して同期
+            // 最新のデータを再取得して同期
             await fetchTasksWithUsers();
             console.log("最新データ同期完了");
           } catch (error) {
