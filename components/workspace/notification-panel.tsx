@@ -61,6 +61,7 @@ function getNotificationIcon(type: string) {
     case "task_completed":
       return CheckCircle;
     case "task_commented":
+    case "comment_added":
       return MessageCircle;
     case "user_joined":
       return UserPlus;

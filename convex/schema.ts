@@ -125,4 +125,19 @@ export default defineSchema({
     .index("by_created_at", ["createdAt"])
     .index("by_unread", ["targetUserId", "isRead"])
     .index("by_type", ["type"]),
+
+  taskComments: defineTable({
+    taskId: v.id("tasks"),
+    workspaceId: v.id("workspaces"),
+    userId: v.string(),
+    content: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    isEdited: v.boolean(),
+  })
+    .index("by_task", ["taskId"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_user", ["userId"])
+    .index("by_created_at", ["createdAt"])
+    .index("by_task_created", ["taskId", "createdAt"]),
 });

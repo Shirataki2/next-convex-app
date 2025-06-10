@@ -10,6 +10,7 @@ import { DeleteTaskDialog } from "./delete-task-dialog";
 import { TaskLockIndicator } from "./task-lock-indicator";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import Link from "next/link";
 
 interface TaskCardProps {
   task: Doc<"tasks"> & {
@@ -80,7 +81,17 @@ export function TaskCard({ task, workspace, onTaskChange }: TaskCardProps) {
             </div>
             <div className="flex-1">
               <CardTitle className="text-sm font-medium">
-                {task.title}
+                {workspace ? (
+                  <Link 
+                    href={`/workspace/${workspace._id}/task/${task._id}`}
+                    className="hover:underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {task.title}
+                  </Link>
+                ) : (
+                  task.title
+                )}
               </CardTitle>
               {workspace && (
                 <TaskLockIndicator

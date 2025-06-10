@@ -275,6 +275,10 @@ export function getActivityActionLabel(action: string): string {
       return "削除";
     case "force_update":
       return "強制更新";
+    case "comment_added":
+      return "にコメント";
+    case "comment_deleted":
+      return "のコメントを削除";
     case "conflict_resolved_force_save":
       return "競合解決（強制保存）";
     case "conflict_resolved_merge":
