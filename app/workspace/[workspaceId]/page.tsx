@@ -32,12 +32,15 @@ import { TaskCardOverlay } from "@/components/workspace/task-card-overlay";
 import { useRealtimeTasks, TaskWithUser } from "@/hooks/use-realtime-tasks";
 import { useOptimisticTaskUpdates } from "@/hooks/use-optimistic-task-updates";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { TaskDetailDialog } from "@/components/workspace/task-detail-dialog";
 
 export default function WorkspaceDetailPage() {
   const params = useParams();
   const workspaceId = params.workspaceId as Id<"workspaces">;
   const { user } = useUser();
   const [activeTask, setActiveTask] = useState<TaskWithUser | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<Id<"tasks"> | null>(null);
+  const [taskDetailDialogOpen, setTaskDetailDialogOpen] = useState(false);
 
   // ワークスペース情報を取得
   const workspace = useQuery(api.workspaces.getWorkspace, { workspaceId });
@@ -258,6 +261,20 @@ export default function WorkspaceDetailPage() {
     setActiveTask(null);
   };
 
+  // タスク詳細ダイアログを開く
+  const handleTaskDetailClick = (taskId: Id<"tasks">) => {
+    setSelectedTaskId(taskId);
+    setTaskDetailDialogOpen(true);
+  };
+
+  // タスク詳細ダイアログを閉じる
+  const handleTaskDetailDialogClose = (open: boolean) => {
+    setTaskDetailDialogOpen(open);
+    if (!open) {
+      setSelectedTaskId(null);
+    }
+  };
+
   // ローディング状態
   if (workspace === undefined || isLoadingTasks) {
     return (
@@ -402,6 +419,7 @@ export default function WorkspaceDetailPage() {
               status="todo"
               workspace={workspace}
               onTaskChange={() => Promise.resolve()}
+              onTaskDetailClick={handleTaskDetailClick}
             />
             <TaskColumn
               title="進行中"
@@ -411,6 +429,7 @@ export default function WorkspaceDetailPage() {
               status="in_progress"
               workspace={workspace}
               onTaskChange={() => Promise.resolve()}
+              onTaskDetailClick={handleTaskDetailClick}
             />
             <TaskColumn
               title="完了"
@@ -420,6 +439,7 @@ export default function WorkspaceDetailPage() {
               status="done"
               workspace={workspace}
               onTaskChange={() => Promise.resolve()}
+              onTaskDetailClick={handleTaskDetailClick}
             />
           </div>
 
@@ -474,6 +494,14 @@ export default function WorkspaceDetailPage() {
           </div>
         </div>
       </main>
+
+      {/* タスク詳細ダイアログ */}
+      <TaskDetailDialog
+        taskId={selectedTaskId}
+        workspaceId={workspaceId}
+        open={taskDetailDialogOpen}
+        onOpenChange={handleTaskDetailDialogClose}
+      />
     </div>
   );
 }

@@ -4,13 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Calendar, GripVertical } from "lucide-react";
-import { Doc } from "@/convex/_generated/dataModel";
+import { Doc, Id } from "@/convex/_generated/dataModel";
 import { EditTaskDialog } from "./edit-task-dialog";
 import { DeleteTaskDialog } from "./delete-task-dialog";
 import { TaskLockIndicator } from "./task-lock-indicator";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import Link from "next/link";
 
 interface TaskCardProps {
   task: Doc<"tasks"> & {
@@ -25,9 +24,10 @@ interface TaskCardProps {
   };
   workspace?: Doc<"workspaces">;
   onTaskChange?: () => Promise<void>;
+  onTaskDetailClick?: (taskId: Id<"tasks">) => void;
 }
 
-export function TaskCard({ task, workspace, onTaskChange }: TaskCardProps) {
+export function TaskCard({ task, workspace, onTaskChange, onTaskDetailClick }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -81,14 +81,16 @@ export function TaskCard({ task, workspace, onTaskChange }: TaskCardProps) {
             </div>
             <div className="flex-1">
               <CardTitle className="text-sm font-medium">
-                {workspace ? (
-                  <Link 
-                    href={`/workspace/${workspace._id}/task/${task._id}`}
-                    className="hover:underline"
-                    onClick={(e) => e.stopPropagation()}
+                {onTaskDetailClick ? (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onTaskDetailClick(task._id);
+                    }}
+                    className="hover:underline text-left w-full"
                   >
                     {task.title}
-                  </Link>
+                  </button>
                 ) : (
                   task.title
                 )}

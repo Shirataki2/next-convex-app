@@ -26,6 +26,7 @@ interface TaskColumnProps {
   status: "todo" | "in_progress" | "done";
   workspace?: Doc<"workspaces">;
   onTaskChange?: () => Promise<void>;
+  onTaskDetailClick?: (taskId: Id<"tasks">) => void;
 }
 
 export function TaskColumn({
@@ -36,6 +37,7 @@ export function TaskColumn({
   status,
   workspace,
   onTaskChange,
+  onTaskDetailClick,
 }: TaskColumnProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: status,
@@ -66,6 +68,7 @@ export function TaskColumn({
               task={task}
               workspace={workspace}
               onTaskChange={onTaskChange}
+              onTaskDetailClick={onTaskDetailClick}
             />
           ))}
         </SortableContext>
