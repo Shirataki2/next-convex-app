@@ -7,6 +7,7 @@ import { Calendar, GripVertical } from "lucide-react";
 import { Doc } from "@/convex/_generated/dataModel";
 import { EditTaskDialog } from "./edit-task-dialog";
 import { DeleteTaskDialog } from "./delete-task-dialog";
+import { TaskLockIndicator } from "./task-lock-indicator";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
@@ -77,7 +78,16 @@ export function TaskCard({ task, workspace, onTaskChange }: TaskCardProps) {
             >
               <GripVertical className="h-4 w-4" />
             </div>
-            <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
+            <div className="flex-1">
+              <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
+              {workspace && (
+                <TaskLockIndicator 
+                  taskId={task._id} 
+                  workspaceId={workspace._id}
+                  className="mt-1"
+                />
+              )}
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Badge

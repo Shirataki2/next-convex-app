@@ -10,6 +10,9 @@ import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { TaskColumn } from "@/components/workspace/task-column";
+import { WorkspacePresence } from "@/components/workspace/workspace-presence";
+import { ConflictMonitor } from "@/components/workspace/conflict-monitor";
+import { NotificationPanel } from "@/components/workspace/notification-panel";
 import { Id } from "@/convex/_generated/dataModel";
 import { useState, useEffect } from "react";
 import {
@@ -325,6 +328,7 @@ export default function WorkspaceDetailPage() {
                 <User className="h-3 w-3 mr-1" />
                 チーム: {workspace.members.length}人
               </Badge>
+              <NotificationPanel workspaceId={workspaceId} />
               <Link href={`/workspace/${workspaceId}/members`}>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Users className="h-4 w-4" />
@@ -381,38 +385,50 @@ export default function WorkspaceDetailPage() {
           </DragOverlay>
         </DndContext>
 
-        {/* 統計情報 */}
-        <div className="mt-12 grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">総タスク数</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-blue-600">
-                {stats.todo}
-              </div>
-              <p className="text-xs text-muted-foreground">未着手</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-yellow-600">
-                {stats.inProgress}
-              </div>
-              <p className="text-xs text-muted-foreground">進行中</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-2xl font-bold text-green-600">
-                {stats.done}
-              </div>
-              <p className="text-xs text-muted-foreground">完了</p>
-            </CardContent>
-          </Card>
+        {/* 統計情報、プレゼンス、競合モニター */}
+        <div className="mt-12 grid grid-cols-1 lg:grid-cols-6 gap-6">
+          {/* 統計情報 */}
+          <div className="lg:col-span-4 grid grid-cols-1 md:grid-cols-4 gap-6">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold">{stats.total}</div>
+                <p className="text-xs text-muted-foreground">総タスク数</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold text-blue-600">
+                  {stats.todo}
+                </div>
+                <p className="text-xs text-muted-foreground">未着手</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {stats.inProgress}
+                </div>
+                <p className="text-xs text-muted-foreground">進行中</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-6">
+                <div className="text-2xl font-bold text-green-600">
+                  {stats.done}
+                </div>
+                <p className="text-xs text-muted-foreground">完了</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          {/* サイドバー */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* プレゼンス情報 */}
+            <WorkspacePresence workspaceId={workspaceId} />
+            
+            {/* 競合モニター */}
+            <ConflictMonitor workspaceId={workspaceId} />
+          </div>
         </div>
       </main>
     </div>

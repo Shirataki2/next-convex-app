@@ -28,14 +28,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Pencil } from "lucide-react";
+import { CalendarIcon, Pencil, AlertTriangle } from "lucide-react";
 import { ja } from "date-fns/locale";
 import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
+import { useTaskLock } from "@/hooks/use-presence";
+import { useConflictResolution } from "@/hooks/use-conflict-resolution";
+import { ConflictResolutionDialog } from "./conflict-resolution-dialog";
 import { toast } from "sonner";
 
 // ユーザー情報の型定義
@@ -61,8 +65,9 @@ export function EditTaskDialog({
 }: EditTaskDialogProps) {
   const [open, setOpen] = React.useState(false);
   const { user } = useUser();
-  const updateTask = useMutation(api.tasks.updateTask);
   const getWorkspaceMembers = useAction(api.tasks.getWorkspaceMembers);
+  const { lockTask, unlockTask } = useTaskLock(workspace?._id!);
+  const { updateTaskSafely, currentConflicts } = useConflictResolution(workspace?._id!);
 
   const [title, setTitle] = React.useState(task.title);
   const [description, setDescription] = React.useState(task.description || "");
@@ -78,6 +83,9 @@ export function EditTaskDialog({
     WorkspaceMember[]
   >([]);
   const [isLoadingMembers, setIsLoadingMembers] = React.useState(false);
+  const [taskVersion, setTaskVersion] = React.useState(0);
+  const [conflictDialogOpen, setConflictDialogOpen] = React.useState(false);
+  const [pendingConflict, setPendingConflict] = React.useState<any>(null);
 
   // ワークスペースメンバー情報を取得
   React.useEffect(() => {
@@ -104,6 +112,40 @@ export function EditTaskDialog({
     }
   }, [workspace, open, getWorkspaceMembers]);
 
+  // タスクロックの管理
+  React.useEffect(() => {
+    if (!workspace) return;
+
+    if (open) {
+      // ダイアログが開いた時にタスクロックを設定
+      lockTask(task._id, "editing");
+    } else {
+      // ダイアログが閉じた時にタスクロックを解除
+      unlockTask(task._id);
+    }
+
+    // クリーンアップ（コンポーネントがアンマウントされた時）
+    return () => {
+      if (open) {
+        unlockTask(task._id);
+      }
+    };
+  }, [open, task._id, workspace, lockTask, unlockTask]);
+
+  // タスクのバージョン情報を取得
+  React.useEffect(() => {
+    if (open && workspace) {
+      // 簡易的なバージョン管理：タスクの更新回数を使用
+      // 実際のアプリケーションではより詳細なバージョン管理が必要
+      setTaskVersion(Math.floor(Date.now() / 1000)); // タイムスタンプをバージョンとして使用
+    }
+  }, [open, workspace, task._id]);
+
+  // このタスクの競合状況をチェック
+  const taskConflicts = currentConflicts.filter(
+    conflict => conflict.taskId === task._id && !conflict.isResolved
+  );
+
   // ユーザー名を表示するヘルパー関数
   const getUserDisplayName = (member: WorkspaceMember) => {
     if (member.firstName && member.lastName) {
@@ -123,29 +165,37 @@ export function EditTaskDialog({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.id) return;
+    if (!user?.id || !workspace) return;
+
+    const updates = {
+      title,
+      description,
+      priority,
+      status,
+      assigneeId: assigneeId !== "unassigned" ? assigneeId : undefined,
+      deadline: deadline?.toISOString(),
+    };
 
     try {
-      await updateTask({
-        taskId: task._id,
-        updates: {
-          title,
-          description,
-          priority,
-          status,
-          assigneeId: assigneeId !== "unassigned" ? assigneeId : undefined,
-          deadline: deadline?.toISOString(),
-        },
-        userId: user.id,
-      });
+      // 競合チェック付きの安全な更新を実行
+      const result = await updateTaskSafely(
+        task._id,
+        updates,
+        taskVersion
+      );
 
-      // タスク更新後に親コンポーネントにタスクリストの更新を通知
-      if (onTaskChange) {
-        await onTaskChange();
+      if (result.success) {
+        // タスク更新後に親コンポーネントにタスクリストの更新を通知
+        if (onTaskChange) {
+          await onTaskChange();
+        }
+
+        setOpen(false);
+      } else if (result.conflict) {
+        // 競合が発生した場合は競合解決ダイアログを表示
+        setPendingConflict(result.conflict);
+        setConflictDialogOpen(true);
       }
-
-      toast.success("タスクを更新しました");
-      setOpen(false);
     } catch (error) {
       console.error("タスクの更新に失敗しました:", error);
       toast.error("タスクの更新に失敗しました");
@@ -167,6 +217,18 @@ export function EditTaskDialog({
               タスクの詳細を編集してください
             </DialogDescription>
           </DialogHeader>
+          
+          {/* 競合警告 */}
+          {taskConflicts.length > 0 && (
+            <Alert className="mb-4">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertDescription>
+                このタスクには{taskConflicts.length}件の編集競合があります。
+                他のユーザーが同時に編集している可能性があります。
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="title">タイトル</Label>
@@ -291,6 +353,24 @@ export function EditTaskDialog({
           </DialogFooter>
         </form>
       </DialogContent>
+      
+      {/* 競合解決ダイアログ */}
+      {pendingConflict && (
+        <ConflictResolutionDialog
+          open={conflictDialogOpen}
+          onOpenChange={setConflictDialogOpen}
+          conflict={pendingConflict}
+          workspaceId={workspace!._id}
+          onResolved={() => {
+            setConflictDialogOpen(false);
+            setPendingConflict(null);
+            setOpen(false);
+            if (onTaskChange) {
+              onTaskChange();
+            }
+          }}
+        />
+      )}
     </Dialog>
   );
 }

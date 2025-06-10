@@ -41,4 +41,69 @@ export default defineSchema({
     .index("by_email", ["email"])
     .index("by_token", ["token"])
     .index("by_status", ["status"]),
+
+  userPresence: defineTable({
+    userId: v.string(),
+    workspaceId: v.id("workspaces"),
+    status: v.string(), // "online" | "offline" | "away"
+    lastSeen: v.number(),
+    currentPage: v.optional(v.string()), // URLパス
+    isEditing: v.optional(v.id("tasks")), // 編集中のタスクID
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_user", ["userId"])
+    .index("by_workspace_user", ["workspaceId", "userId"])
+    .index("by_last_seen", ["lastSeen"]),
+
+  taskLocks: defineTable({
+    taskId: v.id("tasks"),
+    userId: v.string(),
+    workspaceId: v.id("workspaces"),
+    lockedAt: v.number(),
+    lockType: v.string(), // "editing" | "viewing"
+  })
+    .index("by_task", ["taskId"])
+    .index("by_user", ["userId"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_locked_at", ["lockedAt"]),
+
+  taskConflicts: defineTable({
+    conflictId: v.string(),
+    taskId: v.id("tasks"),
+    workspaceId: v.id("workspaces"),
+    conflictType: v.string(), // "simultaneous_edit" | "stale_data" | "permission_denied"
+    initiatingUserId: v.string(),
+    conflictingUserId: v.string(),
+    timestamp: v.number(),
+    isResolved: v.boolean(),
+    resolution: v.optional(v.string()), // "force_save" | "merge" | "discard" | "reload"
+    initiatingVersion: v.number(),
+    conflictingVersion: v.number(),
+    metadata: v.optional(v.any()),
+  })
+    .index("by_task", ["taskId"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_conflict_id", ["conflictId"])
+    .index("by_timestamp", ["timestamp"])
+    .index("by_resolved", ["isResolved"]),
+
+  notifications: defineTable({
+    workspaceId: v.id("workspaces"),
+    targetUserId: v.string(),
+    senderUserId: v.string(),
+    type: v.string(), // "task_created" | "task_updated" | "task_assigned" | etc.
+    title: v.string(),
+    message: v.string(),
+    priority: v.string(), // "low" | "medium" | "high" | "urgent"
+    relatedTaskId: v.optional(v.id("tasks")),
+    relatedUserId: v.optional(v.string()),
+    metadata: v.optional(v.any()),
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_target_user", ["targetUserId"])
+    .index("by_workspace", ["workspaceId"])
+    .index("by_created_at", ["createdAt"])
+    .index("by_unread", ["targetUserId", "isRead"])
+    .index("by_type", ["type"]),
 });

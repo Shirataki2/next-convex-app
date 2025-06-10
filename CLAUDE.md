@@ -2,6 +2,22 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## IMPORTANT: 前回のタスクの残り（完了済み）
+TODOの内容を変更したり、statusを変えた時にリアルタイムで同期されるようにしたいです。 ultrathink use context7
+    ☒ 現在のタスクシステムの分析と改善点の特定
+    ☒ リアルタイムタスク取得のためのConvexクエリ関数を実装
+    ☒ useQueryを使用したリアルタイムタスクデータの表示
+    ☒ 楽観的更新の改善とエラーハンドリング強化
+    ☒ コードフォーマットとテスト実行
+    ☒ リアルタイム同期機能のGitコミット
+    ☒ ドキュメントの更新（CLAUDE.md, README.md, directorystructure.md）
+    ☒ リアルタイムプレゼンス表示機能の実装
+    ☒ タスク編集中の競合検出・解決システム
+    ☒ リアルタイム通知とアクティビティフィードの実装
+    ☒ リアルタイム機能の動作確認（Playwright MCP）
+
+**全てのリアルタイム機能が完了し、動作確認済みです。**
+
 ## プロジェクト概要
 
 Next.js 15 + Convex + Clerk + shadcn/ui を使用したプロジェクトです。
@@ -101,6 +117,10 @@ npx vitest --project=convex     # Convex関数
     - `create-workspace-dialog.tsx`: ワークスペース作成ダイアログ
     - `invite-member-dialog.tsx`: メンバー招待ダイアログ
     - `invitation-list.tsx`: 招待一覧コンポーネント
+    - `workspace-presence.tsx`: リアルタイムプレゼンス表示
+    - `conflict-monitor.tsx`: 競合検出・監視コンポーネント
+    - `conflict-resolution-dialog.tsx`: 競合解決ダイアログ
+    - `notification-panel.tsx`: 通知パネル・アクティビティフィード
 - `convex/`: Convexバックエンド関数とスキーマ
   - `_generated/`: 自動生成ファイル（編集不可）
   - `workspaces.ts`: ワークスペース管理関数
@@ -117,15 +137,33 @@ npx vitest --project=convex     # Convex関数
     - `acceptInvitation`: 招待受け入れ
     - `revokeInvitation`: 招待取り消し
     - `getInviterInfo`: 招待者情報取得
+  - `presence.ts`: プレゼンス管理関数
+    - `updatePresence`: ユーザープレゼンス更新
+    - `setTaskLock`: タスクロック設定/解除
+    - `getWorkspacePresence`: ワークスペースのプレゼンス情報取得
+  - `conflict-resolution.ts`: 競合検出・解決関数
+    - `checkForConflicts`: 競合検出
+    - `resolveConflict`: 競合解決
+    - `updateTaskWithConflictCheck`: 競合チェック付きタスク更新
+  - `notifications.ts`: 通知管理関数
+    - `createNotification`: 通知作成
+    - `createTaskNotification`: タスク関連通知の自動作成
+    - `getNotificationsWithUserInfo`: ユーザー情報付き通知取得
 - `hooks/`: カスタムReactフック
   - `use-realtime-tasks.ts`: リアルタイムタスクデータ管理
   - `use-optimistic-task-updates.ts`: 楽観的更新とエラー処理
   - `use-mobile.ts`: モバイル判定フック
+  - `use-presence.ts`: リアルタイムプレゼンス・タスクロック管理
+  - `use-conflict-resolution.ts`: 競合検出・解決処理
+  - `use-notifications.ts`: 通知・アクティビティフィード管理
 - `lib/`: ユーティリティ関数
 - `__tests__/`: テストファイル
   - `convex/`: Convex関数テスト
     - `realtime-tasks.test.ts`: リアルタイム関数テスト
     - `invitations.test.ts`: 招待機能テスト
+    - `presence.test.ts`: プレゼンス機能テスト
+    - `conflict-resolution.test.ts`: 競合解決機能テスト
+    - `notifications.test.ts`: 通知機能テスト
   - `components/`: コンポーネントテスト
   - `hooks/`: カスタムフックテスト
   - `lib/`: ユーティリティテスト
@@ -226,6 +264,40 @@ mcp__playwright__browser_take_screenshot
    - `token`: 招待トークン
    - `status`: ステータス（pending/accepted/revoked）
    - `expiresAt`: 有効期限
+
+5. **userPresence**: ユーザープレゼンス情報
+   - `userId`: ユーザーID
+   - `workspaceId`: ワークスペースID
+   - `status`: ステータス（online/offline/away）
+   - `lastSeen`: 最終確認時刻
+   - `currentPage`: 現在のページ
+   - `isEditing`: 編集中のタスクID
+
+6. **taskLocks**: タスク編集ロック情報
+   - `taskId`: タスクID
+   - `userId`: ロックしているユーザーID
+   - `workspaceId`: ワークスペースID
+   - `lockedAt`: ロック開始時刻
+
+7. **taskConflicts**: タスク競合情報
+   - `taskId`: タスクID
+   - `workspaceId`: ワークスペースID
+   - `conflictType`: 競合種別
+   - `users`: 競合に関わるユーザーID配列
+   - `detectedAt`: 競合検出時刻
+   - `status`: ステータス（active/resolved）
+
+8. **notifications**: 通知情報
+   - `workspaceId`: ワークスペースID
+   - `targetUserId`: 通知対象ユーザーID
+   - `senderUserId`: 送信者ユーザーID
+   - `type`: 通知タイプ
+   - `title`: 通知タイトル
+   - `message`: 通知メッセージ
+   - `priority`: 優先度（low/medium/high/urgent）
+   - `isRead`: 既読フラグ
+   - `relatedTaskId`: 関連タスクID（オプション）
+   - `createdAt`: 作成時刻
 
 ### ドラッグ&ドロップ機能
 
@@ -474,6 +546,152 @@ const getUserDisplayName = (member: WorkspaceMember) => {
 - サーバーサイドで情報を取得してセキュリティを確保
 - エラー時の適切なフォールバック処理
 - ローディング状態の表示とUX向上
+
+### リアルタイムプレゼンス機能
+
+#### 概要
+
+ワークスペース内のユーザーのオンライン状態や編集中のタスクをリアルタイムで表示する機能です。
+
+#### 主要機能
+
+1. **ユーザープレゼンス表示**
+   - オンライン/オフライン/離席状態の表示
+   - 現在閲覧中のページ情報
+   - アバターとステータスアイコンの表示
+
+2. **タスクロック機能**
+   - タスク編集時の自動ロック
+   - 他ユーザーによる編集中表示
+   - ロック解除の自動処理
+
+3. **ハートビート機能**
+   - 定期的なプレゼンス更新（30秒間隔）
+   - ページ非表示時の自動離席状態設定
+   - ページ離脱時の自動クリーンアップ
+
+#### 実装詳細
+
+```typescript
+// プレゼンス更新
+const updatePresence = useMutation(api.presence.updatePresence);
+
+// ハートビート処理
+useEffect(() => {
+  const interval = setInterval(() => {
+    updatePresence({
+      workspaceId,
+      status: document.hidden ? "away" : "online",
+      currentPage: location.pathname,
+    });
+  }, 30000);
+
+  return () => clearInterval(interval);
+}, [workspaceId, updatePresence]);
+```
+
+### 競合検出・解決機能
+
+#### 概要
+
+複数ユーザーが同じタスクを同時編集する際の競合を検出し、適切な解決方法を提供する機能です。
+
+#### 競合検出方式
+
+1. **バージョン追跡**
+   - タスクの更新時刻を使用したバージョン管理
+   - 楽観的ロッキングによる競合検出
+
+2. **リアルタイム監視**
+   - 定期的な競合チェック（15秒間隔）
+   - タスク更新時の自動競合検出
+
+#### 競合解決オプション
+
+1. **強制保存**: 自分の変更を優先して保存
+2. **マージ**: 両方の変更を統合
+3. **破棄**: 自分の変更を破棄
+4. **再読み込み**: 最新データで画面を更新
+
+#### 実装例
+
+```typescript
+const checkForConflicts = useMutation(api.conflictResolution.checkForConflicts);
+
+const handleTaskUpdate = async (taskId: Id<"tasks">, updates: any) => {
+  const conflicts = await checkForConflicts({ taskId });
+  
+  if (conflicts.length > 0) {
+    setConflictDialogOpen(true);
+    setActiveConflicts(conflicts);
+  } else {
+    await updateTask({ taskId, updates });
+  }
+};
+```
+
+### 通知・アクティビティフィード機能
+
+#### 概要
+
+ワークスペース内のタスク関連活動を自動で通知し、アクティビティフィードとして表示する機能です。
+
+#### 通知機能
+
+1. **自動通知作成**
+   - タスク作成・更新・完了時の自動通知
+   - 担当者変更時の専用通知
+   - ワークスペースメンバー参加通知
+
+2. **通知タイプ**
+   - `task_created`: タスク作成
+   - `task_updated`: タスク更新
+   - `task_assigned`: タスク割り当て
+   - `task_completed`: タスク完了
+   - `user_joined`: メンバー参加
+
+3. **優先度管理**
+   - low/medium/high/urgent の4段階
+   - 優先度に応じた色分け表示
+
+#### ブラウザ通知
+
+- Web Notifications APIを使用
+- 許可申請とプライバシー配慮
+- 新しい通知の自動表示
+
+#### アクティビティフィード
+
+- 時系列でのタスク活動表示
+- ユーザーアバター・名前付き表示
+- 相対時間表示（「3分前」「1時間前」等）
+
+#### UI実装
+
+```typescript
+// 通知パネル
+<NotificationPanel workspaceId={workspaceId} />
+
+// 通知バッジ表示
+{unreadCount > 0 && (
+  <Badge variant="destructive">
+    {unreadCount > 99 ? "99+" : unreadCount}
+  </Badge>
+)}
+```
+
+#### 通知の自動作成
+
+```typescript
+// タスク作成時
+await ctx.runMutation(api.notifications.createTaskNotification, {
+  taskId,
+  workspaceId,
+  type: "task_created",
+  actionUserId,
+  taskTitle,
+});
+```
 
 ### テスト環境の詳細
 

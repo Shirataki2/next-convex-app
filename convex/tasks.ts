@@ -3,6 +3,15 @@ import { mutation, query, action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { createClerkClient } from "@clerk/backend";
 
+// 単一タスクを取得
+export const getTask = query({
+  args: { taskId: v.id("tasks") },
+  handler: async (ctx, { taskId }) => {
+    const task = await ctx.db.get(taskId);
+    return task;
+  },
+});
+
 // ワークスペースのタスク一覧を取得
 export const getWorkspaceTasks = query({
   args: { workspaceId: v.id("workspaces") },
@@ -179,6 +188,20 @@ export const createTask = mutation({
       timestamp: Date.now(),
     });
 
+    // 通知を作成
+    try {
+      await ctx.runMutation(api.notifications.createTaskNotification, {
+        taskId,
+        workspaceId: args.workspaceId,
+        type: "task_created",
+        actionUserId: userId,
+        taskTitle: args.title,
+        assigneeId: args.assigneeId,
+      });
+    } catch (error) {
+      console.error("タスク作成通知の送信に失敗:", error);
+    }
+
     return taskId;
   },
 });
@@ -214,6 +237,11 @@ export const updateTask = mutation({
       throw new Error("このタスクを更新する権限がありません");
     }
 
+    const oldAssigneeId = task.assigneeId;
+    const newAssigneeId = updates.assigneeId;
+    const oldStatus = task.status;
+    const newStatus = updates.status;
+
     await ctx.db.patch(taskId, updates);
 
     // タスク更新のアクティビティを記録
@@ -224,6 +252,43 @@ export const updateTask = mutation({
       action: "updated",
       timestamp: Date.now(),
     });
+
+    // 通知を作成
+    try {
+      // 一般的な更新通知
+      await ctx.runMutation(api.notifications.createTaskNotification, {
+        taskId,
+        workspaceId: task.workspaceId,
+        type: "task_updated",
+        actionUserId: userId,
+        taskTitle: updates.title || task.title,
+      });
+
+      // 担当者変更通知
+      if (newAssigneeId && newAssigneeId !== oldAssigneeId) {
+        await ctx.runMutation(api.notifications.createTaskNotification, {
+          taskId,
+          workspaceId: task.workspaceId,
+          type: "task_assigned",
+          actionUserId: userId,
+          taskTitle: updates.title || task.title,
+          assigneeId: newAssigneeId,
+        });
+      }
+
+      // 完了通知
+      if (newStatus === "done" && oldStatus !== "done") {
+        await ctx.runMutation(api.notifications.createTaskNotification, {
+          taskId,
+          workspaceId: task.workspaceId,
+          type: "task_completed",
+          actionUserId: userId,
+          taskTitle: updates.title || task.title,
+        });
+      }
+    } catch (error) {
+      console.error("タスク更新通知の送信に失敗:", error);
+    }
 
     return { success: true };
   },
