@@ -159,11 +159,36 @@ export default function WorkspaceDetailPage() {
     setActiveTask(null);
 
     try {
+      // ステータスをgroupedTasksのキーにマッピング
+      const getGroupedTasksKey = (status: string) => {
+        switch (status) {
+          case "todo":
+            return "todo";
+          case "in_progress":
+            return "inProgress";
+          case "done":
+            return "done";
+          default:
+            throw new Error(`Unknown status: ${status}`);
+        }
+      };
+
       // 同じステータスにドロップした場合（順序変更）
       if (currentTask.status === newStatus) {
         if (overTaskId && overTaskId !== taskId) {
+          const statusKey = getGroupedTasksKey(newStatus);
           const statusTasks =
-            groupedTasks[newStatus as keyof typeof groupedTasks];
+            groupedTasks[statusKey as keyof typeof groupedTasks];
+          
+          if (!statusTasks) {
+            console.error("ステータスに対応するタスクが見つかりません:", {
+              newStatus,
+              statusKey,
+              groupedTasks,
+            });
+            return;
+          }
+
           const activeIndex = statusTasks.findIndex(
             (task) => task._id === taskId
           );
@@ -194,8 +219,19 @@ export default function WorkspaceDetailPage() {
         }
       } else {
         // ステータス変更
+        const newStatusKey = getGroupedTasksKey(newStatus);
         const newStatusTasks =
-          groupedTasks[newStatus as keyof typeof groupedTasks];
+          groupedTasks[newStatusKey as keyof typeof groupedTasks];
+        
+        if (!newStatusTasks) {
+          console.error("新しいステータスに対応するタスクが見つかりません:", {
+            newStatus,
+            newStatusKey,
+            groupedTasks,
+          });
+          return;
+        }
+
         const maxOrder = Math.max(
           ...newStatusTasks.map((task) => task.order),
           0
@@ -291,22 +327,22 @@ export default function WorkspaceDetailPage() {
           </Alert>
         )}
 
-        {/* ローディング状態 */}
-        {(isUpdating || isLoadingUsers) && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-              {isUpdating && "タスクを更新中..."}
-              {isLoadingUsers && "ユーザー情報を読み込み中..."}
-            </div>
-          </div>
-        )}
-
         {/* リアルタイム状態インジケーター */}
         <div className="mb-4">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            リアルタイム同期: 有効
+            {
+              (isUpdating || isLoadingUsers) ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+                  <span>{isUpdating && "タスクを更新中..."}{isLoadingUsers && "ユーザー情報を読み込み中..."}  </span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span>リアルタイム同期: 有効</span>
+                </div>
+              )
+            }
             <span className="ml-2">
               最終更新: {new Date().toLocaleTimeString("ja-JP")}
             </span>

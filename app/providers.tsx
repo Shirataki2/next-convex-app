@@ -11,7 +11,7 @@ const convex = new ConvexReactClient(process.env.NEXT_PUBLIC_CONVEX_URL!);
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
-    <ClerkProvider localization={jaJP}>
+    <ClerkProvider localization={jaJP} publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY!}>
       <ThemeProvider
         attribute="class"
         defaultTheme="system"

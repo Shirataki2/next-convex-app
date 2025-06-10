@@ -6,7 +6,11 @@ export default defineSchema({
     name: v.string(),
     ownerId: v.string(),
     members: v.array(v.string()),
-  }),
+  })
+    .index("by_owner", ["ownerId"])
+    .searchIndex("search_name", {
+      searchField: "name",
+    }),
 
   tasks: defineTable({
     title: v.string(),
@@ -17,7 +21,18 @@ export default defineSchema({
     deadline: v.optional(v.string()),
     order: v.number(),
     priority: v.string(),
-  }),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_workspace_status", ["workspaceId", "status"])
+    .index("by_workspace_status_order", ["workspaceId", "status", "order"])
+    .index("by_assignee", ["assigneeId"])
+    .index("by_status", ["status"])
+    .index("by_priority", ["priority"])
+    .index("by_deadline", ["deadline"])
+    .searchIndex("search_title", {
+      searchField: "title",
+      filterFields: ["workspaceId", "status"],
+    }),
 
   taskActivities: defineTable({
     workspaceId: v.id("workspaces"),
@@ -25,7 +40,11 @@ export default defineSchema({
     taskId: v.id("tasks"),
     action: v.string(),
     timestamp: v.number(),
-  }),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_task", ["taskId"])
+    .index("by_user", ["userId"])
+    .index("by_timestamp", ["timestamp"]),
 
   workspaceInvitations: defineTable({
     workspaceId: v.id("workspaces"),
