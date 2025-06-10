@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { DndContext } from "@dnd-kit/core";
-import { vi } from "vitest";
+import { vi, describe, it, expect } from "vitest";
 
 // Clerkのhookをモック
 vi.mock("@clerk/nextjs", () => ({

@@ -19,6 +19,48 @@ export type NotificationType =
 // 通知優先度
 export type NotificationPriority = "low" | "medium" | "high" | "urgent";
 
+interface UserInfo {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  imageUrl?: string | null;
+  username?: string | null;
+  emailAddress?: string | null;
+}
+
+interface NotificationWithUserInfo {
+  _id: Id<"notifications">;
+  workspaceId: Id<"workspaces">;
+  targetUserId: string;
+  senderUserId: string;
+  type: string;
+  title: string;
+  message: string;
+  priority: string;
+  relatedTaskId?: Id<"tasks">;
+  relatedUserId?: string;
+  metadata?: any;
+  isRead: boolean;
+  createdAt: number;
+  senderUser?: UserInfo;
+  relatedUser?: UserInfo;
+}
+
+interface ActivityWithUserInfo {
+  _id: Id<"taskActivities">;
+  workspaceId: Id<"workspaces">;
+  userId: string;
+  taskId: Id<"tasks">;
+  action: string;
+  timestamp: number;
+  user?: UserInfo;
+  task?: {
+    _id: Id<"tasks">;
+    title: string;
+    status: string;
+  };
+}
+
 // 通知作成
 export const createNotification = mutation({
   args: {
@@ -66,6 +108,7 @@ export const createBulkNotification = mutation({
     message: v.string(),
     priority: v.string(),
     relatedTaskId: v.optional(v.id("tasks")),
+    relatedUserId: v.optional(v.string()),
     excludeUserId: v.optional(v.string()),
     metadata: v.optional(v.any()),
   },
@@ -225,14 +268,14 @@ export const getNotificationsWithUserInfo = action({
     limit: v.optional(v.number()),
     unreadOnly: v.optional(v.boolean()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<NotificationWithUserInfo[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("認証が必要です");
     }
 
     // 通知を取得
-    const notifications = await ctx.runQuery(
+    const notifications: any[] = await ctx.runQuery(
       api.notifications.getUserNotifications,
       args
     );
@@ -248,8 +291,8 @@ export const getNotificationsWithUserInfo = action({
 
     const userIds = Array.from(
       new Set([
-        ...notifications.map((n) => n.senderUserId),
-        ...notifications.map((n) => n.relatedUserId).filter(Boolean),
+        ...notifications.map((n: any) => n.senderUserId),
+        ...notifications.map((n: any) => n.relatedUserId).filter(Boolean),
       ])
     ) as string[];
 
@@ -280,7 +323,7 @@ export const getNotificationsWithUserInfo = action({
     }
 
     // 通知にユーザー情報を追加
-    return notifications.map((notification) => ({
+    return notifications.map((notification: any) => ({
       ...notification,
       senderUser: userInfoMap.get(notification.senderUserId),
       relatedUser: notification.relatedUserId
@@ -433,14 +476,14 @@ export const getActivityFeedWithUserInfo = action({
     workspaceId: v.id("workspaces"),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<ActivityWithUserInfo[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("認証が必要です");
     }
 
     // アクティビティを取得
-    const activities = await ctx.runQuery(
+    const activities: any[] = await ctx.runQuery(
       api.notifications.getWorkspaceActivityFeed,
       args
     );
@@ -454,8 +497,8 @@ export const getActivityFeedWithUserInfo = action({
       secretKey: process.env.CLERK_SECRET_KEY,
     });
 
-    const userIds = Array.from(new Set(activities.map((a) => a.userId)));
-    const taskIds = Array.from(new Set(activities.map((a) => a.taskId)));
+    const userIds = Array.from(new Set(activities.map((a: any) => a.userId)));
+    const taskIds = Array.from(new Set(activities.map((a: any) => a.taskId)));
 
     const userInfoMap = new Map();
     const taskInfoMap = new Map();
@@ -493,12 +536,12 @@ export const getActivityFeedWithUserInfo = action({
           taskInfoMap.set(taskId, task);
         }
       } catch (error) {
-        console.error(`タスク情報の取得に失敗: ${taskId}`, error);
+        console.error(`タスク情報の取得に失敗: ${String(taskId)}`, error);
       }
     }
 
     // アクティビティにユーザー情報とタスク情報を追加
-    return activities.map((activity) => ({
+    return activities.map((activity: any) => ({
       ...activity,
       user: userInfoMap.get(activity.userId),
       task: taskInfoMap.get(activity.taskId),

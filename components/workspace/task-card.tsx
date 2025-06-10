@@ -118,6 +118,7 @@ export function TaskCard({ task, workspace, onTaskChange }: TaskCardProps) {
               <>
                 <Avatar className="h-6 w-6">
                   {task.assigneeUser.imageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={task.assigneeUser.imageUrl}
                       alt={`${task.assigneeUser.firstName || ""} ${task.assigneeUser.lastName || ""}`}

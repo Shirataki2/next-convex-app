@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, test, expect, vi, beforeEach } from "vitest";
 import { InviteMemberDialog } from "@/components/workspace/invite-member-dialog";
 import { TestWrapper } from "@/__tests__/utils/test-wrapper";
+import { Id } from "@/convex/_generated/dataModel";
 
 // Convexのモック
 vi.mock("convex/react", () => ({
@@ -17,7 +18,7 @@ vi.mock("@clerk/nextjs", () => ({
 }));
 
 const mockWorkspace = {
-  _id: "workspace_123" as any,
+  _id: "workspace_123" as Id<"workspaces">,
   _creationTime: Date.now(),
   name: "Test Workspace",
   ownerId: "user_123",

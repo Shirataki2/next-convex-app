@@ -1,9 +1,10 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { WorkspacePresence } from "@/components/workspace/workspace-presence";
 import { ConvexProvider } from "convex/react";
 import { ConvexReactClient } from "convex/react";
 import { ReactNode } from "react";
 import { Id } from "@/convex/_generated/dataModel";
+import { vi, describe, beforeEach, test, expect } from "vitest";
 
 // Convexクライアントのモック
 const mockConvexClient = new ConvexReactClient("https://test.convex.cloud");
@@ -14,17 +15,17 @@ function TestConvexProvider({ children }: { children: ReactNode }) {
 }
 
 // usePresenceフックのモック
-jest.mock("@/hooks/use-presence", () => ({
-  usePresence: jest.fn(),
+vi.mock("@/hooks/use-presence", () => ({
+  usePresence: vi.fn(),
 }));
 
-const mockUsePresence = require("@/hooks/use-presence").usePresence;
+const mockUsePresence = vi.fn();
 
 describe("WorkspacePresence", () => {
   const mockWorkspaceId = "workspaceId123" as Id<"workspaces">;
 
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("ローディング状態の表示", () => {
@@ -32,8 +33,8 @@ describe("WorkspacePresence", () => {
       presenceData: [],
       loading: true,
       error: null,
-      updatePresence: jest.fn(),
-      refetch: jest.fn(),
+      updatePresence: vi.fn(),
+      refetch: vi.fn(),
     });
 
     render(
@@ -51,8 +52,8 @@ describe("WorkspacePresence", () => {
       presenceData: [],
       loading: false,
       error: errorMessage,
-      updatePresence: jest.fn(),
-      refetch: jest.fn(),
+      updatePresence: vi.fn(),
+      refetch: vi.fn(),
     });
 
     render(
@@ -69,8 +70,8 @@ describe("WorkspacePresence", () => {
       presenceData: [],
       loading: false,
       error: null,
-      updatePresence: jest.fn(),
-      refetch: jest.fn(),
+      updatePresence: vi.fn(),
+      refetch: vi.fn(),
     });
 
     render(
@@ -121,8 +122,8 @@ describe("WorkspacePresence", () => {
       presenceData: mockPresenceData,
       loading: false,
       error: null,
-      updatePresence: jest.fn(),
-      refetch: jest.fn(),
+      updatePresence: vi.fn(),
+      refetch: vi.fn(),
     });
 
     render(
@@ -180,8 +181,8 @@ describe("WorkspacePresence", () => {
       presenceData: mockPresenceData,
       loading: false,
       error: null,
-      updatePresence: jest.fn(),
-      refetch: jest.fn(),
+      updatePresence: vi.fn(),
+      refetch: vi.fn(),
     });
 
     render(
@@ -245,8 +246,8 @@ describe("WorkspacePresence", () => {
       presenceData: mockPresenceData,
       loading: false,
       error: null,
-      updatePresence: jest.fn(),
-      refetch: jest.fn(),
+      updatePresence: vi.fn(),
+      refetch: vi.fn(),
     });
 
     render(
@@ -296,8 +297,8 @@ describe("WorkspacePresence", () => {
       presenceData: mockPresenceData,
       loading: false,
       error: null,
-      updatePresence: jest.fn(),
-      refetch: jest.fn(),
+      updatePresence: vi.fn(),
+      refetch: vi.fn(),
     });
 
     render(
@@ -358,8 +359,8 @@ describe("WorkspacePresence", () => {
       presenceData: mockPresenceData,
       loading: false,
       error: null,
-      updatePresence: jest.fn(),
-      refetch: jest.fn(),
+      updatePresence: vi.fn(),
+      refetch: vi.fn(),
     });
 
     const { container } = render(
@@ -374,6 +375,7 @@ describe("WorkspacePresence", () => {
       Array.from(container.querySelectorAll("div")).filter((el) =>
         el.textContent?.includes("ユーザー")
       );
+    expect(userElements).toBeInTheDocument();
 
     // オンライン → 離席中 → オフラインの順序で表示されることを期待
     // (実際のテストでは、より具体的な要素選択が必要)

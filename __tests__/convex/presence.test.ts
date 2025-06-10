@@ -2,6 +2,7 @@ import { convexTest } from "convex-test";
 import schema from "../../convex/schema";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
+import { test, describe, expect } from "vitest";
 
 describe("プレゼンス機能", () => {
   test("プレゼンス状態の更新", async () => {

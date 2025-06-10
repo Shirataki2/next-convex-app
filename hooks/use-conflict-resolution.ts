@@ -245,7 +245,7 @@ function getConflictMessage(conflictType?: ConflictType): string {
 
 // 競合解決の提案を生成
 export function getConflictSuggestions(conflictType: ConflictType): Array<{
-  action: string;
+  action: "force_save" | "merge" | "discard" | "reload";
   label: string;
   description: string;
   recommended?: boolean;

@@ -29,6 +29,20 @@ export interface TaskConflict {
   };
 }
 
+interface UserInfo {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  imageUrl?: string | null;
+  username?: string | null;
+  emailAddress?: string | null;
+}
+
+interface ConflictWithUserInfo extends TaskConflict {
+  initiatingUser?: UserInfo;
+  conflictingUser?: UserInfo;
+}
+
 // タスク競合情報を追加するためのスキーマ拡張（実際にはschema.tsに追加する必要がある）
 export const taskConflictSchema = {
   conflictId: v.string(),
@@ -304,14 +318,14 @@ export const getConflictsWithUserInfo = action({
     workspaceId: v.id("workspaces"),
     includeResolved: v.optional(v.boolean()),
   },
-  handler: async (ctx, { workspaceId, includeResolved = false }) => {
+  handler: async (ctx, { workspaceId, includeResolved = false }): Promise<ConflictWithUserInfo[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("認証が必要です");
     }
 
     // 競合情報を取得
-    const conflicts = await ctx.runQuery(
+    const conflicts: any[] = await ctx.runQuery(
       api.conflictResolution.getWorkspaceConflicts,
       {
         workspaceId,
@@ -330,10 +344,10 @@ export const getConflictsWithUserInfo = action({
 
     const userIds = Array.from(
       new Set([
-        ...conflicts.map((c) => c.initiatingUserId),
+        ...conflicts.map((c: any) => c.initiatingUserId),
         ...conflicts
-          .map((c) => c.conflictingUserId)
-          .filter((id) => id !== "system"),
+          .map((c: any) => c.conflictingUserId)
+          .filter((id: string) => id !== "system"),
       ])
     );
 
@@ -364,7 +378,7 @@ export const getConflictsWithUserInfo = action({
     }
 
     // 競合情報にユーザー情報を追加
-    return conflicts.map((conflict) => ({
+    return conflicts.map((conflict: any) => ({
       ...conflict,
       initiatingUser: userInfoMap.get(conflict.initiatingUserId),
       conflictingUser:

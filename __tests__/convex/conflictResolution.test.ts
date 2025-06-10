@@ -2,6 +2,7 @@ import { convexTest } from "convex-test";
 import schema from "../../convex/schema";
 import { api } from "../../convex/_generated/api";
 import { Id } from "../../convex/_generated/dataModel";
+import { test, describe, expect } from "vitest";
 
 describe("競合解決システム", () => {
   test("同時編集競合の検出", async () => {
@@ -44,6 +45,8 @@ describe("競合解決システム", () => {
         getUserIdentity: async () => ({
           subject: "user2",
           email: "user2@example.com",
+          tokenIdentifier: "mockTokenIdentifier",
+          issuer: "mockIssuer",
         }),
       };
       ctx.auth = mockAuth;

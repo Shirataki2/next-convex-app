@@ -107,13 +107,13 @@ export function ConflictResolutionDialog({
 }: ConflictResolutionDialogProps) {
   const { resolveTaskConflict, isResolvingConflict } =
     useConflictResolution(workspaceId);
-  const [selectedResolution, setSelectedResolution] = useState<string | null>(
+  const [selectedResolution, setSelectedResolution] = useState<"force_save" | "merge" | "discard" | "reload" | null>(
     null
   );
 
   const suggestions = getConflictSuggestions(conflict.conflictType);
 
-  const handleResolve = async (resolution: string) => {
+  const handleResolve = async (resolution: "force_save" | "merge" | "discard" | "reload") => {
     try {
       await resolveTaskConflict(conflict.conflictId, resolution);
       onOpenChange(false);

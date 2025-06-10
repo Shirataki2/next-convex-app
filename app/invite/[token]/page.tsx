@@ -39,11 +39,15 @@ export default function InviteAcceptPage() {
   const [isAccepting, setIsAccepting] = useState(false);
   const [inviterInfo, setInviterInfo] = useState<InviterInfo | null>(null);
   const [loadingInviter, setLoadingInviter] = useState(true);
+  const [workspaceName, setWorkspaceName] = useState<string>("");
 
   // 招待情報を取得
   const invitation = useQuery(api.invitations.getInvitationByToken, { token });
   const acceptInvitation = useMutation(api.invitations.acceptInvitation);
   const getInviterInfo = useAction(api.invitations.getInviterInfo);
+  const getWorkspaceInfo = useQuery(api.workspaces.getWorkspace, 
+    invitation ? { workspaceId: invitation.workspaceId } : "skip"
+  );
 
   // 招待者情報を取得
   useEffect(() => {
@@ -57,7 +61,13 @@ export default function InviteAcceptPage() {
         const info = await getInviterInfo({
           inviterUserId: invitation.inviterUserId,
         });
-        setInviterInfo(info);
+        setInviterInfo(info ? {
+          ...info,
+          firstName: info.firstName || undefined,
+          lastName: info.lastName || undefined,
+          username: info.username || undefined,
+          emailAddress: info.emailAddress || undefined,
+        } : null);
       } catch (error) {
         console.error("招待者情報の取得に失敗:", error);
       } finally {
@@ -67,6 +77,13 @@ export default function InviteAcceptPage() {
 
     fetchInviterInfo();
   }, [invitation, getInviterInfo]);
+
+  // ワークスペース名を更新
+  useEffect(() => {
+    if (getWorkspaceInfo) {
+      setWorkspaceName(getWorkspaceInfo.name);
+    }
+  }, [getWorkspaceInfo]);
 
   const handleAcceptInvitation = async () => {
     if (!user || !invitation) return;
@@ -267,7 +284,7 @@ export default function InviteAcceptPage() {
                 <div className="text-center p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                   <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold mb-2">
-                    {invitation.workspace?.name} ワークスペース
+                    {workspaceName} ワークスペース
                   </h3>
                   <p className="text-muted-foreground">
                     {getRoleBadge(invitation.role)} として招待されています
@@ -328,7 +345,7 @@ export default function InviteAcceptPage() {
               <div className="text-center p-6 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  {invitation.workspace?.name} ワークスペース
+                  {workspaceName} ワークスペース
                 </h3>
                 <p className="text-muted-foreground mb-3">
                   {getRoleBadge(invitation.role)} として招待されています
@@ -349,6 +366,7 @@ export default function InviteAcceptPage() {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       {inviterInfo.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={inviterInfo.imageUrl}
                           alt={getUserDisplayName(inviterInfo)}

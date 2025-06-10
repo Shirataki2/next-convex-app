@@ -1,11 +1,11 @@
-import { convexTest } from "convex-test";
+import { convexTest, TestConvex } from "convex-test";
 import { expect, test, describe, beforeEach } from "vitest";
 import { api } from "../../convex/_generated/api";
 import schema from "../../convex/schema";
 import { Id } from "../../convex/_generated/dataModel";
 
 describe("Invitations", () => {
-  let t: any;
+  let t: TestConvex<typeof schema>;
   let workspaceId: Id<"workspaces">;
   let ownerId: string;
   let memberId: string;
@@ -94,14 +94,6 @@ describe("Invitations", () => {
   });
 
   test("acceptInvitation: 有効な招待を受け入れできる", async () => {
-    // 招待を作成
-    const invitationId = await t.mutation(api.invitations.createInvitation, {
-      workspaceId,
-      email: "test@example.com",
-      role: "member",
-      inviterUserId: ownerId,
-    });
-
     // 招待を取得してトークンを確認
     const invitations = await t.query(api.invitations.getWorkspaceInvitations, {
       workspaceId,
@@ -235,7 +227,7 @@ describe("Invitations", () => {
     expect(result).toBeDefined();
     expect(result?.email).toBe("test@example.com");
     expect(result?.expired).toBe(false);
-    expect(result?.workspace).toBeDefined();
+    expect(result?.workspaceId).toBeDefined();
   });
 
   test("getInvitationByToken: 無効なトークンではnullを返す", async () => {
@@ -262,7 +254,7 @@ describe("Invitations", () => {
     const invitation = invitations[0];
 
     // 招待の有効期限を過去の日時に変更（直接データベースパッチ）
-    await t.run(async (ctx: any) => {
+    await t.run(async (ctx) => {
       await ctx.db.patch(invitation._id, {
         expiresAt: Date.now() - 1000, // 1秒前
       });

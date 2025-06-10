@@ -4,6 +4,14 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { usePathname } from "next/navigation";
 
+interface TaskLock {
+  taskId: Id<"tasks">;
+  userId: string;
+  workspaceId: Id<"workspaces">;
+  lockedAt: number;
+  lockType: string;
+}
+
 // プレゼンス情報を管理するフック
 export function usePresence(workspaceId: Id<"workspaces">) {
   const presenceAction = useAction(api.presence.getWorkspacePresenceWithUsers);
@@ -169,7 +177,7 @@ export function useTaskLock(workspaceId: Id<"workspaces">) {
     (taskId: Id<"tasks">) => {
       if (!taskLocks) return false;
       return taskLocks.some(
-        (lock) => lock.taskId === taskId && lock.lockType === "editing"
+        (lock: TaskLock) => lock.taskId === taskId && lock.lockType === "editing"
       );
     },
     [taskLocks]
@@ -180,7 +188,7 @@ export function useTaskLock(workspaceId: Id<"workspaces">) {
     (taskId: Id<"tasks">) => {
       if (!taskLocks) return null;
       const editingLock = taskLocks.find(
-        (lock) => lock.taskId === taskId && lock.lockType === "editing"
+        (lock: TaskLock) => lock.taskId === taskId && lock.lockType === "editing"
       );
       return editingLock ? editingLock.userId : null;
     },

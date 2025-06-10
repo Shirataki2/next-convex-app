@@ -44,7 +44,7 @@ describe("CreateWorkspaceDialog", () => {
       user: mockUser,
       isLoaded: true,
       isSignedIn: true,
-    } as any);
+    });
   });
 
   it("ダイアログトリガーが正しく表示される", () => {
@@ -214,7 +214,7 @@ describe("CreateWorkspaceDialog", () => {
       user: null,
       isLoaded: true,
       isSignedIn: false,
-    } as any);
+    });
 
     render(<CreateWorkspaceDialog />);
 

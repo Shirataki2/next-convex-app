@@ -87,7 +87,7 @@ export function InvitationList({
 
       setLoadingInviters(true);
       const invitationsWithInviterInfo = await Promise.all(
-        invitations.map(async (invitation) => {
+        invitations.map(async (invitation: InvitationWithInviter) => {
           try {
             const inviterInfo = await getInviterInfo({
               inviterUserId: invitation.inviterUserId,
@@ -268,9 +268,10 @@ export function InvitationList({
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
                         {invitation.inviterInfo?.imageUrl ? (
-                          <img
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
                             src={invitation.inviterInfo.imageUrl}
-                            alt={getUserDisplayName(invitation.inviterInfo)}
+                            alt={getUserDisplayName(invitation.inviterInfo as InviterInfo)}
                             className="h-6 w-6 rounded-full object-cover"
                           />
                         ) : (
@@ -282,7 +283,7 @@ export function InvitationList({
                         )}
                       </Avatar>
                       <span className="text-sm">
-                        {getUserDisplayName(invitation.inviterInfo)}
+                        {getUserDisplayName(invitation.inviterInfo as InviterInfo)}
                       </span>
                     </div>
                   )}

@@ -2,10 +2,11 @@ import { convexTest } from "convex-test";
 import { expect, test, describe, beforeEach } from "vitest";
 import { api } from "../../convex/_generated/api";
 import schema from "../../convex/schema";
-import { Id } from "../../convex/_generated/dataModel";
+import { Doc, Id } from "../../convex/_generated/dataModel";
+import { TestConvex } from "convex-test";
 
 describe("Realtime Tasks", () => {
-  let t: any;
+  let t: TestConvex<typeof schema>;
   let workspaceId: Id<"workspaces">;
   let ownerId: string;
 
@@ -21,36 +22,16 @@ describe("Realtime Tasks", () => {
   });
 
   test("getWorkspaceTasksRealtime: リアルタイムタスク一覧を取得できる", async () => {
-    // タスクを作成
-    const taskId1 = await t.mutation(api.tasks.createTask, {
-      title: "Task 1",
-      description: "Description 1",
-      status: "todo",
-      workspaceId,
-      priority: "medium",
-      userId: ownerId,
-    });
-
-    const taskId2 = await t.mutation(api.tasks.createTask, {
-      title: "Task 2",
-      description: "Description 2",
-      status: "in_progress",
-      workspaceId,
-      assigneeId: ownerId,
-      priority: "high",
-      userId: ownerId,
-    });
-
     // リアルタイムタスク一覧を取得
     const tasks = await t.query(api.tasks.getWorkspaceTasksRealtime, {
       workspaceId,
     });
 
     expect(tasks).toHaveLength(2);
-    expect(tasks.map((task: any) => task.title)).toEqual(
+    expect(tasks.map((task) => task.title)).toEqual(
       expect.arrayContaining(["Task 1", "Task 2"])
     );
-    expect(tasks.map((task: any) => task.status)).toEqual(
+    expect(tasks.map((task) => task.status)).toEqual(
       expect.arrayContaining(["todo", "in_progress"])
     );
   });
@@ -59,8 +40,11 @@ describe("Realtime Tasks", () => {
     const memberId = "user_member_456";
 
     // メンバーを追加
-    await t.run(async (ctx: any) => {
-      const workspace = await ctx.db.get(workspaceId);
+    await t.run(async (ctx) => {
+      const workspace: Doc<"workspaces"> | null = await ctx.db.get(workspaceId);
+      if (!workspace) {
+        throw new Error("Workspace not found");
+      }
       await ctx.db.patch(workspaceId, {
         members: [...workspace.members, memberId],
       });
@@ -72,7 +56,7 @@ describe("Realtime Tasks", () => {
     });
 
     expect(members).toHaveLength(2);
-    expect(members.map((member: any) => member.id)).toEqual(
+    expect(members.map((member) => member.id)).toEqual(
       expect.arrayContaining([ownerId, memberId])
     );
   });
@@ -113,8 +97,8 @@ describe("Realtime Tasks", () => {
     });
 
     expect(realtimeTasks).toHaveLength(originalTasks.length);
-    expect(realtimeTasks.map((task: any) => task._id)).toEqual(
-      originalTasks.map((task: any) => task._id)
+    expect(realtimeTasks.map((task) => task._id)).toEqual(
+      originalTasks.map((task) => task._id)
     );
   });
 
@@ -133,9 +117,9 @@ describe("Realtime Tasks", () => {
       workspaceId,
     });
 
-    const initialTask = tasks.find((task: any) => task._id === taskId);
-    expect(initialTask.status).toBe("todo");
-    expect(initialTask.order).toBe(1);
+    const initialTask = tasks.find((task) => task._id === taskId);
+    expect(initialTask?.status).toBe("todo");
+    expect(initialTask?.order).toBe(1);
 
     // タスクを更新
     await t.mutation(api.tasks.updateTask, {
@@ -149,9 +133,9 @@ describe("Realtime Tasks", () => {
       workspaceId,
     });
 
-    const updatedTask = tasks.find((task: any) => task._id === taskId);
-    expect(updatedTask.status).toBe("in_progress");
-    expect(updatedTask.order).toBe(2);
+    const updatedTask = tasks.find((task) => task._id === taskId);
+    expect(updatedTask?.status).toBe("in_progress");
+    expect(updatedTask?.order).toBe(2);
   });
 
   test("複数タスクの順序変更がリアルタイムで反映される", async () => {
@@ -205,10 +189,10 @@ describe("Realtime Tasks", () => {
     });
 
     const todoTasks = tasks
-      .filter((task: any) => task.status === "todo")
-      .sort((a: any, b: any) => a.order - b.order);
+      .filter((task) => task.status === "todo")
+      .sort((a, b) => a.order - b.order);
 
-    expect(todoTasks.map((task: any) => task.title)).toEqual([
+    expect(todoTasks.map((task) => task.title)).toEqual([
       "Task 2", // order: 1
       "Task 3", // order: 2
       "Task 1", // order: 3
@@ -227,8 +211,6 @@ describe("Realtime Tasks", () => {
   });
 
   test("リアルタイムデータのパフォーマンステスト", async () => {
-    const startTime = Date.now();
-
     // 大量のタスクを作成
     const taskPromises = [];
     for (let i = 0; i < 50; i++) {

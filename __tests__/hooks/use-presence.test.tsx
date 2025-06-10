@@ -1,3 +1,4 @@
+import { describe, test, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { usePresence, useTaskLock } from "@/hooks/use-presence";
 import { ConvexProvider } from "convex/react";
@@ -14,15 +15,15 @@ function TestConvexProvider({ children }: { children: ReactNode }) {
 }
 
 // useQueryとuseMutationのモック
-jest.mock("convex/react", () => ({
-  ...jest.requireActual("convex/react"),
-  useQuery: jest.fn(),
-  useMutation: jest.fn(),
-  useAction: jest.fn(),
+vi.mock("convex/react", () => ({
+  ...vi.importActual("convex/react"),
+  useQuery: vi.fn(),
+  useMutation: vi.fn(),
+  useAction: vi.fn(),
 }));
 
 // usePathnameのモック
-jest.mock("next/navigation", () => ({
+vi.mock("next/navigation", () => ({
   usePathname: () => "/workspace/test",
 }));
 
@@ -30,7 +31,7 @@ describe("usePresence", () => {
   const mockWorkspaceId = "workspaceId123" as Id<"workspaces">;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
     // DOM APIのモック
     Object.defineProperty(document, "hidden", {
       writable: true,
@@ -38,14 +39,14 @@ describe("usePresence", () => {
     });
     
     // イベントリスナーのモック
-    document.addEventListener = jest.fn();
-    document.removeEventListener = jest.fn();
-    window.addEventListener = jest.fn();
-    window.removeEventListener = jest.fn();
+    document.addEventListener = vi.fn();
+    document.removeEventListener = vi.fn();
+    window.addEventListener = vi.fn();
+    window.removeEventListener = vi.fn();
   });
 
   test("プレゼンス情報の初期取得", async () => {
-    const mockPresenceAction = jest.fn().mockResolvedValue([
+    const mockPresenceAction = vi.fn().mockResolvedValue([
       {
         userId: "user1",
         status: "online",
@@ -61,10 +62,10 @@ describe("usePresence", () => {
       },
     ]);
 
-    const mockHeartbeatMutation = jest.fn();
-    const mockUpdatePresenceMutation = jest.fn();
+    const mockHeartbeatMutation = vi.fn();
+    const mockUpdatePresenceMutation = vi.fn();
 
-    const { useAction, useMutation } = require("convex/react");
+    const { useAction, useMutation } = await vi.importActual("convex/react");
     useAction.mockReturnValue(mockPresenceAction);
     useMutation
       .mockReturnValueOnce(mockHeartbeatMutation)
@@ -88,9 +89,9 @@ describe("usePresence", () => {
   });
 
   test("プレゼンス状態の更新", async () => {
-    const mockUpdatePresenceMutation = jest.fn();
-    const mockPresenceAction = jest.fn().mockResolvedValue([]);
-    const mockHeartbeatMutation = jest.fn();
+    const mockUpdatePresenceMutation = vi.fn();
+    const mockPresenceAction = vi.fn().mockResolvedValue([]);
+    const mockHeartbeatMutation = vi.fn();
 
     const { useAction, useMutation } = require("convex/react");
     useAction.mockReturnValue(mockPresenceAction);
@@ -121,9 +122,9 @@ describe("usePresence", () => {
   });
 
   test("ページ可視性変更の処理", async () => {
-    const mockUpdatePresenceMutation = jest.fn();
-    const mockPresenceAction = jest.fn().mockResolvedValue([]);
-    const mockHeartbeatMutation = jest.fn();
+    const mockUpdatePresenceMutation = vi.fn();
+    const mockPresenceAction = vi.fn().mockResolvedValue([]);
+    const mockHeartbeatMutation = vi.fn();
 
     const { useAction, useMutation } = require("convex/react");
     useAction.mockReturnValue(mockPresenceAction);
@@ -147,12 +148,12 @@ describe("useTaskLock", () => {
   const mockWorkspaceId = "workspaceId123" as Id<"workspaces">;
   
   beforeEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   test("タスクロックの設定", async () => {
-    const mockSetTaskLockMutation = jest.fn();
-    const mockRemoveTaskLockMutation = jest.fn();
+    const mockSetTaskLockMutation = vi.fn();
+    const mockRemoveTaskLockMutation = vi.fn();
     const mockTaskLocks = [
       {
         taskId: "taskId123" as Id<"tasks">,
@@ -188,8 +189,8 @@ describe("useTaskLock", () => {
   });
 
   test("タスクロックの解除", async () => {
-    const mockSetTaskLockMutation = jest.fn();
-    const mockRemoveTaskLockMutation = jest.fn();
+    const mockSetTaskLockMutation = vi.fn();
+    const mockRemoveTaskLockMutation = vi.fn();
     const mockTaskLocks: any[] = [];
 
     const { useQuery, useMutation } = require("convex/react");
@@ -226,7 +227,7 @@ describe("useTaskLock", () => {
 
     const { useQuery, useMutation } = require("convex/react");
     useQuery.mockReturnValue(mockTaskLocks);
-    useMutation.mockReturnValue(jest.fn());
+    useMutation.mockReturnValue(vi.fn());
 
     const { result } = renderHook(() => useTaskLock(mockWorkspaceId), {
       wrapper: TestConvexProvider,
@@ -263,7 +264,7 @@ describe("useTaskLock", () => {
 
     const { useQuery, useMutation } = require("convex/react");
     useQuery.mockReturnValue(mockTaskLocks);
-    useMutation.mockReturnValue(jest.fn());
+    useMutation.mockReturnValue(vi.fn());
 
     const { result } = renderHook(() => useTaskLock(mockWorkspaceId), {
       wrapper: TestConvexProvider,

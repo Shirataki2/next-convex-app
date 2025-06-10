@@ -273,6 +273,7 @@ export function CreateTaskDialog({
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           {member.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={member.imageUrl}
                               alt={getUserDisplayName(member)}

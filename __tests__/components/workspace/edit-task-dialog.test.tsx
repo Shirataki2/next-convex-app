@@ -2,7 +2,7 @@ import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import { EditTaskDialog } from "@/components/workspace/edit-task-dialog";
 import { Doc } from "@/convex/_generated/dataModel";
 import { TestWrapper } from "@/__tests__/utils/test-wrapper";
-import { vi } from "vitest";
+import { vi, describe, beforeEach, it, expect } from "vitest";
 
 // Convex Reactのモック
 const mockUpdateTask = vi.fn();

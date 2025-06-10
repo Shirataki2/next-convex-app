@@ -30,6 +30,24 @@ interface UserInfo {
   emailAddress?: string | null;
 }
 
+interface PresenceWithUser {
+  userId: string;
+  workspaceId: string;
+  status: string;
+  lastSeen: number;
+  currentPage?: string;
+  isEditing?: string;
+  user?: UserInfo;
+}
+
+interface TaskLock {
+  taskId: string;
+  userId: string;
+  workspaceId: string;
+  lockedAt: number;
+  lockType: string;
+}
+
 export function TaskLockIndicator({
   taskId,
   workspaceId,
@@ -46,10 +64,10 @@ export function TaskLockIndicator({
   useEffect(() => {
     if (editorUserId) {
       getUserInfo({ workspaceId })
-        .then((presenceData) => {
-          const editor = presenceData.find((p) => p.userId === editorUserId);
+        .then((presenceData: PresenceWithUser[]) => {
+          const editor = presenceData.find((p: PresenceWithUser) => p.userId === editorUserId);
           if (editor) {
-            setEditorInfo(editor.user);
+            setEditorInfo(editor.user || null);
           }
         })
         .catch(console.error);
@@ -138,17 +156,17 @@ export function TaskViewersIndicator({
 
   // 閲覧中のユーザー一覧を取得
   const viewers = taskLocks.filter(
-    (lock) => lock.taskId === taskId && lock.lockType === "viewing"
+    (lock: TaskLock) => lock.taskId === taskId && lock.lockType === "viewing"
   );
 
   useEffect(() => {
     if (viewers.length > 0) {
       getUserInfo({ workspaceId })
-        .then((presenceData) => {
+        .then((presenceData: PresenceWithUser[]) => {
           const viewerUsers = viewers
             .map(
-              (viewer) =>
-                presenceData.find((p) => p.userId === viewer.userId)?.user
+              (viewer: TaskLock) =>
+                presenceData.find((p: PresenceWithUser) => p.userId === viewer.userId)?.user
             )
             .filter(Boolean) as UserInfo[];
           setViewersInfo(viewerUsers);

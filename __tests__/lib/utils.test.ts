@@ -105,9 +105,9 @@ describe("utils", () => {
     });
 
     it("実際のコンポーネント使用例のようなケース", () => {
-      const size = "lg";
+      const size: "default" | "sm" | "lg" = "lg";
       const disabled = false;
-      const variant = "default";
+      const variant: "default" | "destructive" | "outline" = "default";
 
       const result = cn(
         "inline-flex items-center justify-center rounded-md font-medium transition-colors",
@@ -130,8 +130,8 @@ describe("utils", () => {
         }
       );
 
-      expect(result).toContain("h-11 px-8"); // size lg
-      expect(result).toContain("bg-primary"); // variant default
+      expect(result).toContain("h-11 px-8"); // size lg が実際に適用される
+      expect(result).toContain("bg-primary"); // variant default が実際に適用される
       expect(result).not.toContain("opacity-50"); // not disabled
     });
   });

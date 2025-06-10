@@ -76,14 +76,14 @@ export const getWorkspacePresence = query({
 // ユーザー情報を含むプレゼンス情報を取得するaction
 export const getWorkspacePresenceWithUsers = action({
   args: { workspaceId: v.id("workspaces") },
-  handler: async (ctx, { workspaceId }) => {
+  handler: async (ctx, { workspaceId }): Promise<any[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("認証が必要です");
     }
 
     // プレゼンス情報を取得
-    const presenceList = await ctx.runQuery(api.presence.getWorkspacePresence, {
+    const presenceList: any[] = await ctx.runQuery(api.presence.getWorkspacePresence, {
       workspaceId,
     });
 
@@ -92,8 +92,8 @@ export const getWorkspacePresenceWithUsers = action({
       secretKey: process.env.CLERK_SECRET_KEY,
     });
 
-    const presenceWithUsers = await Promise.all(
-      presenceList.map(async (presence) => {
+    const presenceWithUsers: any[] = await Promise.all(
+      presenceList.map(async (presence: any) => {
         try {
           const user = await clerk.users.getUser(presence.userId);
           return {

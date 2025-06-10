@@ -35,7 +35,7 @@ import { CalendarIcon, Pencil, AlertTriangle } from "lucide-react";
 import { ja } from "date-fns/locale";
 import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
-import { Doc } from "@/convex/_generated/dataModel";
+import { Doc, Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
 import { useTaskLock } from "@/hooks/use-presence";
 import { useConflictResolution } from "@/hooks/use-conflict-resolution";
@@ -67,9 +67,9 @@ export function EditTaskDialog({
   const [open, setOpen] = React.useState(false);
   const { user } = useUser();
   const getWorkspaceMembers = useAction(api.tasks.getWorkspaceMembers);
-  const { lockTask, unlockTask } = useTaskLock(workspace?._id || "" as any);
+  const { lockTask, unlockTask } = useTaskLock(workspace?._id || "" as Id<"workspaces">);
   const { updateTaskSafely, currentConflicts } = useConflictResolution(
-    workspace?._id || "" as any
+    workspace?._id || "" as Id<"workspaces">
   );
 
   const [title, setTitle] = React.useState(task.title);
@@ -296,6 +296,7 @@ export function EditTaskDialog({
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
                           {member.imageUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={member.imageUrl}
                               alt={getUserDisplayName(member)}

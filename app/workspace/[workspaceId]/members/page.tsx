@@ -55,13 +55,13 @@ export default function WorkspaceMembersPage() {
       const membersInfo = await getWorkspaceMembers({ workspaceId });
 
       // オーナー情報を含むメンバー一覧を作成
-      const membersWithOwnerInfo = membersInfo.map((member: WorkspaceMember) => ({
+      const membersWithOwnerInfo = membersInfo.map((member) => ({
         ...member,
         isOwner: member.id === workspace.ownerId,
       }));
 
       // オーナーを最初に表示するようにソート
-      membersWithOwnerInfo.sort((a: WorkspaceMember, b: WorkspaceMember) => {
+      membersWithOwnerInfo.sort((a, b) => {
         if (a.isOwner) return -1;
         if (b.isOwner) return 1;
         return 0;
@@ -242,6 +242,7 @@ export default function WorkspaceMembersPage() {
                   <div className="flex items-center gap-3 mb-3">
                     <Avatar className="h-10 w-10">
                       {member.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={member.imageUrl}
                           alt={getUserDisplayName(member)}
