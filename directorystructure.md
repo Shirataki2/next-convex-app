@@ -18,20 +18,37 @@
 │   │   └── page.test.tsx                    # ランディングページテスト
 │   ├── components/
 │   │   └── workspace/
-│   │       └── create-workspace-dialog.test.tsx # ワークスペース作成ダイアログテスト
+│   │       ├── create-workspace-dialog.test.tsx # ワークスペース作成ダイアログテスト
+│   │       ├── edit-task-dialog.test.tsx        # タスク編集ダイアログテスト
+│   │       ├── delete-task-dialog.test.tsx      # タスク削除ダイアログテスト
+│   │       ├── invite-member-dialog.test.tsx    # メンバー招待ダイアログテスト
+│   │       └── task-drag-drop.test.tsx          # ドラッグ&ドロップテスト
 │   ├── convex/
 │   │   ├── tasks.test.ts                    # タスク関数テスト
-│   │   └── workspaces.test.ts               # ワークスペース関数テスト
+│   │   ├── workspaces.test.ts               # ワークスペース関数テスト
+│   │   ├── realtime-tasks.test.ts           # リアルタイム関数テスト
+│   │   └── invitations.test.ts              # 招待機能テスト
+│   ├── hooks/
+│   │   ├── use-realtime-tasks.test.ts       # リアルタイムタスクフックテスト
+│   │   └── use-optimistic-task-updates.test.ts # 楽観的更新フックテスト
 │   └── lib/
 │       └── utils.test.ts                    # ユーティリティ関数テスト
 ├── app/                                      # Next.js App Router
 │   ├── dashboard/
 │   │   └── page.tsx                         # ダッシュボードページ
+│   ├── invite/
+│   │   └── [token]/
+│   │       └── page.tsx                     # 招待受け入れページ
 │   ├── login/
 │   │   └── [[...rest]]/
 │   │       └── page.tsx                     # ログインページ（Clerk対応）
 │   ├── workspace/
-│   │   └── page.tsx                         # ワークスペース管理ページ
+│   │   ├── [workspaceId]/
+│   │   │   ├── page.tsx                     # ワークスペース詳細ページ（リアルタイム対応）
+│   │   │   ├── page-old.tsx                 # 旧版ワークスペースページ（参考）
+│   │   │   └── members/
+│   │   │       └── page.tsx             # メンバー管理ページ
+│   │   └── page.tsx                         # ワークスペース一覧ページ
 │   ├── favicon.ico                          # ファビコン
 │   ├── globals.css                          # グローバルスタイル
 │   ├── layout.tsx                           # ルートレイアウト
@@ -42,7 +59,15 @@
 │   │   ├── header.tsx                       # ヘッダーコンポーネント
 │   │   └── landing-header.tsx               # ランディングページヘッダー
 │   ├── workspace/                           # ワークスペース関連コンポーネント
-│   │   └── create-workspace-dialog.tsx     # ワークスペース作成ダイアログ
+│   │   ├── task-card.tsx                    # ドラッグ可能タスクカード
+│   │   ├── task-card-overlay.tsx            # ドラッグ中オーバーレイ
+│   │   ├── task-column.tsx                  # カンバンカラム
+│   │   ├── create-task-dialog.tsx           # タスク作成ダイアログ
+│   │   ├── edit-task-dialog.tsx             # タスク編集ダイアログ
+│   │   ├── delete-task-dialog.tsx           # タスク削除ダイアログ
+│   │   ├── create-workspace-dialog.tsx     # ワークスペース作成ダイアログ
+│   │   ├── invite-member-dialog.tsx         # メンバー招待ダイアログ
+│   │   └── invitation-list.tsx              # 招待一覧コンポーネント
 │   └── ui/                                  # shadcn/uiコンポーネント
 │       ├── accordion.tsx
 │       ├── alert-dialog.tsx
@@ -100,9 +125,12 @@
 │   │   └── server.js                       # サーバー実装
 │   ├── schema.ts                           # データベーススキーマ定義
 │   ├── tasks.ts                            # タスク管理関数
-│   └── workspaces.ts                       # ワークスペース管理関数
+│   ├── workspaces.ts                       # ワークスペース管理関数
+│   └── invitations.ts                      # 招待管理関数
 ├── hooks/                                   # カスタムフック
-│   └── use-mobile.ts                       # モバイル判定フック
+│   ├── use-mobile.ts                       # モバイル判定フック
+│   ├── use-realtime-tasks.ts               # リアルタイムタスクデータ管理
+│   └── use-optimistic-task-updates.ts      # 楽観的更新とエラー処理
 ├── lib/                                     # ユーティリティ
 │   └── utils.ts                            # 共通ユーティリティ関数
 ├── public/                                  # 静的ファイル
@@ -125,6 +153,17 @@
 ├── package.json                           # npm設定
 ├── postcss.config.mjs                     # PostCSS設定
 ├── tsconfig.json                          # TypeScript設定
+├── tests-e2e/                              # E2Eテスト（Playwright）
+│   ├── example.spec.ts                     # サンプルE2Eテスト
+│   └── workspace.spec.ts                   # ワークスペースE2Eテスト
+├── .github/
+│   └── workflows/                          # GitHub Actions
+│       ├── ci.yml                           # CIパイプライン
+│       ├── e2e.yml                         # E2Eテスト
+│       └── production-deploy.yml            # 本番デプロイ
+├── DEPLOYMENT.md                           # デプロイメントガイド
+├── deploy-scripts.md                       # デプロイ戦略
+├── playwright.config.ts                    # Playwright設定
 └── yarn.lock                              # 依存関係ロック
 ```
 
@@ -135,27 +174,32 @@
 - **`page.tsx`**: ランディングページ（TaskFlow紹介）
 - **`login/[[...rest]]/page.tsx`**: Clerk認証ページ（catch-all route）
 - **`dashboard/page.tsx`**: ダッシュボード（要認証）
-- **`workspace/page.tsx`**: ワークスペース管理ページ
+- **`workspace/page.tsx`**: ワークスペース一覧ページ
+- **`workspace/[workspaceId]/page.tsx`**: ワークスペース詳細ページ（リアルタイム同期対応）
+- **`workspace/[workspaceId]/members/page.tsx`**: メンバー管理ページ
+- **`invite/[token]/page.tsx`**: 招待受け入れページ
 - **`layout.tsx`**: アプリ全体のレイアウト
 - **`providers.tsx`**: ClerkProvider + ConvexProvider + ThemeProvider
 
 ### `/convex` - Convexバックエンド
 
-- **`schema.ts`**: データベーススキーマ（workspaces, tasks, taskActivities）
+- **`schema.ts`**: データベーススキーマ（workspaces, tasks, taskActivities, invitations）
 - **`workspaces.ts`**: ワークスペース関連のquery/mutation関数
-- **`tasks.ts`**: タスク管理関連のquery/mutation関数
+- **`tasks.ts`**: タスク管理関連のquery/mutation関数（リアルタイム対応）
+- **`invitations.ts`**: メンバー招待管理関数
 - **`_generated/`**: Convexが自動生成するファイル群（編集禁止）
 
 ### `/components` - Reactコンポーネント
 
 - **`ui/`**: shadcn/ui（再利用可能なUIコンポーネント群）
 - **`layout/`**: レイアウト関連コンポーネント
-- **`workspace/`**: ワークスペース機能コンポーネント
+- **`workspace/`**: ワークスペース機能コンポーネント（ドラッグ&ドロップ、招待管理含む）
 
 ### `/__tests__` - テストファイル
 
-- **`convex/`**: Convex関数のユニットテスト（convex-test使用）
+- **`convex/`**: Convex関数のユニットテスト（convex-test使用、リアルタイム関数含む）
 - **`components/`**: Reactコンポーネントテスト（React Testing Library）
+- **`hooks/`**: カスタムフックテスト（リアルタイム、楽観的更新）
 - **`lib/`**: ユーティリティ関数テスト
 
 ### 設定ファイル
@@ -177,6 +221,8 @@
 - **Tailwind CSS v4**: スタイリング
 - **TypeScript**: 型安全な開発
 - **next-themes**: ダークモード対応
+- **@dnd-kit**: ドラッグ&ドロップ機能
 - **Prettier**: コードフォーマッター
-- **Vitest + React Testing Library**: テストフレームワーク（Jest互換・高速）
-- **convex-test**: Convex関数テスト
+- **Vitest + React Testing Library**: テストフレームワーク（Jest互換・高速・プロジェクト分割）
+- **convex-test**: Convex関数テスト（edge-runtime環境）
+- **Playwright**: E2Eテストフレームワーク

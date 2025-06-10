@@ -78,9 +78,14 @@ npx convex deploy --cmd "yarn build"  # フロントエンド込みデプロイ
 
 ### ✅ ワークスペース機能
 
-- [x] データベーススキーマ設計（workspaces, tasks, taskActivities）
+- [x] データベーススキーマ設計（workspaces, tasks, taskActivities, invitations）
 - [x] ワークスペース作成・管理機能
 - [x] メンバー管理（追加・削除・権限制御）
+- [x] **メンバー招待システム（新機能）**
+  - メール招待機能
+  - 招待トークン生成・管理
+  - 招待受け入れページ
+  - 招待取り消し機能
 - [x] リアルタイムデータ同期
 - [x] ワークスペース一覧ページ
 
@@ -92,7 +97,10 @@ npx convex deploy --cmd "yarn build"  # フロントエンド込みデプロイ
 - [x] タスクカードコンポーネント（ユーザー名・アバター表示）
 - [x] 優先度・期限・担当者設定
 - [x] ステータス別タスク表示
-- [x] リアルタイムタスク同期
+- [x] **リアルタイムタスク同期（新機能）**
+  - Convex useQueryを使用したリアルタイムデータ取得
+  - タスクの作成・更新・削除が即座に全ユーザーに反映
+  - カスタムフック（useRealtimeTasks, useOptimisticTaskUpdates）
 - [x] ドラッグ&ドロップによるタスクステータス変更（dnd-kit使用）
 - [x] カンバン内でのタスク順序変更（ドラッグ&ドロップ、arrayMove使用）
 - [x] 楽観的更新（Optimistic Update）でスムーズなUX
@@ -105,10 +113,11 @@ npx convex deploy --cmd "yarn build"  # フロントエンド込みデプロイ
 ### ✅ テスト環境
 
 - [x] Vitest設定（Jest互換・高速実行・プロジェクト分割）
-- [x] 基本テストスイート（68テストケース実行中）
+- [x] 基本テストスイート（100+テストケース実行中）
 - [x] Reactコンポーネントテスト（React Testing Library・jsdom環境）
 - [x] ユーティリティ関数テスト
 - [x] Convex関数テスト（edge-runtime環境で有効化）
+- [x] カスタムフックテスト（useRealtimeTasks, useOptimisticTaskUpdates）
 - [x] モック環境構築・移行完了
 - [x] Playwright E2Eテスト環境構築
 - [x] GitHub Actions CI/CD（テスト自動実行）
@@ -134,9 +143,10 @@ npx convex deploy --cmd "yarn build"  # フロントエンド込みデプロイ
 
 - [ ] リアルタイムコラボレーション通知
 - [ ] アクティビティフィード
-- [ ] メンバー招待システム
 - [ ] プッシュ通知機能
 - [ ] コメント・メンション機能
+- [ ] リアルタイムプレゼンス表示（誰がオンラインか）
+- [ ] タスク編集競合検出・解決システム
 
 ### 🔄 分析・レポート
 

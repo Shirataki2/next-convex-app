@@ -83,8 +83,11 @@ npx vitest --project=convex     # Convex関数
 
 - `app/`: Next.js App Routerのページとレイアウト
   - `workspace/`: ワークスペース管理ページ
+    - `[workspaceId]/`: ワークスペース詳細ページ（リアルタイム同期対応）
+    - `[workspaceId]/members/`: メンバー管理ページ
   - `dashboard/`: ダッシュボードページ
   - `login/`: 認証ページ
+  - `invite/[token]/`: 招待受け入れページ
 - `components/`: Reactコンポーネント
   - `ui/`: shadcn/uiコンポーネント（自動生成）
   - `layout/`: レイアウトコンポーネント
@@ -96,22 +99,39 @@ npx vitest --project=convex     # Convex関数
     - `edit-task-dialog.tsx`: タスク編集ダイアログ（ユーザー選択対応）
     - `delete-task-dialog.tsx`: タスク削除確認ダイアログ
     - `create-workspace-dialog.tsx`: ワークスペース作成ダイアログ
+    - `invite-member-dialog.tsx`: メンバー招待ダイアログ
+    - `invitation-list.tsx`: 招待一覧コンポーネント
 - `convex/`: Convexバックエンド関数とスキーマ
   - `_generated/`: 自動生成ファイル（編集不可）
   - `workspaces.ts`: ワークスペース管理関数
   - `tasks.ts`: タスク管理関数
     - `getWorkspaceTasks`: ワークスペースのタスク一覧取得
     - `getWorkspaceTasksWithUsers`: ユーザー情報付きタスク一覧取得
+    - `getWorkspaceTasksRealtime`: リアルタイムタスク一覧取得
+    - `getWorkspaceMembersRealtime`: リアルタイムメンバー一覧取得
     - `getWorkspaceMembers`: ワークスペースメンバーのClerkユーザー情報取得
     - `createTask`, `updateTask`, `deleteTask`: タスクCRUD操作
     - `getWorkspaceActivities`: タスクアクティビティ履歴取得
+  - `invitations.ts`: 招待管理関数
+    - `createInvitation`: 招待作成
+    - `acceptInvitation`: 招待受け入れ
+    - `revokeInvitation`: 招待取り消し
+    - `getInviterInfo`: 招待者情報取得
 - `hooks/`: カスタムReactフック
+  - `use-realtime-tasks.ts`: リアルタイムタスクデータ管理
+  - `use-optimistic-task-updates.ts`: 楽観的更新とエラー処理
+  - `use-mobile.ts`: モバイル判定フック
 - `lib/`: ユーティリティ関数
 - `__tests__/`: テストファイル
   - `convex/`: Convex関数テスト
+    - `realtime-tasks.test.ts`: リアルタイム関数テスト
+    - `invitations.test.ts`: 招待機能テスト
   - `components/`: コンポーネントテスト
+  - `hooks/`: カスタムフックテスト
   - `lib/`: ユーティリティテスト
 - `__mocks__/`: モックファイル
+- `tests-e2e/`: E2Eテスト（Playwright）
+- `.github/workflows/`: CI/CDパイプライン
 
 ### 重要な設定
 
@@ -198,6 +218,15 @@ mcp__playwright__browser_take_screenshot
    - `action`: アクション種別
    - `timestamp`: タイムスタンプ
 
+4. **invitations**: ワークスペース招待
+   - `workspaceId`: ワークスペースID
+   - `email`: 招待先メールアドレス
+   - `role`: 役割（member/admin）
+   - `inviterUserId`: 招待者のユーザーID
+   - `token`: 招待トークン
+   - `status`: ステータス（pending/accepted/revoked）
+   - `expiresAt`: 有効期限
+
 ### ドラッグ&ドロップ機能
 
 #### 概要
@@ -267,9 +296,45 @@ if (over.data?.current?.type === "column") {
 - エラーハンドリングと詳細なデバッグログを実装
 - 最小限のバックエンド更新で効率的な同期
 
+### リアルタイム同期機能
+
+#### 概要
+
+ConvexのuseQueryフックを使用して、タスクの変更がリアルタイムで全ユーザーに同期される機能を実装しています。
+
+#### 主要コンポーネント
+
+1. **useRealtimeTasks**: リアルタイムタスクデータ管理
+   - Convex useQueryでタスクとメンバー情報を取得
+   - ユーザー情報のキャッシュ機能
+   - ステータス別のタスクグループ化
+   - 統計情報の自動計算
+
+2. **useOptimisticTaskUpdates**: 楽観的更新とエラー処理
+   - タスクステータス・順序・内容の更新
+   - バッチ更新サポート
+   - エラーハンドリングとロールバック
+   - ローディング状態管理
+
+#### リアルタイムデータフロー
+
+```javascript
+// リアルタイムタスク取得
+const tasks = useQuery(api.tasks.getWorkspaceTasksRealtime, { workspaceId });
+
+// メンバー情報取得
+const members = useQuery(api.tasks.getWorkspaceMembersRealtime, { workspaceId });
+
+// ユーザー情報統合
+const tasksWithUsers = tasks.map(task => ({
+  ...task,
+  assigneeUser: userCache.get(task.assigneeId)
+}));
+```
+
 #### 楽観的更新（Optimistic Update）
 
-ドラッグ&ドロップ操作では、ユーザー体験向上のため楽観的更新を実装：
+ドラッグ&ドロップ操作やタスク編集では、ユーザー体験向上のため楽観的更新を実装：
 
 ##### ステータス変更時
 
