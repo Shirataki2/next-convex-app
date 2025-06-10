@@ -11,7 +11,7 @@ import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { TaskColumn } from "@/components/workspace/task-column";
 import { Id } from "@/convex/_generated/dataModel";
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -56,7 +56,7 @@ export default function WorkspaceDetailPage() {
   const getTasksWithUsers = useAction(api.tasks.getWorkspaceTasksWithUsers);
 
   // タスクとユーザー情報を取得
-  const fetchTasksWithUsers = async () => {
+  const fetchTasksWithUsers = useCallback(async () => {
     if (!workspaceId) return;
 
     try {
@@ -68,11 +68,11 @@ export default function WorkspaceDetailPage() {
     } finally {
       setIsLoadingTasks(false);
     }
-  };
+  }, [workspaceId, getTasksWithUsers]);
 
   useEffect(() => {
     fetchTasksWithUsers();
-  }, [workspaceId]);
+  }, [fetchTasksWithUsers]);
 
   // デバッグ：タスクの変更を監視
   useEffect(() => {

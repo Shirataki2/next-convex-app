@@ -227,10 +227,10 @@ describe("プレゼンス機能", () => {
 
     // 2回目のハートビート（更新）
     const firstLastSeen = presence[0].lastSeen;
-    
+
     // 少し時間を置いてから再度ハートビート
-    await new Promise(resolve => setTimeout(resolve, 10));
-    
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
     await t.run(async (ctx) => {
       const mockAuth = {
         getUserIdentity: async () => ({
@@ -301,10 +301,10 @@ describe("プレゼンス機能", () => {
     });
 
     expect(allPresence).toHaveLength(3);
-    
-    const onlineUsers = allPresence.filter(p => p.status === "online");
-    const awayUsers = allPresence.filter(p => p.status === "away");
-    
+
+    const onlineUsers = allPresence.filter((p) => p.status === "online");
+    const awayUsers = allPresence.filter((p) => p.status === "away");
+
     expect(onlineUsers).toHaveLength(2);
     expect(awayUsers).toHaveLength(1);
     expect(awayUsers[0].userId).toBe("user3");

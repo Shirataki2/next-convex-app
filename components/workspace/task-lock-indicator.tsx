@@ -2,7 +2,12 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useTaskLock } from "@/hooks/use-presence";
 import { Id } from "@/convex/_generated/dataModel";
 import { Edit3, Eye } from "lucide-react";
@@ -25,12 +30,12 @@ interface UserInfo {
   emailAddress?: string | null;
 }
 
-export function TaskLockIndicator({ 
-  taskId, 
-  workspaceId, 
-  className = "" 
+export function TaskLockIndicator({
+  taskId,
+  workspaceId,
+  className = "",
 }: TaskLockIndicatorProps) {
-  const { taskLocks, isTaskLocked, getTaskEditor } = useTaskLock(workspaceId);
+  const { isTaskLocked, getTaskEditor } = useTaskLock(workspaceId);
   const [editorInfo, setEditorInfo] = useState<UserInfo | null>(null);
   const getUserInfo = useAction(api.presence.getWorkspacePresenceWithUsers);
 
@@ -42,7 +47,7 @@ export function TaskLockIndicator({
     if (editorUserId) {
       getUserInfo({ workspaceId })
         .then((presenceData) => {
-          const editor = presenceData.find(p => p.userId === editorUserId);
+          const editor = presenceData.find((p) => p.userId === editorUserId);
           if (editor) {
             setEditorInfo(editor.user);
           }
@@ -82,8 +87,8 @@ export function TaskLockIndicator({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={`flex items-center space-x-1 ${className}`}>
-            <Badge 
-              variant="secondary" 
+            <Badge
+              variant="secondary"
               className="text-xs bg-blue-50 text-blue-700 border-blue-200"
             >
               <Edit3 className="h-3 w-3 mr-1" />
@@ -106,7 +111,10 @@ export function TaskLockIndicator({
                 <span className="font-medium">
                   {getDisplayName(editorInfo)}
                 </span>
-                <span className="text-muted-foreground"> がこのタスクを編集中です</span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  がこのタスクを編集中です
+                </span>
               </>
             ) : (
               "誰かがこのタスクを編集中です"
@@ -119,10 +127,10 @@ export function TaskLockIndicator({
 }
 
 // タスクを閲覧中のユーザーも表示する別のコンポーネント
-export function TaskViewersIndicator({ 
-  taskId, 
-  workspaceId, 
-  className = "" 
+export function TaskViewersIndicator({
+  taskId,
+  workspaceId,
+  className = "",
 }: TaskLockIndicatorProps) {
   const { taskLocks } = useTaskLock(workspaceId);
   const [viewersInfo, setViewersInfo] = useState<UserInfo[]>([]);
@@ -130,7 +138,7 @@ export function TaskViewersIndicator({
 
   // 閲覧中のユーザー一覧を取得
   const viewers = taskLocks.filter(
-    lock => lock.taskId === taskId && lock.lockType === "viewing"
+    (lock) => lock.taskId === taskId && lock.lockType === "viewing"
   );
 
   useEffect(() => {
@@ -138,7 +146,10 @@ export function TaskViewersIndicator({
       getUserInfo({ workspaceId })
         .then((presenceData) => {
           const viewerUsers = viewers
-            .map(viewer => presenceData.find(p => p.userId === viewer.userId)?.user)
+            .map(
+              (viewer) =>
+                presenceData.find((p) => p.userId === viewer.userId)?.user
+            )
             .filter(Boolean) as UserInfo[];
           setViewersInfo(viewerUsers);
         })
@@ -146,7 +157,7 @@ export function TaskViewersIndicator({
     } else {
       setViewersInfo([]);
     }
-  }, [viewers.length, workspaceId, getUserInfo]);
+  }, [viewers, workspaceId, getUserInfo]);
 
   if (viewers.length === 0) {
     return null;
@@ -177,16 +188,16 @@ export function TaskViewersIndicator({
       <Tooltip>
         <TooltipTrigger asChild>
           <div className={`flex items-center space-x-1 ${className}`}>
-            <Badge 
-              variant="outline" 
-              className="text-xs"
-            >
+            <Badge variant="outline" className="text-xs">
               <Eye className="h-3 w-3 mr-1" />
               {viewers.length}人が閲覧中
             </Badge>
             <div className="flex -space-x-1">
-              {viewersInfo.slice(0, 3).map((viewer, index) => (
-                <Avatar key={viewer.id} className="h-4 w-4 border border-background">
+              {viewersInfo.slice(0, 3).map((viewer) => (
+                <Avatar
+                  key={viewer.id}
+                  className="h-4 w-4 border border-background"
+                >
                   <AvatarImage src={viewer.imageUrl || undefined} />
                   <AvatarFallback className="text-xs">
                     {getInitials(viewer)}
@@ -204,10 +215,8 @@ export function TaskViewersIndicator({
         <TooltipContent>
           <div className="text-sm space-y-1">
             <div className="font-medium">閲覧中のユーザー:</div>
-            {viewersInfo.map(viewer => (
-              <div key={viewer.id}>
-                {getDisplayName(viewer)}
-              </div>
+            {viewersInfo.map((viewer) => (
+              <div key={viewer.id}>{getDisplayName(viewer)}</div>
             ))}
           </div>
         </TooltipContent>

@@ -22,6 +22,14 @@ import {
   UserPlus,
 } from "lucide-react";
 
+type InviterInfo = {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  emailAddress?: string;
+  imageUrl?: string;
+};
+
 export default function InviteAcceptPage() {
   const params = useParams();
   const router = useRouter();
@@ -29,7 +37,7 @@ export default function InviteAcceptPage() {
   const { user, isLoaded } = useUser();
 
   const [isAccepting, setIsAccepting] = useState(false);
-  const [inviterInfo, setInviterInfo] = useState<any>(null);
+  const [inviterInfo, setInviterInfo] = useState<InviterInfo | null>(null);
   const [loadingInviter, setLoadingInviter] = useState(true);
 
   // 招待情報を取得
@@ -84,7 +92,7 @@ export default function InviteAcceptPage() {
     }
   };
 
-  const getUserDisplayName = (userInfo: any) => {
+  const getUserDisplayName = (userInfo: InviterInfo | null) => {
     if (!userInfo) return "不明なユーザー";
 
     if (userInfo.firstName && userInfo.lastName) {

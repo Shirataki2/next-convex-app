@@ -23,9 +23,18 @@ import {
 import { useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useUser } from "@clerk/nextjs";
-import { Doc, Id } from "@/convex/_generated/dataModel";
+import { Doc } from "@/convex/_generated/dataModel";
 import { UserPlus, Mail, Crown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+type ExistingUser = {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  emailAddress: string;
+  imageUrl?: string;
+};
 
 interface InviteMemberDialogProps {
   workspace: Doc<"workspaces">;
@@ -40,7 +49,7 @@ export function InviteMemberDialog({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"member" | "admin">("member");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [existingUser, setExistingUser] = useState<any>(null);
+  const [existingUser, setExistingUser] = useState<ExistingUser | null>(null);
   const [checkingUser, setCheckingUser] = useState(false);
 
   const { user } = useUser();

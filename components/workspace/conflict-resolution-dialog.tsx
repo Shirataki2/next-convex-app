@@ -15,22 +15,30 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  AlertTriangle, 
-  Users, 
-  Clock, 
+import {
+  AlertTriangle,
+  Clock,
   RefreshCw,
   Save,
   Merge,
   X,
   CheckCircle,
 } from "lucide-react";
-import { 
-  ConflictInfo, 
+import {
+  ConflictInfo,
   getConflictSuggestions,
   useConflictResolution,
 } from "@/hooks/use-conflict-resolution";
 import { Id } from "@/convex/_generated/dataModel";
+
+// ユーザー情報の型定義
+type UserInfo = {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  username?: string | null;
+  emailAddress?: string;
+};
 
 interface ConflictResolutionDialogProps {
   open: boolean;
@@ -66,7 +74,7 @@ function getConflictTypeColor(type: string): string {
   }
 }
 
-function getUserDisplayName(user: any): string {
+function getUserDisplayName(user: UserInfo | null): string {
   if (!user) return "不明なユーザー";
   if (user.id === "system") return "システム";
   if (user.firstName && user.lastName) {
@@ -75,7 +83,7 @@ function getUserDisplayName(user: any): string {
   return user.username || user.emailAddress || "不明なユーザー";
 }
 
-function getInitials(user: any): string {
+function getInitials(user: UserInfo | null): string {
   if (!user) return "?";
   if (user.id === "system") return "SYS";
   if (user.firstName && user.lastName) {
@@ -97,14 +105,17 @@ export function ConflictResolutionDialog({
   workspaceId,
   onResolved,
 }: ConflictResolutionDialogProps) {
-  const { resolveTaskConflict, isResolvingConflict } = useConflictResolution(workspaceId);
-  const [selectedResolution, setSelectedResolution] = useState<string | null>(null);
+  const { resolveTaskConflict, isResolvingConflict } =
+    useConflictResolution(workspaceId);
+  const [selectedResolution, setSelectedResolution] = useState<string | null>(
+    null
+  );
 
-  const suggestions = getConflictSuggestions(conflict.conflictType as any);
+  const suggestions = getConflictSuggestions(conflict.conflictType);
 
   const handleResolve = async (resolution: string) => {
     try {
-      await resolveTaskConflict(conflict.conflictId, resolution as any);
+      await resolveTaskConflict(conflict.conflictId, resolution);
       onOpenChange(false);
       onResolved?.();
     } catch (error) {
@@ -146,7 +157,9 @@ export function ConflictResolutionDialog({
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center justify-between">
                 競合の詳細
-                <Badge variant={getConflictTypeColor(conflict.conflictType) as any}>
+                <Badge
+                  variant={getConflictTypeColor(conflict.conflictType) as "default" | "secondary" | "destructive" | "outline"}
+                >
                   {getConflictTypeLabel(conflict.conflictType)}
                 </Badge>
               </CardTitle>
@@ -162,7 +175,7 @@ export function ConflictResolutionDialog({
               {/* 関係ユーザー */}
               <div className="space-y-3">
                 <div className="text-sm font-medium">関係するユーザー</div>
-                
+
                 <div className="flex items-center gap-3">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={conflict.initiatingUser?.imageUrl} />
@@ -193,8 +206,8 @@ export function ConflictResolutionDialog({
                         {getUserDisplayName(conflict.conflictingUser)}
                       </div>
                       <div className="text-xs text-muted-foreground">
-                        {conflict.conflictingUser?.id === "system" 
-                          ? "システム（データ更新）" 
+                        {conflict.conflictingUser?.id === "system"
+                          ? "システム（データ更新）"
                           : "同時編集中のユーザー"}
                       </div>
                     </div>
@@ -207,11 +220,15 @@ export function ConflictResolutionDialog({
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
                   <div className="font-medium">期待バージョン</div>
-                  <div className="text-muted-foreground">v{conflict.initiatingVersion}</div>
+                  <div className="text-muted-foreground">
+                    v{conflict.initiatingVersion}
+                  </div>
                 </div>
                 <div>
                   <div className="font-medium">現在のバージョン</div>
-                  <div className="text-muted-foreground">v{conflict.conflictingVersion}</div>
+                  <div className="text-muted-foreground">
+                    v{conflict.conflictingVersion}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -219,32 +236,39 @@ export function ConflictResolutionDialog({
 
           {/* 解決オプション */}
           <div className="space-y-3">
-            <div className="text-sm font-medium">解決方法を選択してください</div>
-            
+            <div className="text-sm font-medium">
+              解決方法を選択してください
+            </div>
+
             {suggestions.map((suggestion) => (
-              <Card 
+              <Card
                 key={suggestion.action}
                 className={`cursor-pointer transition-colors ${
-                  selectedResolution === suggestion.action 
-                    ? "border-primary bg-primary/5" 
+                  selectedResolution === suggestion.action
+                    ? "border-primary bg-primary/5"
                     : "hover:bg-muted/50"
                 } ${suggestion.recommended ? "border-green-200 bg-green-50" : ""}`}
                 onClick={() => setSelectedResolution(suggestion.action)}
               >
                 <CardContent className="p-4">
                   <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-full ${
-                      suggestion.recommended 
-                        ? "bg-green-100 text-green-600" 
-                        : "bg-muted text-muted-foreground"
-                    }`}>
+                    <div
+                      className={`p-2 rounded-full ${
+                        suggestion.recommended
+                          ? "bg-green-100 text-green-600"
+                          : "bg-muted text-muted-foreground"
+                      }`}
+                    >
                       {getActionIcon(suggestion.action)}
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <div className="font-medium">{suggestion.label}</div>
                         {suggestion.recommended && (
-                          <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
+                          <Badge
+                            variant="outline"
+                            className="text-xs bg-green-50 text-green-700 border-green-200"
+                          >
                             推奨
                           </Badge>
                         )}
@@ -272,17 +296,21 @@ export function ConflictResolutionDialog({
         </div>
 
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isResolvingConflict}
           >
             キャンセル
           </Button>
-          <Button 
-            onClick={() => selectedResolution && handleResolve(selectedResolution)}
+          <Button
+            onClick={() =>
+              selectedResolution && handleResolve(selectedResolution)
+            }
             disabled={!selectedResolution || isResolvingConflict}
-            variant={selectedResolution === "force_save" ? "destructive" : "default"}
+            variant={
+              selectedResolution === "force_save" ? "destructive" : "default"
+            }
           >
             {isResolvingConflict ? (
               <>

@@ -89,8 +89,8 @@ describe("通知システム", () => {
     });
 
     expect(notifications).toHaveLength(3);
-    expect(notifications.every(n => n.senderUserId === "user1")).toBe(true);
-    expect(notifications.every(n => n.type === "user_joined")).toBe(true);
+    expect(notifications.every((n) => n.senderUserId === "user1")).toBe(true);
+    expect(notifications.every((n) => n.type === "user_joined")).toBe(true);
   });
 
   test("ユーザーの通知一覧取得", async () => {
@@ -160,7 +160,7 @@ describe("通知システム", () => {
     });
 
     expect(notifications).toHaveLength(3);
-    
+
     // 新しい順にソートされていることを確認
     expect(notifications[0].type).toBe("task_assigned");
     expect(notifications[1].type).toBe("task_updated");
@@ -183,7 +183,7 @@ describe("通知システム", () => {
     });
 
     expect(unreadNotifications).toHaveLength(2);
-    expect(unreadNotifications.every(n => !n.isRead)).toBe(true);
+    expect(unreadNotifications.every((n) => !n.isRead)).toBe(true);
   });
 
   test("通知の既読マーク", async () => {
@@ -282,7 +282,9 @@ describe("通知システム", () => {
       };
       ctx.auth = mockAuth;
 
-      return await api.notifications.markAllNotificationsAsRead(ctx, { workspaceId });
+      return await api.notifications.markAllNotificationsAsRead(ctx, {
+        workspaceId,
+      });
     });
 
     expect(markedCount).toBe(2);
@@ -295,7 +297,7 @@ describe("通知システム", () => {
         .collect();
     });
 
-    expect(notifications.every(n => n.isRead)).toBe(true);
+    expect(notifications.every((n) => n.isRead)).toBe(true);
   });
 
   test("未読通知数の取得", async () => {
@@ -359,7 +361,9 @@ describe("通知システム", () => {
       };
       ctx.auth = mockAuth;
 
-      return await api.notifications.getUnreadNotificationCount(ctx, { workspaceId });
+      return await api.notifications.getUnreadNotificationCount(ctx, {
+        workspaceId,
+      });
     });
 
     expect(unreadCount).toBe(2);
@@ -413,11 +417,11 @@ describe("通知システム", () => {
     });
 
     expect(notifications).toHaveLength(2); // user2とuser3に送信
-    expect(notifications.every(n => n.senderUserId === "user1")).toBe(true);
-    expect(notifications.every(n => n.type === "task_created")).toBe(true);
-    expect(notifications.every(n => n.relatedTaskId === taskId)).toBe(true);
-    
-    const targetUserIds = notifications.map(n => n.targetUserId).sort();
+    expect(notifications.every((n) => n.senderUserId === "user1")).toBe(true);
+    expect(notifications.every((n) => n.type === "task_created")).toBe(true);
+    expect(notifications.every((n) => n.relatedTaskId === taskId)).toBe(true);
+
+    const targetUserIds = notifications.map((n) => n.targetUserId).sort();
     expect(targetUserIds).toEqual(["user2", "user3"]);
   });
 
@@ -473,11 +477,13 @@ describe("通知システム", () => {
       };
       ctx.auth = mockAuth;
 
-      return await api.notifications.getWorkspaceActivityFeed(ctx, { workspaceId });
+      return await api.notifications.getWorkspaceActivityFeed(ctx, {
+        workspaceId,
+      });
     });
 
     expect(activities).toHaveLength(2);
-    
+
     // 新しい順にソートされていることを確認
     expect(activities[0].action).toBe("updated");
     expect(activities[1].action).toBe("created");

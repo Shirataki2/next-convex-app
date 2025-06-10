@@ -4,7 +4,10 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 
-export type ConflictType = "simultaneous_edit" | "stale_data" | "permission_denied";
+export type ConflictType =
+  | "simultaneous_edit"
+  | "stale_data"
+  | "permission_denied";
 
 export interface ConflictInfo {
   conflictId: string;
@@ -37,11 +40,17 @@ export interface ConflictCheckResult {
 
 // 競合検出と解決のメインフック
 export function useConflictResolution(workspaceId: Id<"workspaces">) {
-  const checkForConflicts = useMutation(api.conflictResolution.checkForConflicts);
+  const checkForConflicts = useMutation(
+    api.conflictResolution.checkForConflicts
+  );
   const resolveConflict = useMutation(api.conflictResolution.resolveConflict);
-  const updateTaskWithConflictCheck = useMutation(api.conflictResolution.updateTaskWithConflictCheck);
-  const getConflictsWithUserInfo = useAction(api.conflictResolution.getConflictsWithUserInfo);
-  
+  const updateTaskWithConflictCheck = useMutation(
+    api.conflictResolution.updateTaskWithConflictCheck
+  );
+  const getConflictsWithUserInfo = useAction(
+    api.conflictResolution.getConflictsWithUserInfo
+  );
+
   const [currentConflicts, setCurrentConflicts] = useState<ConflictInfo[]>([]);
   const [isCheckingConflicts, setIsCheckingConflicts] = useState(false);
   const [isResolvingConflict, setIsResolvingConflict] = useState(false);
@@ -121,11 +130,11 @@ export function useConflictResolution(workspaceId: Id<"workspaces">) {
         if (error.message?.includes("CONFLICT_DETECTED")) {
           const conflictData = JSON.parse(error.message);
           const conflict = conflictData.conflict;
-          
+
           toast.error("編集競合が発生しました", {
             description: getConflictMessage(conflict.conflictType),
           });
-          
+
           return {
             success: false,
             conflict: conflict,
@@ -156,10 +165,10 @@ export function useConflictResolution(workspaceId: Id<"workspaces">) {
         });
 
         toast.success("競合を解決しました");
-        
+
         // 競合一覧を更新
         await fetchConflicts();
-        
+
         return { success: true };
       } catch (error) {
         console.error("競合解決に失敗:", error);
@@ -175,7 +184,7 @@ export function useConflictResolution(workspaceId: Id<"workspaces">) {
   // 特定のタスクの競合を取得
   const getTaskConflicts = useCallback(
     (taskId: Id<"tasks">) => {
-      return currentConflicts.filter(conflict => conflict.taskId === taskId);
+      return currentConflicts.filter((conflict) => conflict.taskId === taskId);
     },
     [currentConflicts]
   );
@@ -184,7 +193,7 @@ export function useConflictResolution(workspaceId: Id<"workspaces">) {
   const hasTaskConflict = useCallback(
     (taskId: Id<"tasks">) => {
       return currentConflicts.some(
-        conflict => conflict.taskId === taskId && !conflict.isResolved
+        (conflict) => conflict.taskId === taskId && !conflict.isResolved
       );
     },
     [currentConflicts]
@@ -205,8 +214,10 @@ export function useConflictResolution(workspaceId: Id<"workspaces">) {
 
 // 特定のタスクの競合状態を監視するフック
 export function useTaskConflictStatus(taskId: Id<"tasks">) {
-  const taskConflicts = useQuery(api.conflictResolution.getTaskConflicts, { taskId });
-  
+  const taskConflicts = useQuery(api.conflictResolution.getTaskConflicts, {
+    taskId,
+  });
+
   const hasActiveConflict = taskConflicts && taskConflicts.length > 0;
   const latestConflict = taskConflicts?.[0]; // 最新の競合
 
@@ -259,7 +270,7 @@ export function getConflictSuggestions(conflictType: ConflictType): Array<{
           description: "両方の変更を統合して保存します",
         },
       ];
-    
+
     case "stale_data":
       return [
         {
@@ -274,7 +285,7 @@ export function getConflictSuggestions(conflictType: ConflictType): Array<{
           description: "現在の変更を強制的に保存します",
         },
       ];
-    
+
     default:
       return [
         {

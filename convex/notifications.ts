@@ -5,11 +5,11 @@ import { api } from "./_generated/api";
 import { createClerkClient } from "@clerk/backend";
 
 // 通知の種類
-export type NotificationType = 
-  | "task_created" 
-  | "task_updated" 
-  | "task_assigned" 
-  | "task_completed" 
+export type NotificationType =
+  | "task_created"
+  | "task_updated"
+  | "task_assigned"
+  | "task_completed"
   | "task_commented"
   | "user_joined"
   | "user_left"
@@ -83,7 +83,7 @@ export const createBulkNotification = mutation({
 
     // 除外ユーザーを除いたメンバー一覧
     const targetUsers = workspace.members.filter(
-      memberId => memberId !== (args.excludeUserId || identity.subject)
+      (memberId) => memberId !== (args.excludeUserId || identity.subject)
     );
 
     // 各メンバーに通知を作成
@@ -112,7 +112,7 @@ export const createBulkNotification = mutation({
 
 // ユーザーの通知一覧取得
 export const getUserNotifications = query({
-  args: { 
+  args: {
     workspaceId: v.optional(v.id("workspaces")),
     limit: v.optional(v.number()),
     unreadOnly: v.optional(v.boolean()),
@@ -125,7 +125,9 @@ export const getUserNotifications = query({
 
     let query = ctx.db
       .query("notifications")
-      .withIndex("by_target_user", (q) => q.eq("targetUserId", identity.subject));
+      .withIndex("by_target_user", (q) =>
+        q.eq("targetUserId", identity.subject)
+      );
 
     if (workspaceId) {
       query = query.filter((q) => q.eq(q.field("workspaceId"), workspaceId));
@@ -135,9 +137,7 @@ export const getUserNotifications = query({
       query = query.filter((q) => q.eq(q.field("isRead"), false));
     }
 
-    const notifications = await query
-      .order("desc")
-      .take(limit);
+    const notifications = await query.order("desc").take(limit);
 
     return notifications;
   },
@@ -172,8 +172,10 @@ export const markAllNotificationsAsRead = mutation({
 
     const unreadNotifications = await ctx.db
       .query("notifications")
-      .withIndex("by_target_user", (q) => q.eq("targetUserId", identity.subject))
-      .filter((q) => 
+      .withIndex("by_target_user", (q) =>
+        q.eq("targetUserId", identity.subject)
+      )
+      .filter((q) =>
         q.and(
           q.eq(q.field("workspaceId"), workspaceId),
           q.eq(q.field("isRead"), false)
@@ -182,7 +184,7 @@ export const markAllNotificationsAsRead = mutation({
       .collect();
 
     await Promise.all(
-      unreadNotifications.map(notification =>
+      unreadNotifications.map((notification) =>
         ctx.db.patch(notification._id, { isRead: true })
       )
     );
@@ -202,7 +204,9 @@ export const getUnreadNotificationCount = query({
 
     let query = ctx.db
       .query("notifications")
-      .withIndex("by_target_user", (q) => q.eq("targetUserId", identity.subject))
+      .withIndex("by_target_user", (q) =>
+        q.eq("targetUserId", identity.subject)
+      )
       .filter((q) => q.eq(q.field("isRead"), false));
 
     if (workspaceId) {
@@ -216,7 +220,7 @@ export const getUnreadNotificationCount = query({
 
 // ユーザー情報付き通知を取得
 export const getNotificationsWithUserInfo = action({
-  args: { 
+  args: {
     workspaceId: v.optional(v.id("workspaces")),
     limit: v.optional(v.number()),
     unreadOnly: v.optional(v.boolean()),
@@ -228,7 +232,10 @@ export const getNotificationsWithUserInfo = action({
     }
 
     // 通知を取得
-    const notifications = await ctx.runQuery(api.notifications.getUserNotifications, args);
+    const notifications = await ctx.runQuery(
+      api.notifications.getUserNotifications,
+      args
+    );
 
     if (notifications.length === 0) {
       return [];
@@ -239,13 +246,15 @@ export const getNotificationsWithUserInfo = action({
       secretKey: process.env.CLERK_SECRET_KEY,
     });
 
-    const userIds = Array.from(new Set([
-      ...notifications.map(n => n.senderUserId),
-      ...notifications.map(n => n.relatedUserId).filter(Boolean),
-    ])) as string[];
+    const userIds = Array.from(
+      new Set([
+        ...notifications.map((n) => n.senderUserId),
+        ...notifications.map((n) => n.relatedUserId).filter(Boolean),
+      ])
+    ) as string[];
 
     const userInfoMap = new Map();
-    
+
     for (const userId of userIds) {
       try {
         const user = await clerk.users.getUser(userId);
@@ -271,10 +280,12 @@ export const getNotificationsWithUserInfo = action({
     }
 
     // 通知にユーザー情報を追加
-    return notifications.map(notification => ({
+    return notifications.map((notification) => ({
       ...notification,
       senderUser: userInfoMap.get(notification.senderUserId),
-      relatedUser: notification.relatedUserId ? userInfoMap.get(notification.relatedUserId) : null,
+      relatedUser: notification.relatedUserId
+        ? userInfoMap.get(notification.relatedUserId)
+        : null,
     }));
   },
 });
@@ -291,7 +302,15 @@ export const createTaskNotification = mutation({
     metadata: v.optional(v.any()),
   },
   handler: async (ctx, args) => {
-    const { taskId, workspaceId, type, actionUserId, taskTitle, assigneeId, metadata } = args;
+    const {
+      taskId,
+      workspaceId,
+      type,
+      actionUserId,
+      taskTitle,
+      assigneeId,
+      metadata,
+    } = args;
 
     let title = "";
     let message = "";
@@ -309,14 +328,14 @@ export const createTaskNotification = mutation({
         title = "新しいタスクが作成されました";
         message = `${taskTitle} が作成されました`;
         priority = "medium";
-        targetUsers = workspace.members.filter(id => id !== actionUserId);
+        targetUsers = workspace.members.filter((id) => id !== actionUserId);
         break;
 
       case "task_updated":
         title = "タスクが更新されました";
         message = `${taskTitle} が更新されました`;
         priority = "low";
-        targetUsers = workspace.members.filter(id => id !== actionUserId);
+        targetUsers = workspace.members.filter((id) => id !== actionUserId);
         break;
 
       case "task_assigned":
@@ -330,7 +349,7 @@ export const createTaskNotification = mutation({
         title = "タスクが完了しました";
         message = `${taskTitle} が完了しました`;
         priority = "medium";
-        targetUsers = workspace.members.filter(id => id !== actionUserId);
+        targetUsers = workspace.members.filter((id) => id !== actionUserId);
         break;
 
       default:
@@ -369,7 +388,7 @@ export const cleanupOldNotifications = mutation({
 
     const oldNotifications = await ctx.db
       .query("notifications")
-      .filter((q) => 
+      .filter((q) =>
         q.and(
           q.lt(q.field("createdAt"), thirtyDaysAgo),
           q.eq(q.field("isRead"), true)
@@ -387,7 +406,7 @@ export const cleanupOldNotifications = mutation({
 
 // リアルタイムアクティビティフィード
 export const getWorkspaceActivityFeed = query({
-  args: { 
+  args: {
     workspaceId: v.id("workspaces"),
     limit: v.optional(v.number()),
   },
@@ -410,7 +429,7 @@ export const getWorkspaceActivityFeed = query({
 
 // ユーザー情報付きアクティビティフィード
 export const getActivityFeedWithUserInfo = action({
-  args: { 
+  args: {
     workspaceId: v.id("workspaces"),
     limit: v.optional(v.number()),
   },
@@ -421,7 +440,10 @@ export const getActivityFeedWithUserInfo = action({
     }
 
     // アクティビティを取得
-    const activities = await ctx.runQuery(api.notifications.getWorkspaceActivityFeed, args);
+    const activities = await ctx.runQuery(
+      api.notifications.getWorkspaceActivityFeed,
+      args
+    );
 
     if (activities.length === 0) {
       return [];
@@ -432,8 +454,8 @@ export const getActivityFeedWithUserInfo = action({
       secretKey: process.env.CLERK_SECRET_KEY,
     });
 
-    const userIds = Array.from(new Set(activities.map(a => a.userId)));
-    const taskIds = Array.from(new Set(activities.map(a => a.taskId)));
+    const userIds = Array.from(new Set(activities.map((a) => a.userId)));
+    const taskIds = Array.from(new Set(activities.map((a) => a.taskId)));
 
     const userInfoMap = new Map();
     const taskInfoMap = new Map();
@@ -476,7 +498,7 @@ export const getActivityFeedWithUserInfo = action({
     }
 
     // アクティビティにユーザー情報とタスク情報を追加
-    return activities.map(activity => ({
+    return activities.map((activity) => ({
       ...activity,
       user: userInfoMap.get(activity.userId),
       task: taskInfoMap.get(activity.taskId),

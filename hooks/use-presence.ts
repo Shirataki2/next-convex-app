@@ -70,7 +70,7 @@ export function usePresence(workspaceId: Id<"workspaces">) {
       if (heartbeatIntervalRef.current) {
         clearInterval(heartbeatIntervalRef.current);
       }
-      
+
       heartbeatIntervalRef.current = setInterval(sendHeartbeat, 30 * 1000);
     };
 
@@ -79,7 +79,7 @@ export function usePresence(workspaceId: Id<"workspaces">) {
 
     // 即座にオンライン状態に設定
     updatePresence("online");
-    
+
     // ハートビート開始
     startHeartbeat();
 
@@ -113,7 +113,7 @@ export function usePresence(workspaceId: Id<"workspaces">) {
       }
       document.removeEventListener("visibilitychange", handleVisibilityChange);
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      
+
       // オフライン状態に設定
       updatePresence("offline");
     };
@@ -132,7 +132,9 @@ export function usePresence(workspaceId: Id<"workspaces">) {
 export function useTaskLock(workspaceId: Id<"workspaces">) {
   const setTaskLockMutation = useMutation(api.presence.setTaskLock);
   const removeTaskLockMutation = useMutation(api.presence.removeTaskLock);
-  const taskLocks = useQuery(api.presence.getWorkspaceTaskLocks, { workspaceId });
+  const taskLocks = useQuery(api.presence.getWorkspaceTaskLocks, {
+    workspaceId,
+  });
 
   // タスクロックを設定
   const lockTask = useCallback(

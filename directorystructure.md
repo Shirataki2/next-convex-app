@@ -22,15 +22,22 @@
 │   │       ├── edit-task-dialog.test.tsx        # タスク編集ダイアログテスト
 │   │       ├── delete-task-dialog.test.tsx      # タスク削除ダイアログテスト
 │   │       ├── invite-member-dialog.test.tsx    # メンバー招待ダイアログテスト
-│   │       └── task-drag-drop.test.tsx          # ドラッグ&ドロップテスト
+│   │       ├── task-drag-drop.test.tsx          # ドラッグ&ドロップテスト
+│   │       └── workspace-presence.test.tsx      # プレゼンス機能テスト
 │   ├── convex/
 │   │   ├── tasks.test.ts                    # タスク関数テスト
 │   │   ├── workspaces.test.ts               # ワークスペース関数テスト
 │   │   ├── realtime-tasks.test.ts           # リアルタイム関数テスト
-│   │   └── invitations.test.ts              # 招待機能テスト
+│   │   ├── invitations.test.ts              # 招待機能テスト
+│   │   ├── presence.test.ts                 # プレゼンス機能テスト
+│   │   ├── conflict-resolution.test.ts      # 競合解決機能テスト
+│   │   └── notifications.test.ts            # 通知機能テスト
 │   ├── hooks/
 │   │   ├── use-realtime-tasks.test.ts       # リアルタイムタスクフックテスト
-│   │   └── use-optimistic-task-updates.test.ts # 楽観的更新フックテスト
+│   │   ├── use-optimistic-task-updates.test.ts # 楽観的更新フックテスト
+│   │   ├── use-presence.test.ts             # プレゼンスフックテスト
+│   │   ├── use-conflict-resolution.test.ts  # 競合解決フックテスト
+│   │   └── use-notifications.test.ts        # 通知フックテスト
 │   └── lib/
 │       └── utils.test.ts                    # ユーティリティ関数テスト
 ├── app/                                      # Next.js App Router
@@ -67,7 +74,12 @@
 │   │   ├── delete-task-dialog.tsx           # タスク削除ダイアログ
 │   │   ├── create-workspace-dialog.tsx     # ワークスペース作成ダイアログ
 │   │   ├── invite-member-dialog.tsx         # メンバー招待ダイアログ
-│   │   └── invitation-list.tsx              # 招待一覧コンポーネント
+│   │   ├── invitation-list.tsx              # 招待一覧コンポーネント
+│   │   ├── workspace-presence.tsx           # リアルタイムプレゼンス表示
+│   │   ├── conflict-monitor.tsx             # 競合検出・監視コンポーネント
+│   │   ├── conflict-resolution-dialog.tsx   # 競合解決ダイアログ
+│   │   ├── notification-panel.tsx           # 通知パネル・アクティビティフィード
+│   │   └── task-lock-indicator.tsx          # タスクロック表示
 │   └── ui/                                  # shadcn/uiコンポーネント
 │       ├── accordion.tsx
 │       ├── alert-dialog.tsx
@@ -123,14 +135,21 @@
 │   │   ├── dataModel.d.ts                  # データモデル型定義
 │   │   ├── server.d.ts                     # サーバー型定義
 │   │   └── server.js                       # サーバー実装
-│   ├── schema.ts                           # データベーススキーマ定義
-│   ├── tasks.ts                            # タスク管理関数
+│   ├── auth.config.js                      # Convex-Clerk認証設定
+│   ├── schema.ts                           # データベーススキーマ定義（インデックス最適化済み）
+│   ├── tasks.ts                            # タスク管理関数（リアルタイム対応）
 │   ├── workspaces.ts                       # ワークスペース管理関数
-│   └── invitations.ts                      # 招待管理関数
+│   ├── invitations.ts                      # 招待管理関数
+│   ├── presence.ts                         # プレゼンス管理関数
+│   ├── conflictResolution.ts               # 競合検出・解決関数
+│   └── notifications.ts                    # 通知管理関数
 ├── hooks/                                   # カスタムフック
 │   ├── use-mobile.ts                       # モバイル判定フック
-│   ├── use-realtime-tasks.ts               # リアルタイムタスクデータ管理
-│   └── use-optimistic-task-updates.ts      # 楽観的更新とエラー処理
+│   ├── use-realtime-tasks.ts               # リアルタイムタスクデータ管理（楽観的更新統合）
+│   ├── use-optimistic-task-updates.ts      # 楽観的更新とエラー処理
+│   ├── use-presence.ts                     # リアルタイムプレゼンス・タスクロック管理
+│   ├── use-conflict-resolution.ts          # 競合検出・解決処理
+│   └── use-notifications.ts                # 通知・アクティビティフィード管理
 ├── lib/                                     # ユーティリティ
 │   └── utils.ts                            # 共通ユーティリティ関数
 ├── public/                                  # 静的ファイル
@@ -183,23 +202,27 @@
 
 ### `/convex` - Convexバックエンド
 
-- **`schema.ts`**: データベーススキーマ（workspaces, tasks, taskActivities, invitations）
+- **`auth.config.js`**: Convex-Clerk認証統合設定
+- **`schema.ts`**: データベーススキーマ（全テーブルにインデックス最適化済み）
 - **`workspaces.ts`**: ワークスペース関連のquery/mutation関数
 - **`tasks.ts`**: タスク管理関連のquery/mutation関数（リアルタイム対応）
 - **`invitations.ts`**: メンバー招待管理関数
+- **`presence.ts`**: リアルタイムプレゼンス・タスクロック管理関数
+- **`conflictResolution.ts`**: 競合検出・解決関数（ファイル名修正済み）
+- **`notifications.ts`**: 通知・アクティビティフィード管理関数
 - **`_generated/`**: Convexが自動生成するファイル群（編集禁止）
 
 ### `/components` - Reactコンポーネント
 
 - **`ui/`**: shadcn/ui（再利用可能なUIコンポーネント群）
 - **`layout/`**: レイアウト関連コンポーネント
-- **`workspace/`**: ワークスペース機能コンポーネント（ドラッグ&ドロップ、招待管理含む）
+- **`workspace/`**: ワークスペース機能コンポーネント（ドラッグ&ドロップ、招待管理、リアルタイム機能含む）
 
 ### `/__tests__` - テストファイル
 
-- **`convex/`**: Convex関数のユニットテスト（convex-test使用、リアルタイム関数含む）
-- **`components/`**: Reactコンポーネントテスト（React Testing Library）
-- **`hooks/`**: カスタムフックテスト（リアルタイム、楽観的更新）
+- **`convex/`**: Convex関数のユニットテスト（convex-test使用、リアルタイム・プレゼンス・競合・通知機能含む）
+- **`components/`**: Reactコンポーネントテスト（React Testing Library、リアルタイム機能含む）
+- **`hooks/`**: カスタムフックテスト（リアルタイム、楽観的更新、プレゼンス、競合解決、通知）
 - **`lib/`**: ユーティリティ関数テスト
 
 ### 設定ファイル

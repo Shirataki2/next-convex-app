@@ -1,0 +1,17 @@
+yarn run v1.22.22
+$ next dev --turbopack
+   ▲ Next.js 15.3.3 (Turbopack)
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.51:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ○ Compiling middleware ...
+ ✓ Compiled middleware in 623ms
+ ✓ Ready in 2.9s
+ ○ Compiling /workspace/[workspaceId] ...
+ ✓ Compiled /workspace/[workspaceId] in 6.2s
+ GET /workspace/j576pqd8s06bxmwmx7vpg39pxn7hc98m 200 in 9510ms
+ ✓ Compiled /favicon.ico in 341ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 630ms
+[?25h

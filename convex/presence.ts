@@ -62,7 +62,7 @@ export const getWorkspacePresence = query({
 
     // 最近のプレゼンス情報を取得（5分以内にアクティビティがあったユーザー）
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-    
+
     const presenceList = await ctx.db
       .query("userPresence")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))
@@ -207,7 +207,7 @@ export const getWorkspaceTaskLocks = query({
 
     // 最近のロック情報を取得（5分以内）
     const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
-    
+
     const locks = await ctx.db
       .query("taskLocks")
       .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId))

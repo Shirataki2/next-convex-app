@@ -15,6 +15,7 @@ import { useUser } from "@clerk/nextjs";
 import { api } from "@/convex/_generated/api";
 import { CreateWorkspaceDialog } from "@/components/workspace/create-workspace-dialog";
 import Link from "next/link";
+import { Doc } from "@/convex/_generated/dataModel";
 
 export default function WorkspacePage() {
   const { user } = useUser();
@@ -76,7 +77,7 @@ export default function WorkspacePage() {
         {/* Workspace Grid */}
         {workspaces && workspaces.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {workspaces.map((workspace) => (
+            {workspaces.map((workspace: Doc<"workspaces">) => (
               <Link
                 key={workspace._id}
                 href={`/workspace/${workspace._id}`}

@@ -5,7 +5,10 @@ import { createClerkClient } from "@clerk/backend";
 import { api } from "./_generated/api";
 
 // 競合の種類
-export type ConflictType = "simultaneous_edit" | "stale_data" | "permission_denied";
+export type ConflictType =
+  | "simultaneous_edit"
+  | "stale_data"
+  | "permission_denied";
 
 // 競合状態の定義
 export interface TaskConflict {
@@ -50,7 +53,10 @@ export const checkForConflicts = mutation({
     expectedVersion: v.number(),
     proposedChanges: v.any(),
   },
-  handler: async (ctx, { taskId, workspaceId, expectedVersion, proposedChanges }) => {
+  handler: async (
+    ctx,
+    { taskId, workspaceId, expectedVersion, proposedChanges }
+  ) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("認証が必要です");
@@ -79,7 +85,7 @@ export const checkForConflicts = mutation({
       const currentLocks = await ctx.db
         .query("taskLocks")
         .withIndex("by_task", (q) => q.eq("taskId", taskId))
-        .filter((q) => 
+        .filter((q) =>
           q.and(
             q.neq(q.field("userId"), userId),
             q.eq(q.field("lockType"), "editing"),
@@ -91,7 +97,7 @@ export const checkForConflicts = mutation({
       if (currentLocks.length > 0) {
         // 競合を記録
         const conflictId = `conflict_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         await ctx.db.insert("taskConflicts", {
           conflictId,
           taskId,
@@ -113,7 +119,7 @@ export const checkForConflicts = mutation({
           hasConflict: true,
           conflictType: "simultaneous_edit" as ConflictType,
           conflictId,
-          conflictingUsers: currentLocks.map(lock => lock.userId),
+          conflictingUsers: currentLocks.map((lock) => lock.userId),
           currentVersion,
           suggestedActions: [
             "reload", // 最新データを再読み込み
@@ -124,7 +130,7 @@ export const checkForConflicts = mutation({
       } else {
         // 他に編集中のユーザーはいないが、データが古い
         const conflictId = `conflict_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        
+
         await ctx.db.insert("taskConflicts", {
           conflictId,
           taskId,
@@ -194,7 +200,10 @@ export const resolveConflict = mutation({
       case "force_save":
         // 強制保存：現在のユーザーの変更を適用
         if (conflict.metadata?.initiatingChanges) {
-          await ctx.db.patch(conflict.taskId, conflict.metadata.initiatingChanges);
+          await ctx.db.patch(
+            conflict.taskId,
+            conflict.metadata.initiatingChanges
+          );
         }
         break;
 
@@ -238,7 +247,7 @@ export const resolveConflict = mutation({
 
 // ワークスペースの競合一覧を取得
 export const getWorkspaceConflicts = query({
-  args: { 
+  args: {
     workspaceId: v.id("workspaces"),
     includeResolved: v.optional(v.boolean()),
   },
@@ -253,14 +262,16 @@ export const getWorkspaceConflicts = query({
       .withIndex("by_workspace", (q) => q.eq("workspaceId", workspaceId));
 
     if (!includeResolved) {
-      conflictsQuery = conflictsQuery.filter((q) => q.eq(q.field("isResolved"), false));
+      conflictsQuery = conflictsQuery.filter((q) =>
+        q.eq(q.field("isResolved"), false)
+      );
     }
 
     const conflicts = await conflictsQuery.collect();
 
     // 最近の1時間以内の競合のみ返す（古い競合は自動的に無視）
     const oneHourAgo = Date.now() - 60 * 60 * 1000;
-    return conflicts.filter(conflict => conflict.timestamp > oneHourAgo);
+    return conflicts.filter((conflict) => conflict.timestamp > oneHourAgo);
   },
 });
 
@@ -281,13 +292,15 @@ export const getTaskConflicts = query({
 
     // 最近の30分以内の競合のみ返す
     const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
-    return conflicts.filter(conflict => conflict.timestamp > thirtyMinutesAgo);
+    return conflicts.filter(
+      (conflict) => conflict.timestamp > thirtyMinutesAgo
+    );
   },
 });
 
 // ユーザー情報を含む競合情報を取得
 export const getConflictsWithUserInfo = action({
-  args: { 
+  args: {
     workspaceId: v.id("workspaces"),
     includeResolved: v.optional(v.boolean()),
   },
@@ -298,10 +311,13 @@ export const getConflictsWithUserInfo = action({
     }
 
     // 競合情報を取得
-    const conflicts = await ctx.runQuery(api.conflictResolution.getWorkspaceConflicts, {
-      workspaceId,
-      includeResolved,
-    });
+    const conflicts = await ctx.runQuery(
+      api.conflictResolution.getWorkspaceConflicts,
+      {
+        workspaceId,
+        includeResolved,
+      }
+    );
 
     if (conflicts.length === 0) {
       return [];
@@ -312,13 +328,17 @@ export const getConflictsWithUserInfo = action({
       secretKey: process.env.CLERK_SECRET_KEY,
     });
 
-    const userIds = Array.from(new Set([
-      ...conflicts.map(c => c.initiatingUserId),
-      ...conflicts.map(c => c.conflictingUserId).filter(id => id !== "system"),
-    ]));
+    const userIds = Array.from(
+      new Set([
+        ...conflicts.map((c) => c.initiatingUserId),
+        ...conflicts
+          .map((c) => c.conflictingUserId)
+          .filter((id) => id !== "system"),
+      ])
+    );
 
     const userInfoMap = new Map();
-    
+
     for (const userId of userIds) {
       try {
         const user = await clerk.users.getUser(userId);
@@ -344,12 +364,20 @@ export const getConflictsWithUserInfo = action({
     }
 
     // 競合情報にユーザー情報を追加
-    return conflicts.map(conflict => ({
+    return conflicts.map((conflict) => ({
       ...conflict,
       initiatingUser: userInfoMap.get(conflict.initiatingUserId),
-      conflictingUser: conflict.conflictingUserId === "system" 
-        ? { id: "system", firstName: "システム", lastName: "", imageUrl: null, username: "system", emailAddress: null }
-        : userInfoMap.get(conflict.conflictingUserId),
+      conflictingUser:
+        conflict.conflictingUserId === "system"
+          ? {
+              id: "system",
+              firstName: "システム",
+              lastName: "",
+              imageUrl: null,
+              username: "system",
+              emailAddress: null,
+            }
+          : userInfoMap.get(conflict.conflictingUserId),
     }));
   },
 });
@@ -383,7 +411,10 @@ export const updateTaskWithConflictCheck = mutation({
     expectedVersion: v.number(),
     forceUpdate: v.optional(v.boolean()),
   },
-  handler: async (ctx, { taskId, workspaceId, updates, expectedVersion, forceUpdate = false }) => {
+  handler: async (
+    ctx,
+    { taskId, workspaceId, updates, expectedVersion, forceUpdate = false }
+  ) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new Error("認証が必要です");
@@ -393,18 +424,23 @@ export const updateTaskWithConflictCheck = mutation({
 
     if (!forceUpdate) {
       // 競合チェックを実行
-      const conflictCheck = await ctx.runMutation(api.conflictResolution.checkForConflicts, {
-        taskId,
-        workspaceId,
-        expectedVersion,
-        proposedChanges: updates,
-      });
+      const conflictCheck = await ctx.runMutation(
+        api.conflictResolution.checkForConflicts,
+        {
+          taskId,
+          workspaceId,
+          expectedVersion,
+          proposedChanges: updates,
+        }
+      );
 
       if (conflictCheck.hasConflict) {
-        throw new Error(JSON.stringify({
-          type: "CONFLICT_DETECTED",
-          conflict: conflictCheck,
-        }));
+        throw new Error(
+          JSON.stringify({
+            type: "CONFLICT_DETECTED",
+            conflict: conflictCheck,
+          })
+        );
       }
     }
 

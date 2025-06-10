@@ -3,7 +3,7 @@
 import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id, Doc } from "@/convex/_generated/dataModel";
-import { useMemo, useEffect, useState } from "react";
+import { useMemo, useEffect, useState, useRef } from "react";
 import { createClerkClient } from "@clerk/backend";
 
 // ユーザー情報付きタスクの型定義
@@ -46,6 +46,12 @@ export function useRealtimeTasks(workspaceId: Id<"workspaces">) {
   );
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
 
+  // 楽観的更新の状態管理
+  const [optimisticUpdates, setOptimisticUpdates] = useState<
+    Map<string, Partial<Doc<"tasks">>>
+  >(new Map());
+  const optimisticTimeoutRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+
   // メンバーのユーザー情報を取得
   useEffect(() => {
     const fetchUserInfo = async () => {
@@ -57,11 +63,11 @@ export function useRealtimeTasks(workspaceId: Id<"workspaces">) {
       try {
         // 未キャッシュのメンバーのユーザー情報を並列取得
         const uncachedMembers = members.filter(
-          (member) => !newCache.has(member.id)
+          (member: any) => !newCache.has(member.id)
         );
 
         if (uncachedMembers.length > 0) {
-          const userInfoPromises = uncachedMembers.map(async (member) => {
+          const userInfoPromises = uncachedMembers.map(async (member: any) => {
             try {
               const userInfo = await getInviterInfo({
                 inviterUserId: member.id,
@@ -78,7 +84,7 @@ export function useRealtimeTasks(workspaceId: Id<"workspaces">) {
 
           const results = await Promise.all(userInfoPromises);
 
-          results.forEach(({ id, userInfo }) => {
+          results.forEach(({ id, userInfo }: any) => {
             newCache.set(id, userInfo);
           });
 
@@ -94,17 +100,71 @@ export function useRealtimeTasks(workspaceId: Id<"workspaces">) {
     fetchUserInfo();
   }, [members, getInviterInfo]);
 
-  // タスクにユーザー情報を組み合わせ
+  // 楽観的更新を適用する関数
+  const applyOptimisticUpdate = (
+    taskId: string,
+    updates: Partial<Doc<"tasks">>
+  ) => {
+    setOptimisticUpdates((prev) => {
+      const newUpdates = new Map(prev);
+      const existingUpdate = newUpdates.get(taskId) || {};
+      newUpdates.set(taskId, { ...existingUpdate, ...updates });
+      return newUpdates;
+    });
+
+    // 既存のタイムアウトをクリア
+    const existingTimeout = optimisticTimeoutRef.current.get(taskId);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    // 3秒後に楽観的更新をクリア（リアルタイムデータを信頼）
+    const timeout = setTimeout(() => {
+      setOptimisticUpdates((prev) => {
+        const newUpdates = new Map(prev);
+        newUpdates.delete(taskId);
+        return newUpdates;
+      });
+      optimisticTimeoutRef.current.delete(taskId);
+    }, 3000);
+
+    optimisticTimeoutRef.current.set(taskId, timeout);
+  };
+
+  // 楽観的更新をクリアする関数
+  const clearOptimisticUpdate = (taskId: string) => {
+    setOptimisticUpdates((prev) => {
+      const newUpdates = new Map(prev);
+      newUpdates.delete(taskId);
+      return newUpdates;
+    });
+
+    const timeout = optimisticTimeoutRef.current.get(taskId);
+    if (timeout) {
+      clearTimeout(timeout);
+      optimisticTimeoutRef.current.delete(taskId);
+    }
+  };
+
+  // タスクにユーザー情報を組み合わせ（楽観的更新も適用）
   const tasksWithUsers: TaskWithUser[] = useMemo(() => {
     if (!tasks) return [];
 
-    return tasks.map((task) => ({
-      ...task,
-      assigneeUser: task.assigneeId
-        ? userCache.get(task.assigneeId) || null
-        : null,
-    }));
-  }, [tasks, userCache]);
+    return tasks.map((task: any) => {
+      // 楽観的更新があれば適用
+      const optimisticUpdate = optimisticUpdates.get(task._id);
+      const updatedTask = optimisticUpdate
+        ? { ...task, ...optimisticUpdate }
+        : task;
+
+      return {
+        ...updatedTask,
+        assigneeUser: updatedTask.assigneeId
+          ? userCache.get(updatedTask.assigneeId) || null
+          : null,
+      };
+    });
+  }, [tasks, userCache, optimisticUpdates]);
 
   // ステータス別にタスクをグループ化
   const groupedTasks = useMemo(() => {
@@ -143,6 +203,10 @@ export function useRealtimeTasks(workspaceId: Id<"workspaces">) {
 
     // ユーザー情報
     userCache,
+
+    // 楽観的更新
+    applyOptimisticUpdate,
+    clearOptimisticUpdate,
 
     // メタデータ
     lastUpdated: Date.now(),

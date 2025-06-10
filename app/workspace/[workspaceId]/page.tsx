@@ -43,18 +43,24 @@ export default function WorkspaceDetailPage() {
   const workspace = useQuery(api.workspaces.getWorkspace, { workspaceId });
 
   // リアルタイムタスクデータ
-  const { tasks, groupedTasks, stats, isLoadingTasks, isLoadingUsers } =
-    useRealtimeTasks(workspaceId);
+  const {
+    tasks,
+    groupedTasks,
+    stats,
+    isLoadingTasks,
+    isLoadingUsers,
+    applyOptimisticUpdate,
+    clearOptimisticUpdate,
+  } = useRealtimeTasks(workspaceId);
 
   // 楽観的更新とエラーハンドリング
   const {
     updateTaskStatus,
-    updateTaskOrder,
     batchUpdateTasks,
     isUpdating,
     error,
     clearError,
-  } = useOptimisticTaskUpdates();
+  } = useOptimisticTaskUpdates(applyOptimisticUpdate, clearOptimisticUpdate);
 
   // デバッグ：タスクの変更を監視
   useEffect(() => {
@@ -179,7 +185,7 @@ export default function WorkspaceDetailPage() {
           const statusKey = getGroupedTasksKey(newStatus);
           const statusTasks =
             groupedTasks[statusKey as keyof typeof groupedTasks];
-          
+
           if (!statusTasks) {
             console.error("ステータスに対応するタスクが見つかりません:", {
               newStatus,
@@ -222,7 +228,7 @@ export default function WorkspaceDetailPage() {
         const newStatusKey = getGroupedTasksKey(newStatus);
         const newStatusTasks =
           groupedTasks[newStatusKey as keyof typeof groupedTasks];
-        
+
         if (!newStatusTasks) {
           console.error("新しいステータスに対応するタスクが見つかりません:", {
             newStatus,
@@ -330,19 +336,20 @@ export default function WorkspaceDetailPage() {
         {/* リアルタイム状態インジケーター */}
         <div className="mb-4">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {
-              (isUpdating || isLoadingUsers) ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
-                  <span>{isUpdating && "タスクを更新中..."}{isLoadingUsers && "ユーザー情報を読み込み中..."}  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                  <span>リアルタイム同期: 有効</span>
-                </div>
-              )
-            }
+            {isUpdating || isLoadingUsers ? (
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+                <span>
+                  {isUpdating && "タスクを更新中..."}
+                  {isLoadingUsers && "ユーザー情報を読み込み中..."}{" "}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span>リアルタイム同期: 有効</span>
+              </div>
+            )}
             <span className="ml-2">
               最終更新: {new Date().toLocaleTimeString("ja-JP")}
             </span>
@@ -456,12 +463,12 @@ export default function WorkspaceDetailPage() {
               </CardContent>
             </Card>
           </div>
-          
+
           {/* サイドバー */}
           <div className="lg:col-span-2 space-y-6">
             {/* プレゼンス情報 */}
             <WorkspacePresence workspaceId={workspaceId} />
-            
+
             {/* 競合モニター */}
             <ConflictMonitor workspaceId={workspaceId} />
           </div>

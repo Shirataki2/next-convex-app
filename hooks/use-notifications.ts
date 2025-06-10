@@ -4,11 +4,11 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { toast } from "sonner";
 
-export type NotificationType = 
-  | "task_created" 
-  | "task_updated" 
-  | "task_assigned" 
-  | "task_completed" 
+export type NotificationType =
+  | "task_created"
+  | "task_updated"
+  | "task_assigned"
+  | "task_completed"
   | "task_commented"
   | "user_joined"
   | "user_left"
@@ -49,14 +49,19 @@ export interface ActivityInfo {
 // 通知管理フック
 export function useNotifications(workspaceId?: Id<"workspaces">) {
   const [lastNotificationCount, setLastNotificationCount] = useState(0);
-  
+
   // 通知関連のmutation/action
   const markAsRead = useMutation(api.notifications.markNotificationAsRead);
-  const markAllAsRead = useMutation(api.notifications.markAllNotificationsAsRead);
-  const getNotificationsWithUserInfo = useAction(api.notifications.getNotificationsWithUserInfo);
-  
+  const markAllAsRead = useMutation(
+    api.notifications.markAllNotificationsAsRead
+  );
+  const getNotificationsWithUserInfo = useAction(
+    api.notifications.getNotificationsWithUserInfo
+  );
+
   // 未読通知数を取得
-  const unreadCount = useQuery(api.notifications.getUnreadNotificationCount, 
+  const unreadCount = useQuery(
+    api.notifications.getUnreadNotificationCount,
     workspaceId ? { workspaceId } : {}
   );
 
@@ -65,31 +70,35 @@ export function useNotifications(workspaceId?: Id<"workspaces">) {
   const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
 
   // 通知を取得する関数
-  const fetchNotifications = useCallback(async (unreadOnly = false) => {
-    if (!getNotificationsWithUserInfo) return;
-    
-    setIsLoadingNotifications(true);
-    try {
-      const result = await getNotificationsWithUserInfo(
-        workspaceId ? { workspaceId, unreadOnly } : { unreadOnly }
-      );
-      setNotifications(result);
-    } catch (error) {
-      console.error("通知の取得に失敗:", error);
-      toast.error("通知の取得に失敗しました");
-    } finally {
-      setIsLoadingNotifications(false);
-    }
-  }, [getNotificationsWithUserInfo, workspaceId]);
+  const fetchNotifications = useCallback(
+    async (unreadOnly = false) => {
+      if (!getNotificationsWithUserInfo) return;
+
+      setIsLoadingNotifications(true);
+      try {
+        const result = await getNotificationsWithUserInfo(
+          workspaceId ? { workspaceId, unreadOnly } : { unreadOnly }
+        );
+        setNotifications(result);
+      } catch (error) {
+        console.error("通知の取得に失敗:", error);
+        toast.error("通知の取得に失敗しました");
+      } finally {
+        setIsLoadingNotifications(false);
+      }
+    },
+    [getNotificationsWithUserInfo, workspaceId]
+  );
 
   // 新しい通知があったときの処理
   useEffect(() => {
     if (unreadCount !== undefined && unreadCount > lastNotificationCount) {
       // 新しい通知があったときは自動で最新の通知を取得
       fetchNotifications();
-      
+
       // 通知音やバイブレーションなどを実装する場合はここに追加
-      if (lastNotificationCount > 0) { // 初回読み込み時は通知しない
+      if (lastNotificationCount > 0) {
+        // 初回読み込み時は通知しない
         // ブラウザ通知を表示（許可されている場合）
         if (Notification.permission === "granted") {
           new Notification("新しい通知があります", {
@@ -99,44 +108,46 @@ export function useNotifications(workspaceId?: Id<"workspaces">) {
         }
       }
     }
-    
+
     if (unreadCount !== undefined) {
       setLastNotificationCount(unreadCount);
     }
   }, [unreadCount, lastNotificationCount, fetchNotifications]);
 
   // 通知を既読にマーク
-  const markNotificationAsRead = useCallback(async (notificationId: Id<"notifications">) => {
-    try {
-      await markAsRead({ notificationId });
-      
-      // ローカル状態を更新
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification._id === notificationId 
-            ? { ...notification, isRead: true }
-            : notification
-        )
-      );
-      
-    } catch (error) {
-      console.error("通知の既読マークに失敗:", error);
-      toast.error("通知の既読マークに失敗しました");
-    }
-  }, [markAsRead]);
+  const markNotificationAsRead = useCallback(
+    async (notificationId: Id<"notifications">) => {
+      try {
+        await markAsRead({ notificationId });
+
+        // ローカル状態を更新
+        setNotifications((prev) =>
+          prev.map((notification) =>
+            notification._id === notificationId
+              ? { ...notification, isRead: true }
+              : notification
+          )
+        );
+      } catch (error) {
+        console.error("通知の既読マークに失敗:", error);
+        toast.error("通知の既読マークに失敗しました");
+      }
+    },
+    [markAsRead]
+  );
 
   // 全通知を既読にマーク
   const markAllNotificationsAsRead = useCallback(async () => {
     if (!workspaceId) return;
-    
+
     try {
       await markAllAsRead({ workspaceId });
-      
+
       // ローカル状態を更新
-      setNotifications(prev => 
-        prev.map(notification => ({ ...notification, isRead: true }))
+      setNotifications((prev) =>
+        prev.map((notification) => ({ ...notification, isRead: true }))
       );
-      
+
       toast.success("全ての通知を既読にしました");
     } catch (error) {
       console.error("全通知の既読マークに失敗:", error);
@@ -152,7 +163,7 @@ export function useNotifications(workspaceId?: Id<"workspaces">) {
     }
 
     const permission = await Notification.requestPermission();
-    
+
     if (permission === "granted") {
       toast.success("ブラウザ通知が有効になりました");
       return true;
@@ -175,8 +186,10 @@ export function useNotifications(workspaceId?: Id<"workspaces">) {
 
 // アクティビティフィード管理フック
 export function useActivityFeed(workspaceId: Id<"workspaces">) {
-  const getActivityFeedWithUserInfo = useAction(api.notifications.getActivityFeedWithUserInfo);
-  
+  const getActivityFeedWithUserInfo = useAction(
+    api.notifications.getActivityFeedWithUserInfo
+  );
+
   const [activities, setActivities] = useState<ActivityInfo[]>([]);
   const [isLoadingActivities, setIsLoadingActivities] = useState(false);
 
@@ -197,7 +210,7 @@ export function useActivityFeed(workspaceId: Id<"workspaces">) {
   // 定期的にアクティビティを更新
   useEffect(() => {
     fetchActivities();
-    
+
     // 30秒間隔で更新
     const interval = setInterval(fetchActivities, 30000);
     return () => clearInterval(interval);
@@ -279,12 +292,12 @@ export function getActivityActionLabel(action: string): string {
 export function getRelativeTime(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
-  
+
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  
+
   if (seconds < 60) {
     return "たった今";
   } else if (minutes < 60) {

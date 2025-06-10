@@ -15,13 +15,24 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
-  Clock,
   Users,
   Settings,
 } from "lucide-react";
-import { useConflictResolution, ConflictInfo } from "@/hooks/use-conflict-resolution";
+import {
+  useConflictResolution,
+  ConflictInfo,
+} from "@/hooks/use-conflict-resolution";
 import { ConflictResolutionDialog } from "./conflict-resolution-dialog";
 import { Id } from "@/convex/_generated/dataModel";
+
+// ユーザー情報の型定義
+type UserInfo = {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  username?: string | null;
+  emailAddress?: string;
+};
 
 interface ConflictMonitorProps {
   workspaceId: Id<"workspaces">;
@@ -65,7 +76,7 @@ function getSeverityColor(severity: "high" | "medium" | "low"): string {
   }
 }
 
-function getUserDisplayName(user: any): string {
+function getUserDisplayName(user: UserInfo | null): string {
   if (!user) return "不明なユーザー";
   if (user.id === "system") return "システム";
   if (user.firstName && user.lastName) {
@@ -74,7 +85,7 @@ function getUserDisplayName(user: any): string {
   return user.username || user.emailAddress || "不明なユーザー";
 }
 
-function getInitials(user: any): string {
+function getInitials(user: UserInfo | null): string {
   if (!user) return "?";
   if (user.id === "system") return "SYS";
   if (user.firstName && user.lastName) {
@@ -93,7 +104,7 @@ function getTimeAgo(timestamp: number): string {
   const now = Date.now();
   const diff = now - timestamp;
   const minutes = Math.floor(diff / (1000 * 60));
-  
+
   if (minutes < 1) {
     return "たった今";
   } else if (minutes < 60) {
@@ -104,13 +115,23 @@ function getTimeAgo(timestamp: number): string {
   }
 }
 
-export function ConflictMonitor({ workspaceId, className = "" }: ConflictMonitorProps) {
-  const { currentConflicts, refetchConflicts } = useConflictResolution(workspaceId);
-  const [selectedConflict, setSelectedConflict] = useState<ConflictInfo | null>(null);
+export function ConflictMonitor({
+  workspaceId,
+  className = "",
+}: ConflictMonitorProps) {
+  const { currentConflicts, refetchConflicts } =
+    useConflictResolution(workspaceId);
+  const [selectedConflict, setSelectedConflict] = useState<ConflictInfo | null>(
+    null
+  );
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const activeConflicts = currentConflicts.filter(conflict => !conflict.isResolved);
-  const resolvedConflicts = currentConflicts.filter(conflict => conflict.isResolved);
+  const activeConflicts = currentConflicts.filter(
+    (conflict) => !conflict.isResolved
+  );
+  const resolvedConflicts = currentConflicts.filter(
+    (conflict) => conflict.isResolved
+  );
 
   if (currentConflicts.length === 0) {
     return null; // 競合がない場合は何も表示しない
@@ -130,16 +151,12 @@ export function ConflictMonitor({ workspaceId, className = "" }: ConflictMonitor
                 </Badge>
               )}
             </div>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={refetchConflicts}
-            >
+            <Button variant="ghost" size="sm" onClick={refetchConflicts}>
               <Settings className="h-4 w-4" />
             </Button>
           </CardTitle>
         </CardHeader>
-        
+
         <CardContent className="space-y-3">
           {/* アクティブな競合 */}
           {activeConflicts.length > 0 ? (
@@ -147,7 +164,8 @@ export function ConflictMonitor({ workspaceId, className = "" }: ConflictMonitor
               <Alert>
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>
-                  {activeConflicts.length}件のアクティブな競合があります。解決が必要です。
+                  {activeConflicts.length}
+                  件のアクティブな競合があります。解決が必要です。
                 </AlertDescription>
               </Alert>
 
@@ -169,7 +187,10 @@ export function ConflictMonitor({ workspaceId, className = "" }: ConflictMonitor
           {resolvedConflicts.length > 0 && (
             <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
               <CollapsibleTrigger asChild>
-                <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-between p-0 h-auto"
+                >
                   <span className="text-sm text-muted-foreground">
                     解決済み競合 ({resolvedConflicts.length}件)
                   </span>
@@ -222,28 +243,40 @@ interface ConflictCardProps {
   showResolution?: boolean;
 }
 
-function ConflictCard({ conflict, onResolve, showResolution = false }: ConflictCardProps) {
+function ConflictCard({
+  conflict,
+  onResolve,
+  showResolution = false,
+}: ConflictCardProps) {
   const severity = getConflictSeverity(conflict.conflictType);
-  
+
   return (
-    <div className={`p-3 border rounded-lg ${
-      conflict.isResolved 
-        ? "bg-green-50 border-green-200" 
-        : severity === "high" 
-        ? "bg-red-50 border-red-200" 
-        : "bg-yellow-50 border-yellow-200"
-    }`}>
+    <div
+      className={`p-3 border rounded-lg ${
+        conflict.isResolved
+          ? "bg-green-50 border-green-200"
+          : severity === "high"
+            ? "bg-red-50 border-red-200"
+            : "bg-yellow-50 border-yellow-200"
+      }`}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
-            <Badge variant={getSeverityColor(severity) as any} className="text-xs">
+            <Badge
+              variant={getSeverityColor(severity) as "default" | "secondary" | "destructive" | "outline"}
+              className="text-xs"
+            >
               {getConflictTypeLabel(conflict.conflictType)}
             </Badge>
             <span className="text-xs text-muted-foreground">
               {getTimeAgo(conflict.timestamp)}
             </span>
             {showResolution && conflict.resolution && (
-              <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+              <Badge
+                variant="outline"
+                className="text-xs bg-green-50 text-green-700"
+              >
                 {conflict.resolution === "force_save" && "強制保存"}
                 {conflict.resolution === "merge" && "マージ"}
                 {conflict.resolution === "discard" && "破棄"}
@@ -285,9 +318,9 @@ function ConflictCard({ conflict, onResolve, showResolution = false }: ConflictC
         </div>
 
         {!conflict.isResolved && onResolve && (
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={onResolve}
             className="ml-2"
           >

@@ -38,6 +38,14 @@ import {
   Copy,
 } from "lucide-react";
 
+type InviterInfo = {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  emailAddress?: string;
+  imageUrl?: string;
+};
+
 interface InvitationListProps {
   workspaceId: Id<"workspaces">;
   workspace: Doc<"workspaces">;
@@ -189,7 +197,7 @@ export function InvitationList({
     }
   };
 
-  const getUserDisplayName = (inviterInfo: any) => {
+  const getUserDisplayName = (inviterInfo: InviterInfo | null) => {
     if (!inviterInfo) return "不明なユーザー";
 
     if (inviterInfo.firstName && inviterInfo.lastName) {

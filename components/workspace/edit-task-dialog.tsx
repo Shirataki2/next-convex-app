@@ -33,13 +33,14 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { CalendarIcon, Pencil, AlertTriangle } from "lucide-react";
 import { ja } from "date-fns/locale";
-import { useMutation, useAction } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
 import { useTaskLock } from "@/hooks/use-presence";
 import { useConflictResolution } from "@/hooks/use-conflict-resolution";
 import { ConflictResolutionDialog } from "./conflict-resolution-dialog";
+import { ConflictInfo } from "@/hooks/use-conflict-resolution";
 import { toast } from "sonner";
 
 // ユーザー情報の型定義
@@ -66,8 +67,10 @@ export function EditTaskDialog({
   const [open, setOpen] = React.useState(false);
   const { user } = useUser();
   const getWorkspaceMembers = useAction(api.tasks.getWorkspaceMembers);
-  const { lockTask, unlockTask } = useTaskLock(workspace?._id!);
-  const { updateTaskSafely, currentConflicts } = useConflictResolution(workspace?._id!);
+  const { lockTask, unlockTask } = useTaskLock(workspace?._id || "" as any);
+  const { updateTaskSafely, currentConflicts } = useConflictResolution(
+    workspace?._id || "" as any
+  );
 
   const [title, setTitle] = React.useState(task.title);
   const [description, setDescription] = React.useState(task.description || "");
@@ -85,7 +88,7 @@ export function EditTaskDialog({
   const [isLoadingMembers, setIsLoadingMembers] = React.useState(false);
   const [taskVersion, setTaskVersion] = React.useState(0);
   const [conflictDialogOpen, setConflictDialogOpen] = React.useState(false);
-  const [pendingConflict, setPendingConflict] = React.useState<any>(null);
+  const [pendingConflict, setPendingConflict] = React.useState<ConflictInfo | null>(null);
 
   // ワークスペースメンバー情報を取得
   React.useEffect(() => {
@@ -143,7 +146,7 @@ export function EditTaskDialog({
 
   // このタスクの競合状況をチェック
   const taskConflicts = currentConflicts.filter(
-    conflict => conflict.taskId === task._id && !conflict.isResolved
+    (conflict) => conflict.taskId === task._id && !conflict.isResolved
   );
 
   // ユーザー名を表示するヘルパー関数
@@ -178,11 +181,7 @@ export function EditTaskDialog({
 
     try {
       // 競合チェック付きの安全な更新を実行
-      const result = await updateTaskSafely(
-        task._id,
-        updates,
-        taskVersion
-      );
+      const result = await updateTaskSafely(task._id, updates, taskVersion);
 
       if (result.success) {
         // タスク更新後に親コンポーネントにタスクリストの更新を通知
@@ -217,7 +216,7 @@ export function EditTaskDialog({
               タスクの詳細を編集してください
             </DialogDescription>
           </DialogHeader>
-          
+
           {/* 競合警告 */}
           {taskConflicts.length > 0 && (
             <Alert className="mb-4">
@@ -228,7 +227,7 @@ export function EditTaskDialog({
               </AlertDescription>
             </Alert>
           )}
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="title">タイトル</Label>
@@ -353,7 +352,7 @@ export function EditTaskDialog({
           </DialogFooter>
         </form>
       </DialogContent>
-      
+
       {/* 競合解決ダイアログ */}
       {pendingConflict && (
         <ConflictResolutionDialog

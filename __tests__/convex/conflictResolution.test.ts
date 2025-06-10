@@ -479,7 +479,7 @@ describe("競合解決システム", () => {
     });
 
     const conflictActivity = activities.find(
-      activity => activity.action === "conflict_resolved_merge"
+      (activity) => activity.action === "conflict_resolved_merge"
     );
 
     expect(conflictActivity).toBeDefined();

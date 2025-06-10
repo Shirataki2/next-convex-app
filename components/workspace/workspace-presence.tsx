@@ -3,7 +3,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { usePresence } from "@/hooks/use-presence";
 import { Id } from "@/convex/_generated/dataModel";
 import { Circle, Edit, Eye } from "lucide-react";
@@ -76,7 +81,7 @@ function getLastSeenText(lastSeen: number) {
   const now = Date.now();
   const diff = now - lastSeen;
   const minutes = Math.floor(diff / (1000 * 60));
-  
+
   if (minutes < 1) {
     return "たった今";
   } else if (minutes < 60) {
@@ -89,18 +94,18 @@ function getLastSeenText(lastSeen: number) {
 
 function getCurrentPageText(currentPage?: string) {
   if (!currentPage) return undefined;
-  
+
   if (currentPage.includes("/workspace/")) {
     if (currentPage.includes("/members")) {
       return "メンバー管理";
     }
     return "ワークスペース";
   }
-  
+
   if (currentPage.includes("/dashboard")) {
     return "ダッシュボード";
   }
-  
+
   return "不明なページ";
 }
 
@@ -153,11 +158,11 @@ export function WorkspacePresence({ workspaceId }: WorkspacePresenceProps) {
     const statusOrder = { online: 0, away: 1, offline: 2 };
     const aOrder = statusOrder[a.status as keyof typeof statusOrder] ?? 3;
     const bOrder = statusOrder[b.status as keyof typeof statusOrder] ?? 3;
-    
+
     if (aOrder !== bOrder) {
       return aOrder - bOrder;
     }
-    
+
     // 同じステータスの場合は最終アクティブ時刻でソート
     return b.lastSeen - a.lastSeen;
   });
@@ -188,7 +193,7 @@ export function WorkspacePresence({ workspaceId }: WorkspacePresenceProps) {
                       )}`}
                     />
                   </div>
-                  
+
                   <div className="flex-1 min-w-0">
                     <div className="font-medium text-sm truncate">
                       {getUserDisplayName(presence.user)}
@@ -199,7 +204,7 @@ export function WorkspacePresence({ workspaceId }: WorkspacePresenceProps) {
                       <span>{getLastSeenText(presence.lastSeen)}</span>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col items-end space-y-1">
                     {presence.isEditing && (
                       <Badge variant="secondary" className="text-xs">
@@ -207,7 +212,7 @@ export function WorkspacePresence({ workspaceId }: WorkspacePresenceProps) {
                         編集中
                       </Badge>
                     )}
-                    
+
                     {getCurrentPageText(presence.currentPage) && (
                       <Badge variant="outline" className="text-xs">
                         <Eye className="h-3 w-3 mr-1" />
@@ -230,13 +235,13 @@ export function WorkspacePresence({ workspaceId }: WorkspacePresenceProps) {
                   </div>
                   {presence.currentPage && (
                     <div className="text-sm text-muted-foreground">
-                      現在のページ: {getCurrentPageText(presence.currentPage) || presence.currentPage}
+                      現在のページ:{" "}
+                      {getCurrentPageText(presence.currentPage) ||
+                        presence.currentPage}
                     </div>
                   )}
                   {presence.isEditing && (
-                    <div className="text-sm text-blue-600">
-                      タスクを編集中
-                    </div>
+                    <div className="text-sm text-blue-600">タスクを編集中</div>
                   )}
                 </div>
               </TooltipContent>

@@ -6,21 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import { 
   Bell,
-  Check,
   CheckCheck,
   Settings,
   Loader2,
@@ -34,7 +27,7 @@ import {
   AlertTriangle,
   ShieldCheck,
 } from "lucide-react";
-import { 
+import {
   useNotifications,
   useActivityFeed,
   getNotificationPriorityColor,
@@ -44,6 +37,14 @@ import {
   ActivityInfo,
 } from "@/hooks/use-notifications";
 import { Id } from "@/convex/_generated/dataModel";
+
+type UserInfo = {
+  id: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  username?: string | null;
+  emailAddress?: string;
+};
 
 interface NotificationPanelProps {
   workspaceId: Id<"workspaces">;
@@ -74,7 +75,7 @@ function getNotificationIcon(type: string) {
   }
 }
 
-function getUserDisplayName(user: any): string {
+function getUserDisplayName(user: UserInfo | null): string {
   if (!user) return "不明なユーザー";
   if (user.firstName && user.lastName) {
     return `${user.firstName} ${user.lastName}`;
@@ -82,7 +83,7 @@ function getUserDisplayName(user: any): string {
   return user.username || user.emailAddress || "不明なユーザー";
 }
 
-function getInitials(user: any): string {
+function getInitials(user: UserInfo | null): string {
   if (!user) return "?";
   if (user.firstName && user.lastName) {
     return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`;
@@ -99,22 +100,17 @@ function getInitials(user: any): string {
 export function NotificationPanel({ workspaceId }: NotificationPanelProps) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("notifications");
-  
+
   const {
     notifications,
     unreadCount,
     isLoadingNotifications,
-    fetchNotifications,
     markNotificationAsRead,
     markAllNotificationsAsRead,
     requestNotificationPermission,
   } = useNotifications(workspaceId);
 
-  const {
-    activities,
-    isLoadingActivities,
-    refreshActivities,
-  } = useActivityFeed(workspaceId);
+  const { activities, isLoadingActivities } = useActivityFeed(workspaceId);
 
   const handleNotificationClick = async (notification: NotificationInfo) => {
     if (!notification.isRead) {
@@ -132,8 +128,8 @@ export function NotificationPanel({ workspaceId }: NotificationPanelProps) {
         <Button variant="ghost" size="icon" className="relative h-9 w-9">
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
+            <Badge
+              variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
             >
               {unreadCount > 99 ? "99+" : unreadCount}
@@ -141,7 +137,7 @@ export function NotificationPanel({ workspaceId }: NotificationPanelProps) {
           )}
         </Button>
       </PopoverTrigger>
-      
+
       <PopoverContent className="w-96 p-0" align="end">
         <Card className="border-0 shadow-none">
           <CardHeader className="pb-3">
@@ -170,7 +166,7 @@ export function NotificationPanel({ workspaceId }: NotificationPanelProps) {
               </div>
             </CardTitle>
           </CardHeader>
-          
+
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-2 mx-4 mb-4">
@@ -181,7 +177,7 @@ export function NotificationPanel({ workspaceId }: NotificationPanelProps) {
                   アクティビティ
                 </TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="notifications" className="mt-0">
                 <ScrollArea className="h-96">
                   {isLoadingNotifications ? (
@@ -206,7 +202,7 @@ export function NotificationPanel({ workspaceId }: NotificationPanelProps) {
                   )}
                 </ScrollArea>
               </TabsContent>
-              
+
               <TabsContent value="activities" className="mt-0">
                 <ScrollArea className="h-96">
                   {isLoadingActivities ? (
@@ -221,10 +217,7 @@ export function NotificationPanel({ workspaceId }: NotificationPanelProps) {
                   ) : (
                     <div className="space-y-1">
                       {activities.map((activity) => (
-                        <ActivityItem
-                          key={activity._id}
-                          activity={activity}
-                        />
+                        <ActivityItem key={activity._id} activity={activity} />
                       ))}
                     </div>
                   )}
@@ -246,7 +239,7 @@ interface NotificationItemProps {
 function NotificationItem({ notification, onClick }: NotificationItemProps) {
   const IconComponent = getNotificationIcon(notification.type);
   const priorityColor = getNotificationPriorityColor(notification.priority);
-  
+
   return (
     <div
       className={`p-3 hover:bg-muted/50 cursor-pointer transition-colors border-l-2 ${
@@ -258,25 +251,29 @@ function NotificationItem({ notification, onClick }: NotificationItemProps) {
         <div className={`p-1.5 rounded-full ${priorityColor}`}>
           <IconComponent className="h-4 w-4" />
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className={`text-sm font-medium ${
-                notification.isRead ? "text-muted-foreground" : "text-foreground"
-              }`}>
+              <div
+                className={`text-sm font-medium ${
+                  notification.isRead
+                    ? "text-muted-foreground"
+                    : "text-foreground"
+                }`}
+              >
                 {notification.title}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 {notification.message}
               </div>
             </div>
-            
+
             {!notification.isRead && (
               <div className="h-2 w-2 bg-primary rounded-full ml-2 mt-1" />
             )}
           </div>
-          
+
           <div className="flex items-center gap-2 mt-2">
             {notification.senderUser && (
               <div className="flex items-center gap-1">
@@ -291,7 +288,7 @@ function NotificationItem({ notification, onClick }: NotificationItemProps) {
                 </span>
               </div>
             )}
-            
+
             <span className="text-xs text-muted-foreground">
               {getRelativeTime(notification.createdAt)}
             </span>
@@ -316,15 +313,13 @@ function ActivityItem({ activity }: ActivityItemProps) {
             {getInitials(activity.user)}
           </AvatarFallback>
         </Avatar>
-        
+
         <div className="flex-1 min-w-0">
           <div className="text-sm">
             <span className="font-medium">
               {getUserDisplayName(activity.user)}
             </span>
-            <span className="text-muted-foreground ml-1">
-              が
-            </span>
+            <span className="text-muted-foreground ml-1">が</span>
             <span className="font-medium ml-1">
               {activity.task?.title || "タスク"}
             </span>
@@ -332,7 +327,7 @@ function ActivityItem({ activity }: ActivityItemProps) {
               を{getActivityActionLabel(activity.action)}しました
             </span>
           </div>
-          
+
           <div className="text-xs text-muted-foreground mt-1">
             {getRelativeTime(activity.timestamp)}
           </div>

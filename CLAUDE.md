@@ -2,21 +2,30 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## IMPORTANT: 前回のタスクの残り（完了済み）
-TODOの内容を変更したり、statusを変えた時にリアルタイムで同期されるようにしたいです。 ultrathink use context7
-    ☒ 現在のタスクシステムの分析と改善点の特定
-    ☒ リアルタイムタスク取得のためのConvexクエリ関数を実装
-    ☒ useQueryを使用したリアルタイムタスクデータの表示
-    ☒ 楽観的更新の改善とエラーハンドリング強化
-    ☒ コードフォーマットとテスト実行
-    ☒ リアルタイム同期機能のGitコミット
-    ☒ ドキュメントの更新（CLAUDE.md, README.md, directorystructure.md）
-    ☒ リアルタイムプレゼンス表示機能の実装
-    ☒ タスク編集中の競合検出・解決システム
-    ☒ リアルタイム通知とアクティビティフィードの実装
-    ☒ リアルタイム機能の動作確認（Playwright MCP）
+## IMPORTANT: 最新のアップデート（2025年6月）
 
-**全てのリアルタイム機能が完了し、動作確認済みです。**
+### ✅ 完了した主要機能
+
+**リアルタイム同期システムの完全実装:**
+
+- ☑️ Convex統合とClerk認証の修正
+- ☑️ ファイル名規約の修正（conflict-resolution.ts → conflictResolution.ts）
+- ☑️ データベースインデックスの最適化
+- ☑️ ドラッグ&ドロップ機能のバグ修正
+- ☑️ 楽観的更新（Optimistic Update）とリアルタイム同期の統合
+- ☑️ リアルタイムプレゼンス機能
+- ☑️ 競合検出・解決システム
+- ☑️ 通知・アクティビティフィード
+- ☑️ 包括的なテスト環境の構築
+
+**技術的修正:**
+
+- Convex-Clerk認証統合の修正（auth.config.js作成、ConvexProviderWithClerk導入）
+- taskActivitiesテーブルのインデックス追加
+- 全テーブルへの適切なインデックス設定
+- 楽観的更新とリアルタイムデータの競合解決
+
+**現在の状態:** 全ての主要機能が動作し、包括的なリアルタイム同期システムが完成しています。
 
 ## プロジェクト概要
 
@@ -141,10 +150,11 @@ npx vitest --project=convex     # Convex関数
     - `updatePresence`: ユーザープレゼンス更新
     - `setTaskLock`: タスクロック設定/解除
     - `getWorkspacePresence`: ワークスペースのプレゼンス情報取得
-  - `conflictResolution.ts`: 競合検出・解決関数
+  - `conflictResolution.ts`: 競合検出・解決関数（※ファイル名をConvex規約に合わせて修正済み）
     - `checkForConflicts`: 競合検出
     - `resolveConflict`: 競合解決
     - `updateTaskWithConflictCheck`: 競合チェック付きタスク更新
+    - `getConflictsWithUserInfo`: ユーザー情報付き競合一覧取得
   - `notifications.ts`: 通知管理関数
     - `createNotification`: 通知作成
     - `createTaskNotification`: タスク関連通知の自動作成
@@ -230,13 +240,14 @@ mcp__playwright__browser_take_screenshot
 
 ### データベーススキーマ
 
-`convex/schema.ts`で定義されている主要なテーブル：
+`convex/schema.ts`で定義されている主要なテーブル（全テーブルに最適化されたインデックスを追加済み）：
 
 1. **workspaces**: ワークスペース管理
 
    - `name`: ワークスペース名
    - `ownerId`: オーナーのユーザーID（Clerk）
    - `members`: メンバーのユーザーID配列
+   - **インデックス**: `by_owner`, `search_name`（全文検索）
 
 2. **tasks**: タスク管理
 
@@ -248,56 +259,75 @@ mcp__playwright__browser_take_screenshot
    - `deadline`: 期限（オプション）
    - `order`: ステータス内での表示順序（ステータス別独立管理）
    - `priority`: 優先度（high/medium/low等）
+   - **インデックス**: `by_workspace`, `by_workspace_status`, `by_workspace_status_order`, `by_assignee`, `by_status`, `by_priority`, `by_deadline`, `search_title`（全文検索）
 
 3. **taskActivities**: タスクの活動履歴
+
    - `workspaceId`: ワークスペースID
    - `userId`: 実行ユーザーID
    - `taskId`: 対象タスクID
    - `action`: アクション種別
    - `timestamp`: タイムスタンプ
+   - **インデックス**: `by_workspace`, `by_task`, `by_user`, `by_timestamp`
 
-4. **invitations**: ワークスペース招待
+4. **workspaceInvitations**: ワークスペース招待
+
    - `workspaceId`: ワークスペースID
    - `email`: 招待先メールアドレス
    - `role`: 役割（member/admin）
    - `inviterUserId`: 招待者のユーザーID
    - `token`: 招待トークン
-   - `status`: ステータス（pending/accepted/revoked）
-   - `expiresAt`: 有効期限
+   - `status`: ステータス（pending/accepted/revoked/expired）
+   - `createdAt`, `expiresAt`: 作成・有効期限
+   - **インデックス**: `by_workspace`, `by_email`, `by_token`, `by_status`
 
 5. **userPresence**: ユーザープレゼンス情報
+
    - `userId`: ユーザーID
    - `workspaceId`: ワークスペースID
    - `status`: ステータス（online/offline/away）
    - `lastSeen`: 最終確認時刻
-   - `currentPage`: 現在のページ
-   - `isEditing`: 編集中のタスクID
+   - `currentPage`: 現在のページ（オプション）
+   - `isEditing`: 編集中のタスクID（オプション）
+   - **インデックス**: `by_workspace`, `by_user`, `by_workspace_user`, `by_last_seen`
 
 6. **taskLocks**: タスク編集ロック情報
+
    - `taskId`: タスクID
    - `userId`: ロックしているユーザーID
    - `workspaceId`: ワークスペースID
    - `lockedAt`: ロック開始時刻
+   - `lockType`: ロック種別（editing/viewing）
+   - **インデックス**: `by_task`, `by_user`, `by_workspace`, `by_locked_at`
 
 7. **taskConflicts**: タスク競合情報
+
+   - `conflictId`: 競合ID
    - `taskId`: タスクID
    - `workspaceId`: ワークスペースID
-   - `conflictType`: 競合種別
-   - `users`: 競合に関わるユーザーID配列
-   - `detectedAt`: 競合検出時刻
-   - `status`: ステータス（active/resolved）
+   - `conflictType`: 競合種別（simultaneous_edit/stale_data/permission_denied）
+   - `initiatingUserId`, `conflictingUserId`: 競合に関わるユーザーID
+   - `timestamp`: 競合検出時刻
+   - `isResolved`: 解決済みフラグ
+   - `resolution`: 解決方法（オプション）
+   - `initiatingVersion`, `conflictingVersion`: バージョン情報
+   - `metadata`: メタデータ（オプション）
+   - **インデックス**: `by_task`, `by_workspace`, `by_conflict_id`, `by_timestamp`, `by_resolved`
 
 8. **notifications**: 通知情報
    - `workspaceId`: ワークスペースID
    - `targetUserId`: 通知対象ユーザーID
    - `senderUserId`: 送信者ユーザーID
-   - `type`: 通知タイプ
+   - `type`: 通知タイプ（task_created/task_updated/task_assigned/task_completed/user_joined）
    - `title`: 通知タイトル
    - `message`: 通知メッセージ
    - `priority`: 優先度（low/medium/high/urgent）
-   - `isRead`: 既読フラグ
    - `relatedTaskId`: 関連タスクID（オプション）
+   - `relatedUserId`: 関連ユーザーID（オプション）
+   - `metadata`: メタデータ（オプション）
+   - `isRead`: 既読フラグ
    - `createdAt`: 作成時刻
+   - **インデックス**: `by_target_user`, `by_workspace`, `by_created_at`, `by_unread`, `by_type`
 
 ### ドラッグ&ドロップ機能
 
@@ -377,6 +407,7 @@ ConvexのuseQueryフックを使用して、タスクの変更がリアルタイ
 #### 主要コンポーネント
 
 1. **useRealtimeTasks**: リアルタイムタスクデータ管理
+
    - Convex useQueryでタスクとメンバー情報を取得
    - ユーザー情報のキャッシュ機能
    - ステータス別のタスクグループ化
@@ -395,12 +426,14 @@ ConvexのuseQueryフックを使用して、タスクの変更がリアルタイ
 const tasks = useQuery(api.tasks.getWorkspaceTasksRealtime, { workspaceId });
 
 // メンバー情報取得
-const members = useQuery(api.tasks.getWorkspaceMembersRealtime, { workspaceId });
+const members = useQuery(api.tasks.getWorkspaceMembersRealtime, {
+  workspaceId,
+});
 
 // ユーザー情報統合
-const tasksWithUsers = tasks.map(task => ({
+const tasksWithUsers = tasks.map((task) => ({
   ...task,
-  assigneeUser: userCache.get(task.assigneeId)
+  assigneeUser: userCache.get(task.assigneeId),
 }));
 ```
 
@@ -556,11 +589,13 @@ const getUserDisplayName = (member: WorkspaceMember) => {
 #### 主要機能
 
 1. **ユーザープレゼンス表示**
+
    - オンライン/オフライン/離席状態の表示
    - 現在閲覧中のページ情報
    - アバターとステータスアイコンの表示
 
 2. **タスクロック機能**
+
    - タスク編集時の自動ロック
    - 他ユーザーによる編集中表示
    - ロック解除の自動処理
@@ -599,6 +634,7 @@ useEffect(() => {
 #### 競合検出方式
 
 1. **バージョン追跡**
+
    - タスクの更新時刻を使用したバージョン管理
    - 楽観的ロッキングによる競合検出
 
@@ -620,7 +656,7 @@ const checkForConflicts = useMutation(api.conflictResolution.checkForConflicts);
 
 const handleTaskUpdate = async (taskId: Id<"tasks">, updates: any) => {
   const conflicts = await checkForConflicts({ taskId });
-  
+
   if (conflicts.length > 0) {
     setConflictDialogOpen(true);
     setActiveConflicts(conflicts);
@@ -639,11 +675,13 @@ const handleTaskUpdate = async (taskId: Id<"tasks">, updates: any) => {
 #### 通知機能
 
 1. **自動通知作成**
+
    - タスク作成・更新・完了時の自動通知
    - 担当者変更時の専用通知
    - ワークスペースメンバー参加通知
 
 2. **通知タイプ**
+
    - `task_created`: タスク作成
    - `task_updated`: タスク更新
    - `task_assigned`: タスク割り当て

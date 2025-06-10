@@ -79,7 +79,9 @@ describe("WorkspacePresence", () => {
       </TestConvexProvider>
     );
 
-    expect(screen.getByText("オンラインのメンバーはいません")).toBeInTheDocument();
+    expect(
+      screen.getByText("オンラインのメンバーはいません")
+    ).toBeInTheDocument();
   });
 
   test("プレゼンス情報の表示", async () => {
@@ -190,7 +192,7 @@ describe("WorkspacePresence", () => {
 
     // ユーザー名がない場合はusernameが表示される
     expect(screen.getByText("test_user")).toBeInTheDocument();
-    
+
     // usernameもない場合はemailAddressが表示される
     expect(screen.getByText("user2@example.com")).toBeInTheDocument();
   });
@@ -367,9 +369,10 @@ describe("WorkspacePresence", () => {
     );
 
     // DOMの順序でソートされていることを確認
-    const userElements = container.querySelectorAll('[data-testid]') || 
-      Array.from(container.querySelectorAll('div')).filter(el => 
-        el.textContent?.includes('ユーザー')
+    const userElements =
+      container.querySelectorAll("[data-testid]") ||
+      Array.from(container.querySelectorAll("div")).filter((el) =>
+        el.textContent?.includes("ユーザー")
       );
 
     // オンライン → 離席中 → オフラインの順序で表示されることを期待

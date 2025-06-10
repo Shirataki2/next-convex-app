@@ -79,10 +79,12 @@ export function TaskCard({ task, workspace, onTaskChange }: TaskCardProps) {
               <GripVertical className="h-4 w-4" />
             </div>
             <div className="flex-1">
-              <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                {task.title}
+              </CardTitle>
               {workspace && (
-                <TaskLockIndicator 
-                  taskId={task._id} 
+                <TaskLockIndicator
+                  taskId={task._id}
                   workspaceId={workspace._id}
                   className="mt-1"
                 />

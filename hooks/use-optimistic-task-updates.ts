@@ -13,7 +13,10 @@ interface OptimisticUpdateState {
   lastUpdate: number | null;
 }
 
-export function useOptimisticTaskUpdates() {
+export function useOptimisticTaskUpdates(
+  applyOptimisticUpdate?: (taskId: string, updates: any) => void,
+  clearOptimisticUpdate?: (taskId: string) => void
+) {
   const { user } = useUser();
   const updateTask = useMutation(api.tasks.updateTask);
   const [updateState, setUpdateState] = useState<OptimisticUpdateState>({
@@ -33,19 +36,29 @@ export function useOptimisticTaskUpdates() {
         throw new Error("ユーザーがログインしていません");
       }
 
+      const updates: any = { status: newStatus };
+      if (newOrder !== undefined) {
+        updates.order = newOrder;
+      }
+
+      // 楽観的更新を即座に適用
+      if (applyOptimisticUpdate) {
+        applyOptimisticUpdate(taskId, updates);
+      }
+
       setUpdateState({ isUpdating: true, error: null, lastUpdate: null });
 
       try {
-        const updates: any = { status: newStatus };
-        if (newOrder !== undefined) {
-          updates.order = newOrder;
-        }
-
         await updateTask({
           taskId,
           updates,
           userId: user.id,
         });
+
+        // 成功時は楽観的更新をクリア（リアルタイムデータを使用）
+        if (clearOptimisticUpdate) {
+          clearOptimisticUpdate(taskId);
+        }
 
         setUpdateState({
           isUpdating: false,
@@ -55,6 +68,11 @@ export function useOptimisticTaskUpdates() {
 
         return { success: true };
       } catch (error) {
+        // エラー時は楽観的更新をクリア（元の状態に戻す）
+        if (clearOptimisticUpdate) {
+          clearOptimisticUpdate(taskId);
+        }
+
         const errorMessage =
           error instanceof Error ? error.message : "更新に失敗しました";
         setUpdateState({
@@ -66,7 +84,7 @@ export function useOptimisticTaskUpdates() {
         throw error;
       }
     },
-    [user, updateTask]
+    [user, updateTask, applyOptimisticUpdate, clearOptimisticUpdate]
   );
 
   // タスク順序更新
@@ -161,6 +179,13 @@ export function useOptimisticTaskUpdates() {
         throw new Error("ユーザーがログインしていません");
       }
 
+      // 楽観的更新を即座に適用
+      if (applyOptimisticUpdate) {
+        updates.forEach(({ taskId, order }) => {
+          applyOptimisticUpdate(taskId, { order });
+        });
+      }
+
       setUpdateState({ isUpdating: true, error: null, lastUpdate: null });
 
       try {
@@ -175,6 +200,13 @@ export function useOptimisticTaskUpdates() {
           )
         );
 
+        // 成功時は楽観的更新をクリア
+        if (clearOptimisticUpdate) {
+          updates.forEach(({ taskId }) => {
+            clearOptimisticUpdate(taskId);
+          });
+        }
+
         setUpdateState({
           isUpdating: false,
           error: null,
@@ -183,6 +215,13 @@ export function useOptimisticTaskUpdates() {
 
         return { success: true };
       } catch (error) {
+        // エラー時は楽観的更新をクリア
+        if (clearOptimisticUpdate) {
+          updates.forEach(({ taskId }) => {
+            clearOptimisticUpdate(taskId);
+          });
+        }
+
         const errorMessage =
           error instanceof Error ? error.message : "バッチ更新に失敗しました";
         setUpdateState({
@@ -194,7 +233,7 @@ export function useOptimisticTaskUpdates() {
         throw error;
       }
     },
-    [user, updateTask]
+    [user, updateTask, applyOptimisticUpdate, clearOptimisticUpdate]
   );
 
   // エラーをクリア

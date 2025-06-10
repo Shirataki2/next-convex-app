@@ -4,20 +4,17 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Users,
   Crown,
   User,
   Mail,
-  UserPlus,
-  Shield,
   Calendar,
 } from "lucide-react";
 import { InviteMemberDialog } from "@/components/workspace/invite-member-dialog";
@@ -50,7 +47,7 @@ export default function WorkspaceMembersPage() {
   const getWorkspaceMembers = useAction(api.tasks.getWorkspaceMembers);
 
   // メンバー情報を取得
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     if (!workspace) return;
 
     try {
@@ -58,13 +55,13 @@ export default function WorkspaceMembersPage() {
       const membersInfo = await getWorkspaceMembers({ workspaceId });
 
       // オーナー情報を含むメンバー一覧を作成
-      const membersWithOwnerInfo = membersInfo.map((member: any) => ({
+      const membersWithOwnerInfo = membersInfo.map((member: WorkspaceMember) => ({
         ...member,
         isOwner: member.id === workspace.ownerId,
       }));
 
       // オーナーを最初に表示するようにソート
-      membersWithOwnerInfo.sort((a: any, b: any) => {
+      membersWithOwnerInfo.sort((a: WorkspaceMember, b: WorkspaceMember) => {
         if (a.isOwner) return -1;
         if (b.isOwner) return 1;
         return 0;
@@ -76,11 +73,11 @@ export default function WorkspaceMembersPage() {
     } finally {
       setIsLoadingMembers(false);
     }
-  };
+  }, [workspace, workspaceId, getWorkspaceMembers]);
 
   useEffect(() => {
     fetchMembers();
-  }, [workspace, workspaceId]);
+  }, [fetchMembers]);
 
   // 招待送信後の処理
   const handleInviteSent = async () => {
