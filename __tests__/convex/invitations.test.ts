@@ -45,8 +45,8 @@ describe("Invitations", () => {
   });
 
   test("createInvitation: 存在しないワークスペースへの招待はエラー", async () => {
-    // 有効な形式だが存在しないワークスペースIDを作成
-    const fakeWorkspaceId = "j975qwerty123456789abcdefgh" as Id<"workspaces">;
+    // テスト用の実在しないワークスペースID
+    const fakeWorkspaceId = "k175555555555555555555555" as Id<"workspaces">;
 
     await expect(
       t.mutation(api.invitations.createInvitation, {

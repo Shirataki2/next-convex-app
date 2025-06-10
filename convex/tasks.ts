@@ -17,6 +17,41 @@ export const getWorkspaceTasks = query({
   },
 });
 
+// リアルタイム用：ワークスペースのタスク一覧を取得（ユーザー情報は含まない）
+export const getWorkspaceTasksRealtime = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, { workspaceId }) => {
+    const tasks = await ctx.db
+      .query("tasks")
+      .filter((q) => q.eq(q.field("workspaceId"), workspaceId))
+      .order("asc")
+      .collect();
+
+    return tasks;
+  },
+});
+
+// ワークスペースメンバーのユーザー情報を取得（リアルタイム用）
+export const getWorkspaceMembersRealtime = query({
+  args: { workspaceId: v.id("workspaces") },
+  handler: async (ctx, { workspaceId }) => {
+    // ワークスペース情報を取得
+    const workspace = await ctx.db.get(workspaceId);
+    if (!workspace) {
+      return [];
+    }
+
+    // オーナーとメンバーの重複を除去
+    const allMemberIds = Array.from(
+      new Set([workspace.ownerId, ...workspace.members])
+    );
+
+    // Clerkからの情報は含まず、IDのみ返す
+    // クライアントサイドでClerkのuseUserでユーザー情報を取得
+    return allMemberIds.map((memberId) => ({ id: memberId }));
+  },
+});
+
 // ユーザー情報の型定義
 type AssigneeUser = {
   id: string;

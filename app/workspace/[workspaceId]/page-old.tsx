@@ -4,14 +4,14 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, User, Users, AlertCircle } from "lucide-react";
+import { Clock, User, Users } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { TaskColumn } from "@/components/workspace/task-column";
 import { Id } from "@/convex/_generated/dataModel";
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -26,45 +26,65 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { useUser } from "@clerk/nextjs";
 import { TaskCardOverlay } from "@/components/workspace/task-card-overlay";
-import { useRealtimeTasks, TaskWithUser } from "@/hooks/use-realtime-tasks";
-import { useOptimisticTaskUpdates } from "@/hooks/use-optimistic-task-updates";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Doc } from "@/convex/_generated/dataModel";
+
+// ユーザー情報付きタスクの型定義
+type TaskWithUser = Doc<"tasks"> & {
+  assigneeUser?: {
+    id: string;
+    firstName: string | null;
+    lastName: string | null;
+    imageUrl: string;
+    username: string | null;
+    emailAddress?: string;
+  } | null;
+};
 
 export default function WorkspaceDetailPage() {
   const params = useParams();
   const workspaceId = params.workspaceId as Id<"workspaces">;
   const { user } = useUser();
+  const updateTask = useMutation(api.tasks.updateTask);
   const [activeTask, setActiveTask] = useState<TaskWithUser | null>(null);
+  const [tasks, setTasks] = useState<TaskWithUser[] | null>(null);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
 
   // ワークスペース情報を取得
   const workspace = useQuery(api.workspaces.getWorkspace, { workspaceId });
 
-  // リアルタイムタスクデータ
-  const { tasks, groupedTasks, stats, isLoadingTasks, isLoadingUsers } =
-    useRealtimeTasks(workspaceId);
+  // ユーザー情報付きタスクを取得するaction
+  const getTasksWithUsers = useAction(api.tasks.getWorkspaceTasksWithUsers);
 
-  // 楽観的更新とエラーハンドリング
-  const {
-    updateTaskStatus,
-    updateTaskOrder,
-    batchUpdateTasks,
-    isUpdating,
-    error,
-    clearError,
-  } = useOptimisticTaskUpdates();
+  // タスクとユーザー情報を取得
+  const fetchTasksWithUsers = async () => {
+    if (!workspaceId) return;
+
+    try {
+      const tasksWithUsers = await getTasksWithUsers({ workspaceId });
+      setTasks(tasksWithUsers);
+    } catch (error) {
+      console.error("Failed to fetch tasks with user info:", error);
+      // フォールバック：基本のタスク情報のみ取得（今後実装）
+    } finally {
+      setIsLoadingTasks(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasksWithUsers();
+  }, [workspaceId]);
 
   // デバッグ：タスクの変更を監視
   useEffect(() => {
     if (tasks) {
-      console.log("リアルタイムタスク更新:", {
+      console.log("タスクが更新されました:", {
         tasksCount: tasks.length,
-        todoCount: groupedTasks.todo.length,
-        inProgressCount: groupedTasks.inProgress.length,
-        doneCount: groupedTasks.done.length,
-        timestamp: new Date().toISOString(),
+        todoCount: tasks.filter((t) => t.status === "todo").length,
+        inProgressCount: tasks.filter((t) => t.status === "in_progress").length,
+        doneCount: tasks.filter((t) => t.status === "done").length,
       });
     }
-  }, [tasks, groupedTasks]);
+  }, [tasks]);
 
   // センサーの設定（マウスとタッチに対応）
   const sensors = useSensors(
@@ -81,6 +101,23 @@ export default function WorkspaceDetailPage() {
     })
   );
 
+  // タスクをステータス別にグループ化（order順にソート）
+  const groupedTasks = useMemo(() => {
+    if (!tasks) return { todo: [], inProgress: [], done: [] };
+
+    return {
+      todo: tasks
+        .filter((task) => task.status === "todo")
+        .sort((a, b) => a.order - b.order),
+      inProgress: tasks
+        .filter((task) => task.status === "in_progress")
+        .sort((a, b) => a.order - b.order),
+      done: tasks
+        .filter((task) => task.status === "done")
+        .sort((a, b) => a.order - b.order),
+    };
+  }, [tasks]);
+
   // ドラッグ開始時の処理
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -91,7 +128,7 @@ export default function WorkspaceDetailPage() {
     setActiveTask(task || null);
   };
 
-  // ドラッグ終了時の処理（リアルタイム対応）
+  // ドラッグ終了時の処理（楽観的更新対応）
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -152,58 +189,154 @@ export default function WorkspaceDetailPage() {
       return;
     }
 
-    // ドラッグ終了時にactiveTaskをクリア
-    setActiveTask(null);
+    // 同じステータスにドロップした場合（順序変更の可能性）
+    if (currentTask.status === newStatus) {
+      console.log("同じステータス内でのドロップ:", {
+        current: currentTask.status,
+        new: newStatus,
+        overTaskId,
+      });
 
-    try {
-      // 同じステータスにドロップした場合（順序変更）
-      if (currentTask.status === newStatus) {
-        if (overTaskId && overTaskId !== taskId) {
-          const statusTasks =
-            groupedTasks[newStatus as keyof typeof groupedTasks];
-          const activeIndex = statusTasks.findIndex(
-            (task) => task._id === taskId
-          );
-          const overIndex = statusTasks.findIndex(
-            (task) => task._id === overTaskId
-          );
+      // タスクの上にドロップした場合、または同じタスクでない場合は順序を変更
+      if (overTaskId && overTaskId !== taskId) {
+        const originalTasks = [...tasks];
+        const statusTasks = tasks
+          .filter((task) => task.status === newStatus)
+          .sort((a, b) => a.order - b.order);
 
-          if (
-            activeIndex !== -1 &&
-            overIndex !== -1 &&
-            activeIndex !== overIndex
-          ) {
-            console.log("順序変更実行:", { activeIndex, overIndex });
-
-            const reorderedTasks = arrayMove(
-              statusTasks,
-              activeIndex,
-              overIndex
-            );
-            const updatesData = reorderedTasks.map((task, index) => ({
-              taskId: task._id,
-              order: index + 1,
-            }));
-
-            await batchUpdateTasks(updatesData);
-            console.log("順序変更完了");
-          }
-        }
-      } else {
-        // ステータス変更
-        const newStatusTasks =
-          groupedTasks[newStatus as keyof typeof groupedTasks];
-        const maxOrder = Math.max(
-          ...newStatusTasks.map((task) => task.order),
-          0
+        const activeIndex = statusTasks.findIndex(
+          (task) => task._id === taskId
+        );
+        const overIndex = statusTasks.findIndex(
+          (task) => task._id === overTaskId
         );
 
-        await updateTaskStatus(taskId, newStatus, maxOrder + 1);
-        console.log("ステータス変更完了:", { taskId, newStatus });
+        if (
+          activeIndex !== -1 &&
+          overIndex !== -1 &&
+          activeIndex !== overIndex
+        ) {
+          console.log("順序変更実行:", { activeIndex, overIndex });
+
+          // arrayMoveで配列を並び替え
+          const reorderedTasks = arrayMove(statusTasks, activeIndex, overIndex);
+
+          // 新しい順序を設定（1から開始）
+          const updatedStatusTasks = reorderedTasks.map((task, index) => ({
+            ...task,
+            order: index + 1,
+          }));
+
+          // 他のステータスのタスクと結合
+          const otherTasks = tasks.filter((task) => task.status !== newStatus);
+          const allUpdatedTasks = [...otherTasks, ...updatedStatusTasks];
+
+          // 楽観的更新
+          setTasks(allUpdatedTasks);
+          console.log("楽観的更新（順序変更）完了");
+
+          // ドラッグ終了時にactiveTaskをクリア
+          setActiveTask(null);
+
+          // バックエンドで順序を更新（非同期）
+          try {
+            // 全ての順序を更新（simplifiedアプローチ）
+            await Promise.all(
+              updatedStatusTasks.map((task, index) =>
+                updateTask({
+                  taskId: task._id,
+                  updates: { order: index + 1 },
+                  userId: user.id,
+                })
+              )
+            );
+
+            console.log("バックエンド更新成功（順序変更）:", {
+              updatedCount: updatedStatusTasks.length,
+            });
+
+            // 最新のデータを再取得して同期
+            await fetchTasksWithUsers();
+            console.log("最新データ同期完了");
+          } catch (error) {
+            console.error("バックエンド更新に失敗、ロールバック実行:", error);
+
+            // エラー時は楽観的更新をロールバック
+            setTasks(originalTasks);
+            console.log("楽観的更新をロールバックしました");
+
+            // ユーザーにエラーを通知
+            alert("タスクの順序変更に失敗しました。再試行してください。");
+          }
+        }
       }
+
+      setActiveTask(null);
+      return;
+    }
+
+    console.log("タスク更新開始（楽観的更新）:", {
+      taskId,
+      currentStatus: currentTask.status,
+      newStatus,
+      taskTitle: currentTask.title,
+    });
+
+    // 楽観的更新: 即座にローカル状態を更新
+    const originalTasks = tasks;
+    if (tasks) {
+      // 新しいステータスの最大orderを計算
+      const newStatusTasks = tasks.filter((task) => task.status === newStatus);
+      const maxOrder = Math.max(...newStatusTasks.map((task) => task.order), 0);
+
+      const updatedTasks = tasks.map((task) =>
+        task._id === taskId
+          ? { ...task, status: newStatus, order: maxOrder + 1 }
+          : task
+      );
+      setTasks(updatedTasks);
+      console.log("楽観的更新完了:", {
+        taskId,
+        newStatus,
+        newOrder: maxOrder + 1,
+      });
+    }
+
+    // ドラッグ終了時にactiveTaskをクリア（楽観的更新後すぐに）
+    setActiveTask(null);
+
+    // バックエンドでタスクのステータスを更新（非同期）
+    try {
+      // 新しいステータスの最大orderを計算（バックエンド用）
+      const newStatusTasks =
+        tasks?.filter((task) => task.status === newStatus) || [];
+      const maxOrder = Math.max(...newStatusTasks.map((task) => task.order), 0);
+
+      await updateTask({
+        taskId,
+        updates: { status: newStatus, order: maxOrder + 1 },
+        userId: user.id,
+      });
+      console.log("バックエンド更新成功:", {
+        taskId,
+        newStatus,
+        newOrder: maxOrder + 1,
+      });
+
+      // バックエンド更新完了後、最新のデータを再取得して同期
+      await fetchTasksWithUsers();
+      console.log("最新データ同期完了");
     } catch (error) {
-      console.error("タスク更新エラー:", error);
-      // エラーはuseOptimisticTaskUpdatesフックで処理される
+      console.error("バックエンド更新に失敗、ロールバック実行:", error);
+
+      // エラー時は楽観的更新をロールバック
+      if (originalTasks) {
+        setTasks(originalTasks);
+        console.log("楽観的更新をロールバックしました");
+      }
+
+      // ユーザーにエラーを通知（今後トースト等で実装）
+      alert("タスクの更新に失敗しました。再試行してください。");
     }
   };
 
@@ -212,6 +345,18 @@ export default function WorkspaceDetailPage() {
     console.log("ドラッグキャンセル");
     setActiveTask(null);
   };
+
+  // 統計情報を計算
+  const stats = useMemo(() => {
+    if (!tasks) return { total: 0, todo: 0, inProgress: 0, done: 0 };
+
+    return {
+      total: tasks.length,
+      todo: groupedTasks.todo.length,
+      inProgress: groupedTasks.inProgress.length,
+      done: groupedTasks.done.length,
+    };
+  }, [tasks, groupedTasks]);
 
   // ローディング状態
   if (workspace === undefined || isLoadingTasks) {
@@ -275,41 +420,6 @@ export default function WorkspaceDetailPage() {
       />
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* エラー表示 */}
-        {error && (
-          <Alert className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="flex items-center justify-between">
-              <span>{error}</span>
-              <Button variant="outline" size="sm" onClick={clearError}>
-                閉じる
-              </Button>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* ローディング状態 */}
-        {(isUpdating || isLoadingUsers) && (
-          <div className="mb-4">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <div className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full" />
-              {isUpdating && "タスクを更新中..."}
-              {isLoadingUsers && "ユーザー情報を読み込み中..."}
-            </div>
-          </div>
-        )}
-
-        {/* リアルタイム状態インジケーター */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            リアルタイム同期: 有効
-            <span className="ml-2">
-              最終更新: {new Date().toLocaleTimeString("ja-JP")}
-            </span>
-          </div>
-        </div>
-
         {/* ページヘッダー */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
@@ -354,7 +464,7 @@ export default function WorkspaceDetailPage() {
               workspaceId={workspaceId}
               status="todo"
               workspace={workspace}
-              onTaskChange={() => Promise.resolve()}
+              onTaskChange={fetchTasksWithUsers}
             />
             <TaskColumn
               title="進行中"
@@ -363,7 +473,7 @@ export default function WorkspaceDetailPage() {
               workspaceId={workspaceId}
               status="in_progress"
               workspace={workspace}
-              onTaskChange={() => Promise.resolve()}
+              onTaskChange={fetchTasksWithUsers}
             />
             <TaskColumn
               title="完了"
@@ -372,7 +482,7 @@ export default function WorkspaceDetailPage() {
               workspaceId={workspaceId}
               status="done"
               workspace={workspace}
-              onTaskChange={() => Promise.resolve()}
+              onTaskChange={fetchTasksWithUsers}
             />
           </div>
 
