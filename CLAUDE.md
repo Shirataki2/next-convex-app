@@ -141,7 +141,7 @@ npx vitest --project=convex     # Convex関数
     - `updatePresence`: ユーザープレゼンス更新
     - `setTaskLock`: タスクロック設定/解除
     - `getWorkspacePresence`: ワークスペースのプレゼンス情報取得
-  - `conflict-resolution.ts`: 競合検出・解決関数
+  - `conflictResolution.ts`: 競合検出・解決関数
     - `checkForConflicts`: 競合検出
     - `resolveConflict`: 競合解決
     - `updateTaskWithConflictCheck`: 競合チェック付きタスク更新
@@ -162,7 +162,7 @@ npx vitest --project=convex     # Convex関数
     - `realtime-tasks.test.ts`: リアルタイム関数テスト
     - `invitations.test.ts`: 招待機能テスト
     - `presence.test.ts`: プレゼンス機能テスト
-    - `conflict-resolution.test.ts`: 競合解決機能テスト
+    - `conflictResolution.test.ts`: 競合解決機能テスト
     - `notifications.test.ts`: 通知機能テスト
   - `components/`: コンポーネントテスト
   - `hooks/`: カスタムフックテスト

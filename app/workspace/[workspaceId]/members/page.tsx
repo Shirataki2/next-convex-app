@@ -58,13 +58,13 @@ export default function WorkspaceMembersPage() {
       const membersInfo = await getWorkspaceMembers({ workspaceId });
 
       // オーナー情報を含むメンバー一覧を作成
-      const membersWithOwnerInfo = membersInfo.map((member) => ({
+      const membersWithOwnerInfo = membersInfo.map((member: any) => ({
         ...member,
         isOwner: member.id === workspace.ownerId,
       }));
 
       // オーナーを最初に表示するようにソート
-      membersWithOwnerInfo.sort((a, b) => {
+      membersWithOwnerInfo.sort((a: any, b: any) => {
         if (a.isOwner) return -1;
         if (b.isOwner) return 1;
         return 0;
