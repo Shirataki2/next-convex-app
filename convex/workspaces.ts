@@ -5,6 +5,12 @@ import { mutation, query } from "./_generated/server";
 export const getUserWorkspaces = query({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      console.log("認証エラー: ワークスペース一覧取得でユーザーのIdentityが取得できませんでした");
+      return [];
+    }
+
     const workspaces = await ctx.db.query("workspaces").collect();
 
     // フィルタリングをJavaScriptで行う（配列内の要素検索）
@@ -36,6 +42,12 @@ export const createWorkspace = mutation({
 export const getWorkspace = query({
   args: { workspaceId: v.id("workspaces") },
   handler: async (ctx, { workspaceId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      console.log("認証エラー: ワークスペース情報取得でユーザーのIdentityが取得できませんでした");
+      return null;
+    }
+
     const workspace = await ctx.db.get(workspaceId);
     return workspace;
   },

@@ -73,12 +73,18 @@ export function useRealtimeTasks(workspaceId: Id<"workspaces">) {
                 inviterUserId: member.id,
               });
               return { id: member.id, userInfo };
-            } catch (error) {
-              console.error(
-                `Failed to fetch user info for ${member.id}:`,
-                error
-              );
-              return { id: member.id, userInfo: null };
+            } catch (error: any) {
+              // 認証エラーの場合は静かに処理
+              if (error?.message?.includes("認証") || error?.message?.includes("authentication")) {
+                console.log(`認証が必要です。ユーザー情報取得をスキップします: ${member.id}`);
+                return { id: member.id, userInfo: null };
+              } else {
+                console.error(
+                  `Failed to fetch user info for ${member.id}:`,
+                  error
+                );
+                return { id: member.id, userInfo: null };
+              }
             }
           });
 
@@ -90,8 +96,13 @@ export function useRealtimeTasks(workspaceId: Id<"workspaces">) {
 
           setUserCache(newCache);
         }
-      } catch (error) {
-        console.error("Failed to fetch user information:", error);
+      } catch (error: any) {
+        // 認証エラーの場合は静かに処理
+        if (error?.message?.includes("認証") || error?.message?.includes("authentication")) {
+          console.log("認証が必要です。ユーザー情報取得をスキップします。");
+        } else {
+          console.error("Failed to fetch user information:", error);
+        }
       } finally {
         setIsLoadingUsers(false);
       }

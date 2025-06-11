@@ -88,7 +88,18 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
   // ユーザー情報付きメッセージを取得
   useEffect(() => {
     if (open && workspaceId) {
-      getMessagesWithUsers({ workspaceId, limit: 100 }).then(setMessagesWithUsers);
+      getMessagesWithUsers({ workspaceId, limit: 100 })
+        .then(setMessagesWithUsers)
+        .catch((error: any) => {
+          // 認証エラーの場合は静かに処理
+          if (error?.message?.includes("認証") || error?.message?.includes("authentication")) {
+            console.log("認証が必要です。ページをリフレッシュしてください。");
+            setMessagesWithUsers([]);
+          } else {
+            console.error("メッセージ取得に失敗:", error);
+            setMessagesWithUsers([]);
+          }
+        });
     }
   }, [workspaceId, messages, open, getMessagesWithUsers]);
 

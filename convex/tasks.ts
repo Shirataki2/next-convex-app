@@ -30,6 +30,12 @@ export const getWorkspaceTasks = query({
 export const getWorkspaceTasksRealtime = query({
   args: { workspaceId: v.id("workspaces") },
   handler: async (ctx, { workspaceId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      console.log("認証エラー: リアルタイムタスク取得でユーザーのIdentityが取得できませんでした");
+      return [];
+    }
+
     const tasks = await ctx.db
       .query("tasks")
       .filter((q) => q.eq(q.field("workspaceId"), workspaceId))
@@ -44,6 +50,12 @@ export const getWorkspaceTasksRealtime = query({
 export const getWorkspaceMembersRealtime = query({
   args: { workspaceId: v.id("workspaces") },
   handler: async (ctx, { workspaceId }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      console.log("認証エラー: リアルタイムメンバー取得でユーザーのIdentityが取得できませんでした");
+      return [];
+    }
+
     // ワークスペース情報を取得
     const workspace = await ctx.db.get(workspaceId);
     if (!workspace) {

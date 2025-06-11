@@ -57,7 +57,8 @@ export const getWorkspacePresence = query({
   handler: async (ctx, { workspaceId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("認証が必要です");
+      console.log("認証エラー: プレゼンス情報取得でユーザーのIdentityが取得できませんでした");
+      return [];
     }
 
     // 最近のプレゼンス情報を取得（5分以内にアクティビティがあったユーザー）
@@ -203,7 +204,8 @@ export const getWorkspaceTaskLocks = query({
   handler: async (ctx, { workspaceId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("認証が必要です");
+      console.log("認証エラー: タスクロック情報取得でユーザーのIdentityが取得できませんでした");
+      return [];
     }
 
     // 最近のロック情報を取得（5分以内）

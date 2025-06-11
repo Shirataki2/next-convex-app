@@ -71,7 +71,8 @@ export const getMessages = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Not authenticated");
+      console.log("認証エラー: メッセージ取得でユーザーのIdentityが取得できませんでした");
+      return [];
     }
 
     // ワークスペースのメンバーか確認
@@ -169,6 +170,12 @@ export const getMessagesWithUsers = action({
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args): Promise<any[]> => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      console.log("認証エラー: ユーザー情報付きメッセージ取得でユーザーのIdentityが取得できませんでした");
+      return [];
+    }
+
     // メッセージ一覧を直接取得
     const limit = args.limit || 100;
     const messages = await ctx.runQuery(api.messages.getMessages, {
