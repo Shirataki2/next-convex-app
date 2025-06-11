@@ -16,6 +16,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ☑️ リアルタイムプレゼンス機能
 - ☑️ 競合検出・解決システム
 - ☑️ 通知・アクティビティフィード
+- ☑️ タスク詳細ダイアログとコメント機能
 - ☑️ 包括的なテスト環境の構築
 
 **技術的修正:**
@@ -117,9 +118,11 @@ npx vitest --project=convex     # Convex関数
   - `ui/`: shadcn/uiコンポーネント（自動生成）
   - `layout/`: レイアウトコンポーネント
   - `workspace/`: ワークスペース関連コンポーネント
-    - `task-card.tsx`: ドラッグ可能なタスクカード（ユーザー情報表示対応）
+    - `task-card.tsx`: ドラッグ可能なタスクカード（ユーザー情報表示対応、詳細ダイアログクリック対応）
     - `task-card-overlay.tsx`: ドラッグ中のオーバーレイ表示
     - `task-column.tsx`: ドロップ可能なカンバンカラム
+    - `task-detail-dialog.tsx`: タスク詳細ダイアログ（ポップアップ形式、コメント機能付き）
+    - `task-comments.tsx`: タスクコメント一覧・投稿コンポーネント（編集・削除機能付き）
     - `create-task-dialog.tsx`: タスク作成ダイアログ（ユーザー選択対応）
     - `edit-task-dialog.tsx`: タスク編集ダイアログ（ユーザー選択対応）
     - `delete-task-dialog.tsx`: タスク削除確認ダイアログ
@@ -127,9 +130,9 @@ npx vitest --project=convex     # Convex関数
     - `invite-member-dialog.tsx`: メンバー招待ダイアログ
     - `invitation-list.tsx`: 招待一覧コンポーネント
     - `workspace-presence.tsx`: リアルタイムプレゼンス表示
-    - `conflict-monitor.tsx`: 競合検出・監視コンポーネント
+    - `conflict-monitor.tsx`: 競合検出・解決監視コンポーネント
     - `conflict-resolution-dialog.tsx`: 競合解決ダイアログ
-    - `notification-panel.tsx`: 通知パネル・アクティビティフィード
+    - `notification-panel.tsx`: 通知パネル・アクティビティフィード（コメント通知対応）
 - `convex/`: Convexバックエンド関数とスキーマ
   - `_generated/`: 自動生成ファイル（編集不可）
   - `workspaces.ts`: ワークスペース管理関数
@@ -159,6 +162,12 @@ npx vitest --project=convex     # Convex関数
     - `createNotification`: 通知作成
     - `createTaskNotification`: タスク関連通知の自動作成
     - `getNotificationsWithUserInfo`: ユーザー情報付き通知取得
+  - `comments.ts`: コメント管理関数
+    - `createComment`: コメント作成（アクティビティ・通知自動作成）
+    - `getTaskComments`: ユーザー情報付きコメント一覧取得
+    - `updateComment`: コメント編集
+    - `deleteComment`: コメント削除
+    - `getCommentCount`: コメント数取得
 - `hooks/`: カスタムReactフック
   - `use-realtime-tasks.ts`: リアルタイムタスクデータ管理
   - `use-optimistic-task-updates.ts`: 楽観的更新とエラー処理
@@ -318,7 +327,7 @@ mcp__playwright__browser_take_screenshot
    - `workspaceId`: ワークスペースID
    - `targetUserId`: 通知対象ユーザーID
    - `senderUserId`: 送信者ユーザーID
-   - `type`: 通知タイプ（task_created/task_updated/task_assigned/task_completed/user_joined）
+   - `type`: 通知タイプ（task_created/task_updated/task_assigned/task_completed/comment_added/user_joined）
    - `title`: 通知タイトル
    - `message`: 通知メッセージ
    - `priority`: 優先度（low/medium/high/urgent）
@@ -328,6 +337,16 @@ mcp__playwright__browser_take_screenshot
    - `isRead`: 既読フラグ
    - `createdAt`: 作成時刻
    - **インデックス**: `by_target_user`, `by_workspace`, `by_created_at`, `by_unread`, `by_type`
+
+9. **taskComments**: タスクコメント情報
+   - `taskId`: タスクID
+   - `workspaceId`: ワークスペースID
+   - `userId`: コメント投稿者ID
+   - `content`: コメント内容
+   - `createdAt`: 作成時刻
+   - `updatedAt`: 更新時刻
+   - `isEdited`: 編集済みフラグ
+   - **インデックス**: `by_task`, `by_workspace`, `by_user`, `by_created_at`, `by_task_created`
 
 ### ドラッグ&ドロップ機能
 
@@ -686,6 +705,7 @@ const handleTaskUpdate = async (taskId: Id<"tasks">, updates: any) => {
    - `task_updated`: タスク更新
    - `task_assigned`: タスク割り当て
    - `task_completed`: タスク完了
+   - `comment_added`: コメント追加
    - `user_joined`: メンバー参加
 
 3. **優先度管理**
@@ -762,6 +782,43 @@ npx vitest --project=convex
 
 # 監視モード（特定プロジェクト）
 npx vitest --project=next.js --watch
+```
+
+### タスク詳細・コメント機能
+
+#### 概要
+
+タスクの詳細情報をポップアップダイアログで表示し、そこでコメントの投稿・編集・削除ができる機能です。
+
+#### 主要機能
+
+1. **タスク詳細ダイアログ**
+   - ポップアップ形式でタスク詳細を表示
+   - タスクカードをクリックして開く
+   - ScrollAreaでコンテンツのスクロール対応
+   - タスク編集・削除ボタン（権限のあるユーザーのみ）
+
+2. **コメント機能**
+   - コメント一覧表示（ユーザーアバター・名前付き）
+   - 新規コメント投稿
+   - コメント編集・削除（自分のコメントのみ）
+   - リアルタイム更新
+
+3. **通知・アクティビティ連携**
+   - コメント投稿時の自動通知作成
+   - アクティビティフィードでの表示
+   - コメント数のバッジ表示
+
+#### 実装構成
+
+```typescript
+// タスクカードからダイアログを開く
+<TaskCard onTaskDetailClick={handleTaskDetailClick} />
+
+// ダイアログ内でコメント機能を表示
+<TaskDetailDialog>
+  <TaskComments taskId={taskId} workspaceId={workspaceId} />
+</TaskDetailDialog>
 ```
 
 ### 開発時の注意事項

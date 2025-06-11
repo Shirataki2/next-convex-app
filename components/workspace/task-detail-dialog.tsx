@@ -49,7 +49,7 @@ export function TaskDetailDialog({
     lastName: string | null;
     imageUrl: string | null;
     username: string | null;
-    emailAddress: string | null;
+    emailAddress?: string | null;
   }
 
   const [members, setMembers] = useState<WorkspaceMemberInfo[]>([]);
@@ -139,7 +139,7 @@ export function TaskDetailDialog({
               </div>
             </div>
             {(user.id === workspace.ownerId || user.id === task.assigneeId) && (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mr-4">
                 <EditTaskDialog
                   task={task}
                   workspace={workspace}

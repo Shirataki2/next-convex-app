@@ -170,7 +170,7 @@ export function NotificationPanel({ workspaceId }: NotificationPanelProps) {
 
           <CardContent className="p-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-2 mx-4 mb-4">
+              <TabsList className="grid w-full grid-cols-2 mb-4">
                 <TabsTrigger value="notifications" className="text-xs">
                   通知 {unreadCount > 0 && `(${unreadCount})`}
                 </TabsTrigger>

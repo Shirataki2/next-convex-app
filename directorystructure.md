@@ -21,6 +21,8 @@
 │   │       ├── create-workspace-dialog.test.tsx # ワークスペース作成ダイアログテスト
 │   │       ├── edit-task-dialog.test.tsx        # タスク編集ダイアログテスト
 │   │       ├── delete-task-dialog.test.tsx      # タスク削除ダイアログテスト
+│   │       ├── task-detail-dialog.test.tsx      # タスク詳細ダイアログテスト
+│   │       ├── task-comments.test.tsx           # タスクコメントコンポーネントテスト
 │   │       ├── invite-member-dialog.test.tsx    # メンバー招待ダイアログテスト
 │   │       ├── task-drag-drop.test.tsx          # ドラッグ&ドロップテスト
 │   │       └── workspace-presence.test.tsx      # プレゼンス機能テスト
@@ -31,13 +33,15 @@
 │   │   ├── invitations.test.ts              # 招待機能テスト
 │   │   ├── presence.test.ts                 # プレゼンス機能テスト
 │   │   ├── conflict-resolution.test.ts      # 競合解決機能テスト
-│   │   └── notifications.test.ts            # 通知機能テスト
+│   │   ├── notifications.test.ts            # 通知機能テスト
+│   │   └── comments.test.ts                 # コメント機能テスト
 │   ├── hooks/
 │   │   ├── use-realtime-tasks.test.ts       # リアルタイムタスクフックテスト
 │   │   ├── use-optimistic-task-updates.test.ts # 楽観的更新フックテスト
 │   │   ├── use-presence.test.ts             # プレゼンスフックテスト
 │   │   ├── use-conflict-resolution.test.ts  # 競合解決フックテスト
-│   │   └── use-notifications.test.ts        # 通知フックテスト
+│   │   ├── use-notifications.test.ts        # 通知フックテスト
+│   │   └── task-comments.test.ts            # タスクコメントフックテスト
 │   └── lib/
 │       └── utils.test.ts                    # ユーティリティ関数テスト
 ├── app/                                      # Next.js App Router
@@ -72,6 +76,8 @@
 │   │   ├── create-task-dialog.tsx           # タスク作成ダイアログ
 │   │   ├── edit-task-dialog.tsx             # タスク編集ダイアログ
 │   │   ├── delete-task-dialog.tsx           # タスク削除ダイアログ
+│   │   ├── task-detail-dialog.tsx           # タスク詳細ダイアログ（ポップアップ形式）
+│   │   ├── task-comments.tsx                # タスクコメント機能
 │   │   ├── create-workspace-dialog.tsx     # ワークスペース作成ダイアログ
 │   │   ├── invite-member-dialog.tsx         # メンバー招待ダイアログ
 │   │   ├── invitation-list.tsx              # 招待一覧コンポーネント
@@ -142,7 +148,8 @@
 │   ├── invitations.ts                      # 招待管理関数
 │   ├── presence.ts                         # プレゼンス管理関数
 │   ├── conflictResolution.ts               # 競合検出・解決関数
-│   └── notifications.ts                    # 通知管理関数
+│   ├── notifications.ts                    # 通知管理関数
+│   └── comments.ts                         # コメント管理関数
 ├── hooks/                                   # カスタムフック
 │   ├── use-mobile.ts                       # モバイル判定フック
 │   ├── use-realtime-tasks.ts               # リアルタイムタスクデータ管理（楽観的更新統合）
@@ -194,7 +201,7 @@
 - **`login/[[...rest]]/page.tsx`**: Clerk認証ページ（catch-all route）
 - **`dashboard/page.tsx`**: ダッシュボード（要認証）
 - **`workspace/page.tsx`**: ワークスペース一覧ページ
-- **`workspace/[workspaceId]/page.tsx`**: ワークスペース詳細ページ（リアルタイム同期対応）
+- **`workspace/[workspaceId]/page.tsx`**: ワークスペース詳細ページ（リアルタイム同期対応、タスク詳細ダイアログ統合）
 - **`workspace/[workspaceId]/members/page.tsx`**: メンバー管理ページ
 - **`invite/[token]/page.tsx`**: 招待受け入れページ
 - **`layout.tsx`**: アプリ全体のレイアウト
@@ -210,19 +217,20 @@
 - **`presence.ts`**: リアルタイムプレゼンス・タスクロック管理関数
 - **`conflictResolution.ts`**: 競合検出・解決関数（ファイル名修正済み）
 - **`notifications.ts`**: 通知・アクティビティフィード管理関数
+- **`comments.ts`**: タスクコメント管理関数（CRUD操作、通知・アクティビティ統合）
 - **`_generated/`**: Convexが自動生成するファイル群（編集禁止）
 
 ### `/components` - Reactコンポーネント
 
 - **`ui/`**: shadcn/ui（再利用可能なUIコンポーネント群）
 - **`layout/`**: レイアウト関連コンポーネント
-- **`workspace/`**: ワークスペース機能コンポーネント（ドラッグ&ドロップ、招待管理、リアルタイム機能含む）
+- **`workspace/`**: ワークスペース機能コンポーネント（ドラッグ&ドロップ、招待管理、リアルタイム機能、タスク詳細・コメント機能含む）
 
 ### `/__tests__` - テストファイル
 
-- **`convex/`**: Convex関数のユニットテスト（convex-test使用、リアルタイム・プレゼンス・競合・通知機能含む）
-- **`components/`**: Reactコンポーネントテスト（React Testing Library、リアルタイム機能含む）
-- **`hooks/`**: カスタムフックテスト（リアルタイム、楽観的更新、プレゼンス、競合解決、通知）
+- **`convex/`**: Convex関数のユニットテスト（convex-test使用、リアルタイム・プレゼンス・競合・通知・コメント機能含む）
+- **`components/`**: Reactコンポーネントテスト（React Testing Library、リアルタイム機能、タスク詳細・コメント機能含む）
+- **`hooks/`**: カスタムフックテスト（リアルタイム、楽観的更新、プレゼンス、競合解決、通知、コメント機能）
 - **`lib/`**: ユーティリティ関数テスト
 
 ### 設定ファイル
