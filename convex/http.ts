@@ -4,6 +4,24 @@ import { internal } from "./_generated/api";
 
 const http = httpRouter();
 
+// CORS preflight リクエスト対応 - /uploadChatFile
+http.route({
+  path: "/uploadChatFile",
+  method: "OPTIONS",
+  handler: httpAction(async (ctx, request) => {
+    const headers = new Headers();
+    headers.set("Access-Control-Allow-Origin", "*");
+    headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    headers.set("Access-Control-Max-Age", "86400"); // 24時間キャッシュ
+
+    return new Response(null, {
+      status: 204,
+      headers,
+    });
+  }),
+});
+
 // ファイルアップロードエンドポイント
 http.route({
   path: "/uploadChatFile",
@@ -15,15 +33,10 @@ http.route({
     headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-    // OPTIONSリクエストへの対応
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers });
-    }
-
     try {
-      // 認証チェック
-      const authHeader = request.headers.get("Authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      // 認証チェック - Convexの組み込み認証を使用
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers,
@@ -34,9 +47,11 @@ http.route({
       const formData = await request.formData();
       const file = formData.get("file") as File;
       const workspaceId = formData.get("workspaceId") as string;
-      const userId = formData.get("userId") as string;
+      
+      // 認証されたユーザーIDを使用
+      const userId = identity.subject;
 
-      if (!file || !workspaceId || !userId) {
+      if (!file || !workspaceId) {
         return new Response(
           JSON.stringify({ error: "Missing required fields" }),
           {
@@ -92,6 +107,24 @@ http.route({
   }),
 });
 
+// CORS preflight リクエスト対応 - /generateUploadUrl
+http.route({
+  path: "/generateUploadUrl",
+  method: "OPTIONS",
+  handler: httpAction(async (ctx, request) => {
+    const headers = new Headers();
+    headers.set("Access-Control-Allow-Origin", "*");
+    headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+    headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    headers.set("Access-Control-Max-Age", "86400"); // 24時間キャッシュ
+
+    return new Response(null, {
+      status: 204,
+      headers,
+    });
+  }),
+});
+
 // アップロードURL生成エンドポイント
 http.route({
   path: "/generateUploadUrl",
@@ -102,14 +135,10 @@ http.route({
     headers.set("Access-Control-Allow-Methods", "POST, OPTIONS");
     headers.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-    if (request.method === "OPTIONS") {
-      return new Response(null, { status: 204, headers });
-    }
-
     try {
-      // 認証チェック
-      const authHeader = request.headers.get("Authorization");
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      // 認証チェック - Convexの組み込み認証を使用
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers,

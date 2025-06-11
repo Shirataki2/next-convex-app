@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, useAuth } from "@clerk/nextjs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,7 @@ interface ChatMessage {
 
 export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [message, setMessage] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<Id<"messages"> | null>(null);
   const [editingContent, setEditingContent] = useState("");
@@ -134,6 +135,12 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
   const uploadFiles = async (files: File[]): Promise<Id<"chatFiles">[]> => {
     const fileIds: Id<"chatFiles">[] = [];
 
+    // JWTトークンを取得
+    const token = await getToken();
+    if (!token) {
+      throw new Error("認証トークンの取得に失敗しました");
+    }
+
     for (const file of files) {
       const formData = new FormData();
       formData.append("file", file);
@@ -143,7 +150,7 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
       const response = await fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL!.replace('.cloud', '.site')}/uploadChatFile`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${user?.id}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
