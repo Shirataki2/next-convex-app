@@ -140,4 +140,32 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_created_at", ["createdAt"])
     .index("by_task_created", ["taskId", "createdAt"]),
+
+  messages: defineTable({
+    workspaceId: v.id("workspaces"),
+    userId: v.string(),
+    content: v.string(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    isEdited: v.boolean(),
+    fileIds: v.optional(v.array(v.id("chatFiles"))), // 複数ファイル添付対応
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_user", ["userId"])
+    .index("by_created_at", ["createdAt"])
+    .index("by_workspace_created", ["workspaceId", "createdAt"]),
+
+  chatFiles: defineTable({
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    fileSize: v.number(),
+    fileType: v.string(),
+    uploadedBy: v.string(),
+    workspaceId: v.id("workspaces"),
+    createdAt: v.number(),
+  })
+    .index("by_workspace", ["workspaceId"])
+    .index("by_user", ["uploadedBy"])
+    .index("by_created_at", ["createdAt"])
+    .index("by_storage", ["storageId"]),
 });

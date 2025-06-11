@@ -15,7 +15,9 @@ import type {
 } from "convex/server";
 import type * as comments from "../comments.js";
 import type * as conflictResolution from "../conflictResolution.js";
+import type * as http from "../http.js";
 import type * as invitations from "../invitations.js";
+import type * as messages from "../messages.js";
 import type * as notifications from "../notifications.js";
 import type * as presence from "../presence.js";
 import type * as tasks from "../tasks.js";
@@ -32,7 +34,9 @@ import type * as workspaces from "../workspaces.js";
 declare const fullApi: ApiFromModules<{
   comments: typeof comments;
   conflictResolution: typeof conflictResolution;
+  http: typeof http;
   invitations: typeof invitations;
+  messages: typeof messages;
   notifications: typeof notifications;
   presence: typeof presence;
   tasks: typeof tasks;

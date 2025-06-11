@@ -4,7 +4,7 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, User, Users, AlertCircle } from "lucide-react";
+import { Clock, User, Users, AlertCircle, MessageSquare } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery } from "convex/react";
@@ -33,6 +33,7 @@ import { useRealtimeTasks, TaskWithUser } from "@/hooks/use-realtime-tasks";
 import { useOptimisticTaskUpdates } from "@/hooks/use-optimistic-task-updates";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TaskDetailDialog } from "@/components/workspace/task-detail-dialog";
+import { ChatPanel } from "@/components/workspace/chat-panel";
 
 export default function WorkspaceDetailPage() {
   const params = useParams();
@@ -41,6 +42,7 @@ export default function WorkspaceDetailPage() {
   const [activeTask, setActiveTask] = useState<TaskWithUser | null>(null);
   const [selectedTaskId, setSelectedTaskId] = useState<Id<"tasks"> | null>(null);
   const [taskDetailDialogOpen, setTaskDetailDialogOpen] = useState(false);
+  const [chatPanelOpen, setChatPanelOpen] = useState(false);
 
   // ワークスペース情報を取得
   const workspace = useQuery(api.workspaces.getWorkspace, { workspaceId });
@@ -389,6 +391,15 @@ export default function WorkspaceDetailPage() {
                 チーム: {workspace.members.length}人
               </Badge>
               <NotificationPanel workspaceId={workspaceId} />
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                onClick={() => setChatPanelOpen(true)}
+              >
+                <MessageSquare className="h-4 w-4" />
+                チャット
+              </Button>
               <Link href={`/workspace/${workspaceId}/members`}>
                 <Button variant="outline" size="sm" className="gap-2">
                   <Users className="h-4 w-4" />
@@ -501,6 +512,13 @@ export default function WorkspaceDetailPage() {
         workspaceId={workspaceId}
         open={taskDetailDialogOpen}
         onOpenChange={handleTaskDetailDialogClose}
+      />
+
+      {/* チャットパネル */}
+      <ChatPanel
+        workspaceId={workspaceId}
+        open={chatPanelOpen}
+        onOpenChange={setChatPanelOpen}
       />
     </div>
   );
