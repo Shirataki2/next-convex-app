@@ -23,6 +23,7 @@
 │   │       ├── delete-task-dialog.test.tsx      # タスク削除ダイアログテスト
 │   │       ├── task-detail-dialog.test.tsx      # タスク詳細ダイアログテスト
 │   │       ├── task-comments.test.tsx           # タスクコメントコンポーネントテスト
+│   │       ├── chat-panel.test.tsx              # チャットパネルコンポーネントテスト
 │   │       ├── invite-member-dialog.test.tsx    # メンバー招待ダイアログテスト
 │   │       ├── task-drag-drop.test.tsx          # ドラッグ&ドロップテスト
 │   │       └── workspace-presence.test.tsx      # プレゼンス機能テスト
@@ -34,7 +35,8 @@
 │   │   ├── presence.test.ts                 # プレゼンス機能テスト
 │   │   ├── conflict-resolution.test.ts      # 競合解決機能テスト
 │   │   ├── notifications.test.ts            # 通知機能テスト
-│   │   └── comments.test.ts                 # コメント機能テスト
+│   │   ├── comments.test.ts                 # コメント機能テスト
+│   │   └── messages.test.ts                 # チャットメッセージ機能テスト
 │   ├── hooks/
 │   │   ├── use-realtime-tasks.test.ts       # リアルタイムタスクフックテスト
 │   │   ├── use-optimistic-task-updates.test.ts # 楽観的更新フックテスト
@@ -85,7 +87,8 @@
 │   │   ├── conflict-monitor.tsx             # 競合検出・監視コンポーネント
 │   │   ├── conflict-resolution-dialog.tsx   # 競合解決ダイアログ
 │   │   ├── notification-panel.tsx           # 通知パネル・アクティビティフィード
-│   │   └── task-lock-indicator.tsx          # タスクロック表示
+│   │   ├── task-lock-indicator.tsx          # タスクロック表示
+│   │   └── chat-panel.tsx                   # ワークスペースチャットパネル（スライド式、ファイル添付対応）
 │   └── ui/                                  # shadcn/uiコンポーネント
 │       ├── accordion.tsx
 │       ├── alert-dialog.tsx
@@ -149,7 +152,9 @@
 │   ├── presence.ts                         # プレゼンス管理関数
 │   ├── conflictResolution.ts               # 競合検出・解決関数
 │   ├── notifications.ts                    # 通知管理関数
-│   └── comments.ts                         # コメント管理関数
+│   ├── comments.ts                         # コメント管理関数
+│   ├── messages.ts                         # チャットメッセージ管理関数
+│   └── http.ts                             # HTTPエンドポイント（ファイルアップロード）
 ├── hooks/                                   # カスタムフック
 │   ├── use-mobile.ts                       # モバイル判定フック
 │   ├── use-realtime-tasks.ts               # リアルタイムタスクデータ管理（楽観的更新統合）
@@ -218,19 +223,21 @@
 - **`conflictResolution.ts`**: 競合検出・解決関数（ファイル名修正済み）
 - **`notifications.ts`**: 通知・アクティビティフィード管理関数
 - **`comments.ts`**: タスクコメント管理関数（CRUD操作、通知・アクティビティ統合）
+- **`messages.ts`**: チャットメッセージ管理関数（リアルタイム送受信、ファイル添付、ユーザー情報統合）
+- **`http.ts`**: HTTPエンドポイント（チャットファイルアップロード、CORS対応）
 - **`_generated/`**: Convexが自動生成するファイル群（編集禁止）
 
 ### `/components` - Reactコンポーネント
 
 - **`ui/`**: shadcn/ui（再利用可能なUIコンポーネント群）
 - **`layout/`**: レイアウト関連コンポーネント
-- **`workspace/`**: ワークスペース機能コンポーネント（ドラッグ&ドロップ、招待管理、リアルタイム機能、タスク詳細・コメント機能含む）
+- **`workspace/`**: ワークスペース機能コンポーネント（ドラッグ&ドロップ、招待管理、リアルタイム機能、タスク詳細・コメント機能、チャット機能含む）
 
 ### `/__tests__` - テストファイル
 
-- **`convex/`**: Convex関数のユニットテスト（convex-test使用、リアルタイム・プレゼンス・競合・通知・コメント機能含む）
-- **`components/`**: Reactコンポーネントテスト（React Testing Library、リアルタイム機能、タスク詳細・コメント機能含む）
-- **`hooks/`**: カスタムフックテスト（リアルタイム、楽観的更新、プレゼンス、競合解決、通知、コメント機能）
+- **`convex/`**: Convex関数のユニットテスト（convex-test使用、リアルタイム・プレゼンス・競合・通知・コメント・チャット機能含む）
+- **`components/`**: Reactコンポーネントテスト（React Testing Library、リアルタイム機能、タスク詳細・コメント・チャット機能含む）
+- **`hooks/`**: カスタムフックテスト（リアルタイム、楽観的更新、プレゼンス、競合解決、通知、コメント、チャット機能）
 - **`lib/`**: ユーティリティ関数テスト
 
 ### 設定ファイル

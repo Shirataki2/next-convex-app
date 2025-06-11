@@ -17,6 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - ☑️ 競合検出・解決システム
 - ☑️ 通知・アクティビティフィード
 - ☑️ タスク詳細ダイアログとコメント機能
+- ☑️ ワークスペースチャット機能（新機能）
 - ☑️ 包括的なテスト環境の構築
 
 **技術的修正:**
@@ -133,6 +134,7 @@ npx vitest --project=convex     # Convex関数
     - `conflict-monitor.tsx`: 競合検出・解決監視コンポーネント
     - `conflict-resolution-dialog.tsx`: 競合解決ダイアログ
     - `notification-panel.tsx`: 通知パネル・アクティビティフィード（コメント通知対応）
+    - `chat-panel.tsx`: ワークスペースチャットパネル（スライド式、ファイル添付対応）
 - `convex/`: Convexバックエンド関数とスキーマ
   - `_generated/`: 自動生成ファイル（編集不可）
   - `workspaces.ts`: ワークスペース管理関数
@@ -168,6 +170,16 @@ npx vitest --project=convex     # Convex関数
     - `updateComment`: コメント編集
     - `deleteComment`: コメント削除
     - `getCommentCount`: コメント数取得
+  - `messages.ts`: チャットメッセージ管理関数
+    - `sendMessage`: メッセージ送信（通知自動作成）
+    - `getMessages`: リアルタイムメッセージ取得
+    - `getMessagesWithUsers`: ユーザー情報付きメッセージ取得
+    - `editMessage`: メッセージ編集
+    - `deleteMessage`: メッセージ削除（ファイル含む）
+    - `saveChatFile`: チャットファイル保存（内部関数）
+  - `http.ts`: HTTPエンドポイント
+    - `/uploadChatFile`: ファイルアップロードエンドポイント
+    - `/generateUploadUrl`: アップロードURL生成エンドポイント
 - `hooks/`: カスタムReactフック
   - `use-realtime-tasks.ts`: リアルタイムタスクデータ管理
   - `use-optimistic-task-updates.ts`: 楽観的更新とエラー処理
@@ -347,6 +359,26 @@ mcp__playwright__browser_take_screenshot
    - `updatedAt`: 更新時刻
    - `isEdited`: 編集済みフラグ
    - **インデックス**: `by_task`, `by_workspace`, `by_user`, `by_created_at`, `by_task_created`
+
+10. **messages**: チャットメッセージ情報
+    - `workspaceId`: ワークスペースID
+    - `userId`: メッセージ送信者ID
+    - `content`: メッセージ内容
+    - `createdAt`: 作成時刻
+    - `updatedAt`: 更新時刻
+    - `isEdited`: 編集済みフラグ
+    - `fileIds`: 添付ファイルID配列（オプション）
+    - **インデックス**: `by_workspace_created`, `by_user`, `by_workspace`
+
+11. **chatFiles**: チャット添付ファイル情報
+    - `storageId`: Convexストレージ内のファイルID
+    - `fileName`: ファイル名
+    - `fileSize`: ファイルサイズ
+    - `fileType`: ファイルタイプ
+    - `uploadedBy`: アップロード者ID
+    - `workspaceId`: ワークスペースID
+    - `createdAt`: 作成時刻
+    - **インデックス**: `by_workspace`, `by_uploaded_by`, `by_created_at`
 
 ### ドラッグ&ドロップ機能
 
@@ -706,6 +738,7 @@ const handleTaskUpdate = async (taskId: Id<"tasks">, updates: any) => {
    - `task_assigned`: タスク割り当て
    - `task_completed`: タスク完了
    - `comment_added`: コメント追加
+   - `message_sent`: チャットメッセージ送信
    - `user_joined`: メンバー参加
 
 3. **優先度管理**
@@ -819,6 +852,79 @@ npx vitest --project=next.js --watch
 <TaskDetailDialog>
   <TaskComments taskId={taskId} workspaceId={workspaceId} />
 </TaskDetailDialog>
+```
+
+### ワークスペースチャット機能
+
+#### 概要
+
+ワークスペース内でメンバー間のリアルタイムコミュニケーションを可能にするチャット機能です。
+
+#### 主要機能
+
+1. **チャットパネル**
+   - 右側スライド式パネル（shadcn/ui Sheet使用）
+   - チャットボタンクリックで開閉
+   - リアルタイムメッセージ同期
+
+2. **メッセージ機能**
+   - リアルタイムメッセージ送受信
+   - ユーザーアバター・名前・タイムスタンプ表示
+   - メッセージ編集・削除（自分のメッセージのみ）
+   - 自動スクロール（新メッセージ表示時）
+
+3. **ファイル添付機能**
+   - ドラッグ&ドロップファイルアップロード
+   - ファイル選択ボタン
+   - ファイルプレビュー・ダウンロード
+   - 複数ファイル添付対応
+
+4. **通知機能**
+   - 新メッセージの自動通知作成
+   - メッセージ送信者以外の全メンバーに通知
+
+#### 実装構成
+
+```typescript
+// ワークスペースページにチャットボタン配置
+<Button onClick={() => setChatPanelOpen(true)}>
+  <MessageSquare className="h-4 w-4" />
+  チャット
+</Button>
+
+// チャットパネル
+<ChatPanel
+  workspaceId={workspaceId}
+  open={chatPanelOpen}
+  onOpenChange={setChatPanelOpen}
+/>
+```
+
+#### ファイル処理フロー
+
+```typescript
+// 1. ファイルアップロード（HTTP Action）
+const response = await fetch('/uploadChatFile', {
+  method: 'POST',
+  body: formData,
+});
+
+// 2. ファイル情報をデータベースに保存
+const fileId = await ctx.runMutation(internal.messages.saveChatFile, {
+  storageId,
+  fileName: file.name,
+  fileSize: file.size,
+  fileType: file.type,
+  uploadedBy: userId,
+  workspaceId,
+});
+
+// 3. メッセージにファイルを添付
+await sendMessage({
+  workspaceId,
+  content: message,
+  fileIds: [fileId],
+});
 ```
 
 ### 開発時の注意事項
