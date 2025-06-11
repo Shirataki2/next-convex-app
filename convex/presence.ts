@@ -79,7 +79,8 @@ export const getWorkspacePresenceWithUsers = action({
   handler: async (ctx, { workspaceId }): Promise<any[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("認証が必要です");
+      console.log("認証エラー: ユーザーのIdentityが取得できませんでした");
+      return [];
     }
 
     // プレゼンス情報を取得

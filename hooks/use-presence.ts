@@ -31,9 +31,16 @@ export function usePresence(workspaceId: Id<"workspaces">) {
       const data = await presenceAction({ workspaceId });
       setPresenceData(data);
       setError(null);
-    } catch (err) {
-      console.error("プレゼンス情報の取得に失敗:", err);
-      setError("プレゼンス情報の取得に失敗しました");
+    } catch (err: any) {
+      // 認証エラーの場合は静かに処理（トークン期限切れなど）
+      if (err?.message?.includes("認証") || err?.message?.includes("authentication")) {
+        console.log("認証が必要です。ページをリフレッシュしてください。");
+        setPresenceData([]);
+        setError(null);
+      } else {
+        console.error("プレゼンス情報の取得に失敗:", err);
+        setError("プレゼンス情報の取得に失敗しました");
+      }
     } finally {
       setLoading(false);
     }

@@ -321,7 +321,8 @@ export const getConflictsWithUserInfo = action({
   handler: async (ctx, { workspaceId, includeResolved = false }): Promise<ConflictWithUserInfo[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("認証が必要です");
+      console.log("認証エラー: ユーザーのIdentityが取得できませんでした");
+      return [];
     }
 
     // 競合情報を取得

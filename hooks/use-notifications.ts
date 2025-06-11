@@ -80,9 +80,15 @@ export function useNotifications(workspaceId?: Id<"workspaces">) {
           workspaceId ? { workspaceId, unreadOnly } : { unreadOnly }
         );
         setNotifications(result);
-      } catch (error) {
-        console.error("通知の取得に失敗:", error);
-        toast.error("通知の取得に失敗しました");
+      } catch (error: any) {
+        // 認証エラーの場合は静かに処理（トークン期限切れなど）
+        if (error?.message?.includes("認証") || error?.message?.includes("authentication")) {
+          console.log("認証が必要です。ページをリフレッシュしてください。");
+          setNotifications([]);
+        } else {
+          console.error("通知の取得に失敗:", error);
+          toast.error("通知の取得に失敗しました");
+        }
       } finally {
         setIsLoadingNotifications(false);
       }
@@ -199,9 +205,15 @@ export function useActivityFeed(workspaceId: Id<"workspaces">) {
     try {
       const result = await getActivityFeedWithUserInfo({ workspaceId });
       setActivities(result);
-    } catch (error) {
-      console.error("アクティビティの取得に失敗:", error);
-      toast.error("アクティビティの取得に失敗しました");
+    } catch (error: any) {
+      // 認証エラーの場合は静かに処理（トークン期限切れなど）
+      if (error?.message?.includes("認証") || error?.message?.includes("authentication")) {
+        console.log("認証が必要です。ページをリフレッシュしてください。");
+        setActivities([]);
+      } else {
+        console.error("アクティビティの取得に失敗:", error);
+        toast.error("アクティビティの取得に失敗しました");
+      }
     } finally {
       setIsLoadingActivities(false);
     }

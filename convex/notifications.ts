@@ -271,7 +271,8 @@ export const getNotificationsWithUserInfo = action({
   handler: async (ctx, args): Promise<NotificationWithUserInfo[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("認証が必要です");
+      console.log("認証エラー: ユーザーのIdentityが取得できませんでした");
+      return [];
     }
 
     // 通知を取得
@@ -479,7 +480,8 @@ export const getActivityFeedWithUserInfo = action({
   handler: async (ctx, args): Promise<ActivityWithUserInfo[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("認証が必要です");
+      console.log("認証エラー: ユーザーのIdentityが取得できませんでした");
+      return [];
     }
 
     // アクティビティを取得

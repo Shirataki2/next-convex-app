@@ -60,8 +60,14 @@ export function useConflictResolution(workspaceId: Id<"workspaces">) {
     try {
       const conflicts = await getConflictsWithUserInfo({ workspaceId });
       setCurrentConflicts(conflicts);
-    } catch (error) {
-      console.error("競合情報の取得に失敗:", error);
+    } catch (error: any) {
+      // 認証エラーの場合は静かに処理（トークン期限切れなど）
+      if (error?.message?.includes("認証") || error?.message?.includes("authentication")) {
+        console.log("認証が必要です。ページをリフレッシュしてください。");
+        setCurrentConflicts([]);
+      } else {
+        console.error("競合情報の取得に失敗:", error);
+      }
     }
   }, [getConflictsWithUserInfo, workspaceId]);
 
