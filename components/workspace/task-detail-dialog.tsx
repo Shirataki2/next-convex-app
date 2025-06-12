@@ -36,10 +36,7 @@ export function TaskDetailDialog({
   onOpenChange,
 }: TaskDetailDialogProps) {
   const { user } = useUser();
-  const task = useQuery(
-    api.tasks.getTask,
-    taskId ? { taskId } : "skip"
-  );
+  const task = useQuery(api.tasks.getTask, taskId ? { taskId } : "skip");
   const workspace = useQuery(api.workspaces.getWorkspace, { workspaceId });
   const getWorkspaceMembers = useAction(api.tasks.getWorkspaceMembers);
 

@@ -40,7 +40,9 @@ export default function WorkspaceDetailPage() {
   const workspaceId = params.workspaceId as Id<"workspaces">;
   const { user } = useUser();
   const [activeTask, setActiveTask] = useState<TaskWithUser | null>(null);
-  const [selectedTaskId, setSelectedTaskId] = useState<Id<"tasks"> | null>(null);
+  const [selectedTaskId, setSelectedTaskId] = useState<Id<"tasks"> | null>(
+    null
+  );
   const [taskDetailDialogOpen, setTaskDetailDialogOpen] = useState(false);
   const [chatPanelOpen, setChatPanelOpen] = useState(false);
 
@@ -59,13 +61,8 @@ export default function WorkspaceDetailPage() {
   } = useRealtimeTasks(workspaceId);
 
   // 楽観的更新とエラーハンドリング
-  const {
-    updateTaskStatus,
-    batchUpdateTasks,
-    isUpdating,
-    error,
-    clearError,
-  } = useOptimisticTaskUpdates(applyOptimisticUpdate, clearOptimisticUpdate);
+  const { updateTaskStatus, batchUpdateTasks, isUpdating, error, clearError } =
+    useOptimisticTaskUpdates(applyOptimisticUpdate, clearOptimisticUpdate);
 
   // デバッグ：タスクの変更を監視
   useEffect(() => {

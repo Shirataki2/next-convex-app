@@ -318,7 +318,10 @@ export const getConflictsWithUserInfo = action({
     workspaceId: v.id("workspaces"),
     includeResolved: v.optional(v.boolean()),
   },
-  handler: async (ctx, { workspaceId, includeResolved = false }): Promise<ConflictWithUserInfo[]> => {
+  handler: async (
+    ctx,
+    { workspaceId, includeResolved = false }
+  ): Promise<ConflictWithUserInfo[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       console.log("認証エラー: ユーザーのIdentityが取得できませんでした");

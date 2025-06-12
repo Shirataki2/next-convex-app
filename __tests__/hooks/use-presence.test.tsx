@@ -29,7 +29,7 @@ vi.mock("next/navigation", () => ({
 
 describe("usePresence", () => {
   const mockWorkspaceId = "workspaceId123" as Id<"workspaces">;
-  
+
   beforeEach(() => {
     vi.clearAllMocks();
     // DOM APIのモック
@@ -37,7 +37,7 @@ describe("usePresence", () => {
       writable: true,
       value: false,
     });
-    
+
     // イベントリスナーのモック
     document.addEventListener = vi.fn();
     document.removeEventListener = vi.fn();
@@ -146,7 +146,7 @@ describe("usePresence", () => {
 
 describe("useTaskLock", () => {
   const mockWorkspaceId = "workspaceId123" as Id<"workspaces">;
-  
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -244,7 +244,7 @@ describe("useTaskLock", () => {
   test("編集中ユーザーの取得", () => {
     const taskId = "taskId123" as Id<"tasks">;
     const viewingTaskId = "taskId456" as Id<"tasks">;
-    
+
     const mockTaskLocks = [
       {
         taskId,

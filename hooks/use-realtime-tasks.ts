@@ -75,8 +75,13 @@ export function useRealtimeTasks(workspaceId: Id<"workspaces">) {
               return { id: member.id, userInfo };
             } catch (error: any) {
               // 認証エラーの場合は静かに処理
-              if (error?.message?.includes("認証") || error?.message?.includes("authentication")) {
-                console.log(`認証が必要です。ユーザー情報取得をスキップします: ${member.id}`);
+              if (
+                error?.message?.includes("認証") ||
+                error?.message?.includes("authentication")
+              ) {
+                console.log(
+                  `認証が必要です。ユーザー情報取得をスキップします: ${member.id}`
+                );
                 return { id: member.id, userInfo: null };
               } else {
                 console.error(
@@ -98,7 +103,10 @@ export function useRealtimeTasks(workspaceId: Id<"workspaces">) {
         }
       } catch (error: any) {
         // 認証エラーの場合は静かに処理
-        if (error?.message?.includes("認証") || error?.message?.includes("authentication")) {
+        if (
+          error?.message?.includes("認証") ||
+          error?.message?.includes("authentication")
+        ) {
           console.log("認証が必要です。ユーザー情報取得をスキップします。");
         } else {
           console.error("Failed to fetch user information:", error);

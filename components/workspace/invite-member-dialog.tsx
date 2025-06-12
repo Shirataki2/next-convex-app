@@ -66,13 +66,17 @@ export function InviteMemberDialog({
       try {
         const result = await checkUserByEmail({ email: newEmail });
         if (result.exists) {
-          setExistingUser(result && result.id && result.emailAddress ? {
-            ...result,
-            firstName: result.firstName || undefined,
-            lastName: result.lastName || undefined,
-            username: result.username || undefined,
-            imageUrl: result.imageUrl || undefined,
-          } : null);
+          setExistingUser(
+            result && result.id && result.emailAddress
+              ? {
+                  ...result,
+                  firstName: result.firstName || undefined,
+                  lastName: result.lastName || undefined,
+                  username: result.username || undefined,
+                  imageUrl: result.imageUrl || undefined,
+                }
+              : null
+          );
         }
       } catch (error) {
         console.error("ユーザー検索エラー:", error);
@@ -257,4 +261,3 @@ export function InviteMemberDialog({
     </Dialog>
   );
 }
-

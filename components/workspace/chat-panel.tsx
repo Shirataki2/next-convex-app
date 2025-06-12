@@ -1,13 +1,26 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useUser, useAuth } from "@clerk/nextjs";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useUser } from "@clerk/nextjs";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Paperclip, Send, X, FileIcon, Download, Trash2, Edit2 } from "lucide-react";
+import {
+  Paperclip,
+  Send,
+  X,
+  FileIcon,
+  Download,
+  Trash2,
+  Edit2,
+} from "lucide-react";
 import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
@@ -66,9 +79,9 @@ interface ChatMessage {
 
 export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
   const { user } = useUser();
-  const { getToken } = useAuth();
   const [message, setMessage] = useState("");
-  const [editingMessageId, setEditingMessageId] = useState<Id<"messages"> | null>(null);
+  const [editingMessageId, setEditingMessageId] =
+    useState<Id<"messages"> | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState(false);
@@ -77,11 +90,16 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   // Convex hooks
-  const messages = useQuery(api.messages.getMessages, { workspaceId, limit: 100 });
+  const messages = useQuery(api.messages.getMessages, {
+    workspaceId,
+    limit: 100,
+  });
   const getMessagesWithUsers = useAction(api.messages.getMessagesWithUsers);
   const sendMessage = useMutation(api.messages.sendMessage);
   const editMessage = useMutation(api.messages.editMessage);
   const deleteMessage = useMutation(api.messages.deleteMessage);
+  const generateUploadUrl = useMutation(api.files.generateUploadUrl);
+  const saveUploadedFile = useMutation(api.files.saveUploadedFile);
 
   const [messagesWithUsers, setMessagesWithUsers] = useState<ChatMessage[]>([]);
 
@@ -92,7 +110,10 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
         .then(setMessagesWithUsers)
         .catch((error: any) => {
           // 認証エラーの場合は静かに処理
-          if (error?.message?.includes("認証") || error?.message?.includes("authentication")) {
+          if (
+            error?.message?.includes("認証") ||
+            error?.message?.includes("authentication")
+          ) {
             console.log("認証が必要です。ページをリフレッシュしてください。");
             setMessagesWithUsers([]);
           } else {
@@ -106,7 +127,9 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
   // 新しいメッセージが来たら一番下にスクロール
   useEffect(() => {
     if (scrollAreaRef.current) {
-      const scrollContainer = scrollAreaRef.current.querySelector("[data-radix-scroll-area-viewport]");
+      const scrollContainer = scrollAreaRef.current.querySelector(
+        "[data-radix-scroll-area-viewport]"
+      );
       if (scrollContainer) {
         scrollContainer.scrollTop = scrollContainer.scrollHeight;
       }
@@ -146,32 +169,38 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
   const uploadFiles = async (files: File[]): Promise<Id<"chatFiles">[]> => {
     const fileIds: Id<"chatFiles">[] = [];
 
-    // JWTトークンを取得
-    const token = await getToken();
-    if (!token) {
-      throw new Error("認証トークンの取得に失敗しました");
-    }
-
     for (const file of files) {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("workspaceId", workspaceId);
-      formData.append("userId", user!.id);
+      try {
+        // 1. アップロードURLを生成
+        const uploadUrl = await generateUploadUrl();
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_CONVEX_URL!.replace('.cloud', '.site')}/uploadChatFile`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
+        // 2. ファイルをアップロード
+        const result = await fetch(uploadUrl, {
+          method: "POST",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
 
-      if (!response.ok) {
-        throw new Error("ファイルアップロードに失敗しました");
+        if (!result.ok) {
+          throw new Error("ファイルアップロードに失敗しました");
+        }
+
+        const { storageId } = await result.json();
+
+        // 3. ファイル情報をデータベースに保存
+        const fileId = await saveUploadedFile({
+          storageId,
+          fileName: file.name,
+          fileSize: file.size,
+          fileType: file.type || "application/octet-stream",
+          workspaceId,
+        });
+
+        fileIds.push(fileId);
+      } catch (error) {
+        console.error("ファイルアップロードエラー:", error);
+        throw error;
       }
-
-      const data = await response.json();
-      fileIds.push(data.fileId);
     }
 
     return fileIds;
@@ -251,8 +280,8 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent 
-        side="right" 
+      <SheetContent
+        side="right"
         className="w-full sm:w-[500px] p-0 flex flex-col"
         onDragEnter={handleDragEnter}
         onDragLeave={handleDragLeave}
@@ -262,11 +291,13 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
         {isDragging && (
           <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
             <div className="rounded-lg border-2 border-dashed border-primary p-8">
-              <p className="text-lg font-medium">ファイルをドロップしてアップロード</p>
+              <p className="text-lg font-medium">
+                ファイルをドロップしてアップロード
+              </p>
             </div>
           </div>
         )}
-        
+
         <SheetHeader className="p-6 pb-4 border-b">
           <SheetTitle>ワークスペースチャット</SheetTitle>
         </SheetHeader>
@@ -288,7 +319,9 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={msg.user?.imageUrl || undefined} />
                     <AvatarFallback>
-                      {getUserDisplayName(msg.user).substring(0, 2).toUpperCase()}
+                      {getUserDisplayName(msg.user)
+                        .substring(0, 2)
+                        .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
 
@@ -298,7 +331,12 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
                       isOwnMessage && "items-end"
                     )}
                   >
-                    <div className={cn("flex items-center gap-2", isOwnMessage && "justify-end")}>
+                    <div
+                      className={cn(
+                        "flex items-center gap-2",
+                        isOwnMessage && "justify-end"
+                      )}
+                    >
                       <span className="text-sm font-medium">
                         {getUserDisplayName(msg.user)}
                       </span>
@@ -316,8 +354,14 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
                       {isOwnMessage && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6">
-                              <span className="sr-only">メッセージオプション</span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6"
+                            >
+                              <span className="sr-only">
+                                メッセージオプション
+                              </span>
                               <svg
                                 className="h-4 w-4"
                                 fill="none"
@@ -344,7 +388,9 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
                               編集
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => deleteMessage({ messageId: msg._id })}
+                              onClick={() =>
+                                deleteMessage({ messageId: msg._id })
+                              }
                               className="text-destructive"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
@@ -395,7 +441,9 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
                           </div>
                         </div>
                       ) : (
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        <p className="text-sm whitespace-pre-wrap">
+                          {msg.content}
+                        </p>
                       )}
 
                       {msg.files && msg.files.length > 0 && (
@@ -439,7 +487,9 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
               {selectedFiles.map((file, index) => (
                 <Badge key={index} variant="secondary" className="pr-1">
                   <FileIcon className="h-3 w-3 mr-1" />
-                  <span className="text-xs truncate max-w-[150px]">{file.name}</span>
+                  <span className="text-xs truncate max-w-[150px]">
+                    {file.name}
+                  </span>
                   <Button
                     size="icon"
                     variant="ghost"
@@ -484,7 +534,10 @@ export function ChatPanel({ workspaceId, open, onOpenChange }: ChatPanelProps) {
             <Button
               size="icon"
               onClick={handleSendMessage}
-              disabled={(!message.trim() && selectedFiles.length === 0) || uploadingFiles}
+              disabled={
+                (!message.trim() && selectedFiles.length === 0) ||
+                uploadingFiles
+              }
             >
               <Send className="h-4 w-4" />
             </Button>

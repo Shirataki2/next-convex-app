@@ -7,7 +7,9 @@ export const getUserWorkspaces = query({
   handler: async (ctx, { userId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      console.log("認証エラー: ワークスペース一覧取得でユーザーのIdentityが取得できませんでした");
+      console.log(
+        "認証エラー: ワークスペース一覧取得でユーザーのIdentityが取得できませんでした"
+      );
       return [];
     }
 
@@ -44,7 +46,9 @@ export const getWorkspace = query({
   handler: async (ctx, { workspaceId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      console.log("認証エラー: ワークスペース情報取得でユーザーのIdentityが取得できませんでした");
+      console.log(
+        "認証エラー: ワークスペース情報取得でユーザーのIdentityが取得できませんでした"
+      );
       return null;
     }
 

@@ -268,10 +268,12 @@ export function InvitationList({
                     <div className="flex items-center gap-2">
                       <Avatar className="h-6 w-6">
                         {invitation.inviterInfo?.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
                             src={invitation.inviterInfo.imageUrl}
-                            alt={getUserDisplayName(invitation.inviterInfo as InviterInfo)}
+                            alt={getUserDisplayName(
+                              invitation.inviterInfo as InviterInfo
+                            )}
                             className="h-6 w-6 rounded-full object-cover"
                           />
                         ) : (
@@ -283,7 +285,9 @@ export function InvitationList({
                         )}
                       </Avatar>
                       <span className="text-sm">
-                        {getUserDisplayName(invitation.inviterInfo as InviterInfo)}
+                        {getUserDisplayName(
+                          invitation.inviterInfo as InviterInfo
+                        )}
                       </span>
                     </div>
                   )}

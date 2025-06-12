@@ -57,7 +57,9 @@ export const getWorkspacePresence = query({
   handler: async (ctx, { workspaceId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      console.log("認証エラー: プレゼンス情報取得でユーザーのIdentityが取得できませんでした");
+      console.log(
+        "認証エラー: プレゼンス情報取得でユーザーのIdentityが取得できませんでした"
+      );
       return [];
     }
 
@@ -85,9 +87,12 @@ export const getWorkspacePresenceWithUsers = action({
     }
 
     // プレゼンス情報を取得
-    const presenceList: any[] = await ctx.runQuery(api.presence.getWorkspacePresence, {
-      workspaceId,
-    });
+    const presenceList: any[] = await ctx.runQuery(
+      api.presence.getWorkspacePresence,
+      {
+        workspaceId,
+      }
+    );
 
     // Clerkからユーザー情報を取得
     const clerk = createClerkClient({
@@ -204,7 +209,9 @@ export const getWorkspaceTaskLocks = query({
   handler: async (ctx, { workspaceId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      console.log("認証エラー: タスクロック情報取得でユーザーのIdentityが取得できませんでした");
+      console.log(
+        "認証エラー: タスクロック情報取得でユーザーのIdentityが取得できませんでした"
+      );
       return [];
     }
 

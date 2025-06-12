@@ -32,7 +32,9 @@ export const getWorkspaceTasksRealtime = query({
   handler: async (ctx, { workspaceId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      console.log("認証エラー: リアルタイムタスク取得でユーザーのIdentityが取得できませんでした");
+      console.log(
+        "認証エラー: リアルタイムタスク取得でユーザーのIdentityが取得できませんでした"
+      );
       return [];
     }
 
@@ -52,7 +54,9 @@ export const getWorkspaceMembersRealtime = query({
   handler: async (ctx, { workspaceId }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      console.log("認証エラー: リアルタイムメンバー取得でユーザーのIdentityが取得できませんでした");
+      console.log(
+        "認証エラー: リアルタイムメンバー取得でユーザーのIdentityが取得できませんでした"
+      );
       return [];
     }
 

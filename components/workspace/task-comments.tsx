@@ -26,7 +26,8 @@ interface TaskCommentsProps {
 export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
   const { user } = useUser();
   const [newComment, setNewComment] = useState("");
-  const [editingCommentId, setEditingCommentId] = useState<Id<"taskComments"> | null>(null);
+  const [editingCommentId, setEditingCommentId] =
+    useState<Id<"taskComments"> | null>(null);
   const [editingContent, setEditingContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,7 +74,7 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
       });
 
       setNewComment("");
-      
+
       // コメント一覧を再取得
       const updatedComments = await getTaskComments({ taskId });
       setComments(updatedComments);
@@ -254,7 +255,10 @@ export function TaskComments({ taskId, workspaceId }: TaskCommentsProps) {
       <Card className="p-4">
         <div className="flex gap-3">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.imageUrl || undefined} alt={user.firstName || ""} />
+            <AvatarImage
+              src={user.imageUrl || undefined}
+              alt={user.firstName || ""}
+            />
             <AvatarFallback>{user.firstName?.[0] || "U"}</AvatarFallback>
           </Avatar>
           <div className="flex-1 space-y-2">

@@ -10,13 +10,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useUser } from "@clerk/nextjs";
 import { useState, useEffect, useCallback } from "react";
-import {
-  Users,
-  Crown,
-  User,
-  Mail,
-  Calendar,
-} from "lucide-react";
+import { Users, Crown, User, Mail, Calendar } from "lucide-react";
 import { InviteMemberDialog } from "@/components/workspace/invite-member-dialog";
 import { InvitationList } from "@/components/workspace/invitation-list";
 

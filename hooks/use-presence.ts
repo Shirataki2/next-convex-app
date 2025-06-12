@@ -33,7 +33,10 @@ export function usePresence(workspaceId: Id<"workspaces">) {
       setError(null);
     } catch (err: any) {
       // 認証エラーの場合は静かに処理（トークン期限切れなど）
-      if (err?.message?.includes("認証") || err?.message?.includes("authentication")) {
+      if (
+        err?.message?.includes("認証") ||
+        err?.message?.includes("authentication")
+      ) {
         console.log("認証が必要です。ページをリフレッシュしてください。");
         setPresenceData([]);
         setError(null);
@@ -184,7 +187,8 @@ export function useTaskLock(workspaceId: Id<"workspaces">) {
     (taskId: Id<"tasks">) => {
       if (!taskLocks) return false;
       return taskLocks.some(
-        (lock: TaskLock) => lock.taskId === taskId && lock.lockType === "editing"
+        (lock: TaskLock) =>
+          lock.taskId === taskId && lock.lockType === "editing"
       );
     },
     [taskLocks]
@@ -195,7 +199,8 @@ export function useTaskLock(workspaceId: Id<"workspaces">) {
     (taskId: Id<"tasks">) => {
       if (!taskLocks) return null;
       const editingLock = taskLocks.find(
-        (lock: TaskLock) => lock.taskId === taskId && lock.lockType === "editing"
+        (lock: TaskLock) =>
+          lock.taskId === taskId && lock.lockType === "editing"
       );
       return editingLock ? editingLock.userId : null;
     },

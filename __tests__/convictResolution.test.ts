@@ -27,4 +27,4 @@ await t.run(async (ctx: any) => {
     expectedVersion: 1,
     proposedChanges: { title: "更新されたタイトル" },
   });
-}); 
+});

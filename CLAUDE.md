@@ -336,6 +336,7 @@ mcp__playwright__browser_take_screenshot
    - **インデックス**: `by_task`, `by_workspace`, `by_conflict_id`, `by_timestamp`, `by_resolved`
 
 8. **notifications**: 通知情報
+
    - `workspaceId`: ワークスペースID
    - `targetUserId`: 通知対象ユーザーID
    - `senderUserId`: 送信者ユーザーID
@@ -351,6 +352,7 @@ mcp__playwright__browser_take_screenshot
    - **インデックス**: `by_target_user`, `by_workspace`, `by_created_at`, `by_unread`, `by_type`
 
 9. **taskComments**: タスクコメント情報
+
    - `taskId`: タスクID
    - `workspaceId`: ワークスペースID
    - `userId`: コメント投稿者ID
@@ -361,6 +363,7 @@ mcp__playwright__browser_take_screenshot
    - **インデックス**: `by_task`, `by_workspace`, `by_user`, `by_created_at`, `by_task_created`
 
 10. **messages**: チャットメッセージ情報
+
     - `workspaceId`: ワークスペースID
     - `userId`: メッセージ送信者ID
     - `content`: メッセージ内容
@@ -826,12 +829,14 @@ npx vitest --project=next.js --watch
 #### 主要機能
 
 1. **タスク詳細ダイアログ**
+
    - ポップアップ形式でタスク詳細を表示
    - タスクカードをクリックして開く
    - ScrollAreaでコンテンツのスクロール対応
    - タスク編集・削除ボタン（権限のあるユーザーのみ）
 
 2. **コメント機能**
+
    - コメント一覧表示（ユーザーアバター・名前付き）
    - 新規コメント投稿
    - コメント編集・削除（自分のコメントのみ）
@@ -863,17 +868,20 @@ npx vitest --project=next.js --watch
 #### 主要機能
 
 1. **チャットパネル**
+
    - 右側スライド式パネル（shadcn/ui Sheet使用）
    - チャットボタンクリックで開閉
    - リアルタイムメッセージ同期
 
 2. **メッセージ機能**
+
    - リアルタイムメッセージ送受信
    - ユーザーアバター・名前・タイムスタンプ表示
    - メッセージ編集・削除（自分のメッセージのみ）
    - 自動スクロール（新メッセージ表示時）
 
 3. **ファイル添付機能**
+
    - ドラッグ&ドロップファイルアップロード
    - ファイル選択ボタン
    - ファイルプレビュー・ダウンロード
@@ -904,8 +912,8 @@ npx vitest --project=next.js --watch
 
 ```typescript
 // 1. ファイルアップロード（HTTP Action）
-const response = await fetch('/uploadChatFile', {
-  method: 'POST',
+const response = await fetch("/uploadChatFile", {
+  method: "POST",
   body: formData,
 });
 

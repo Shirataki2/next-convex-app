@@ -1,5 +1,11 @@
 import { v } from "convex/values";
-import { action, mutation, query, internalMutation, internalQuery } from "./_generated/server";
+import {
+  action,
+  mutation,
+  query,
+  internalMutation,
+  internalQuery,
+} from "./_generated/server";
 import { createClerkClient } from "@clerk/backend";
 import { Id } from "./_generated/dataModel";
 import { internal, api } from "./_generated/api";
@@ -51,7 +57,9 @@ export const sendMessage = mutation({
         senderUserId: userId,
         type: "message_sent",
         title: "新しいメッセージ",
-        message: args.content.substring(0, 100) + (args.content.length > 100 ? "..." : ""),
+        message:
+          args.content.substring(0, 100) +
+          (args.content.length > 100 ? "..." : ""),
         priority: "medium",
         isRead: false,
         createdAt: Date.now(),
@@ -71,7 +79,9 @@ export const getMessages = query({
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      console.log("認証エラー: メッセージ取得でユーザーのIdentityが取得できませんでした");
+      console.log(
+        "認証エラー: メッセージ取得でユーザーのIdentityが取得できませんでした"
+      );
       return [];
     }
 
@@ -90,7 +100,9 @@ export const getMessages = query({
     const limit = args.limit || 100;
     const messages = await ctx.db
       .query("messages")
-      .withIndex("by_workspace_created", (q) => q.eq("workspaceId", args.workspaceId))
+      .withIndex("by_workspace_created", (q) =>
+        q.eq("workspaceId", args.workspaceId)
+      )
       .order("desc")
       .take(limit);
 
@@ -128,7 +140,9 @@ export const getMessagesInternal = internalQuery({
     const limit = args.limit || 100;
     const messages = await ctx.db
       .query("messages")
-      .withIndex("by_workspace_created", (q) => q.eq("workspaceId", args.workspaceId))
+      .withIndex("by_workspace_created", (q) =>
+        q.eq("workspaceId", args.workspaceId)
+      )
       .order("desc")
       .take(limit);
 
@@ -172,7 +186,9 @@ export const getMessagesWithUsers = action({
   handler: async (ctx, args): Promise<any[]> => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      console.log("認証エラー: ユーザー情報付きメッセージ取得でユーザーのIdentityが取得できませんでした");
+      console.log(
+        "認証エラー: ユーザー情報付きメッセージ取得でユーザーのIdentityが取得できませんでした"
+      );
       return [];
     }
 

@@ -65,7 +65,9 @@ export function TaskLockIndicator({
     if (editorUserId) {
       getUserInfo({ workspaceId })
         .then((presenceData: PresenceWithUser[]) => {
-          const editor = presenceData.find((p: PresenceWithUser) => p.userId === editorUserId);
+          const editor = presenceData.find(
+            (p: PresenceWithUser) => p.userId === editorUserId
+          );
           if (editor) {
             setEditorInfo(editor.user || null);
           }
@@ -166,7 +168,9 @@ export function TaskViewersIndicator({
           const viewerUsers = viewers
             .map(
               (viewer: TaskLock) =>
-                presenceData.find((p: PresenceWithUser) => p.userId === viewer.userId)?.user
+                presenceData.find(
+                  (p: PresenceWithUser) => p.userId === viewer.userId
+                )?.user
             )
             .filter(Boolean) as UserInfo[];
           setViewersInfo(viewerUsers);

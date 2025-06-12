@@ -45,7 +45,8 @@ export default function InviteAcceptPage() {
   const invitation = useQuery(api.invitations.getInvitationByToken, { token });
   const acceptInvitation = useMutation(api.invitations.acceptInvitation);
   const getInviterInfo = useAction(api.invitations.getInviterInfo);
-  const getWorkspaceInfo = useQuery(api.workspaces.getWorkspace, 
+  const getWorkspaceInfo = useQuery(
+    api.workspaces.getWorkspace,
     invitation ? { workspaceId: invitation.workspaceId } : "skip"
   );
 
@@ -61,13 +62,17 @@ export default function InviteAcceptPage() {
         const info = await getInviterInfo({
           inviterUserId: invitation.inviterUserId,
         });
-        setInviterInfo(info ? {
-          ...info,
-          firstName: info.firstName || undefined,
-          lastName: info.lastName || undefined,
-          username: info.username || undefined,
-          emailAddress: info.emailAddress || undefined,
-        } : null);
+        setInviterInfo(
+          info
+            ? {
+                ...info,
+                firstName: info.firstName || undefined,
+                lastName: info.lastName || undefined,
+                username: info.username || undefined,
+                emailAddress: info.emailAddress || undefined,
+              }
+            : null
+        );
       } catch (error) {
         console.error("招待者情報の取得に失敗:", error);
       } finally {

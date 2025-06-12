@@ -264,7 +264,13 @@ function ConflictCard({
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
             <Badge
-              variant={getSeverityColor(severity) as "default" | "secondary" | "destructive" | "outline"}
+              variant={
+                getSeverityColor(severity) as
+                  | "default"
+                  | "secondary"
+                  | "destructive"
+                  | "outline"
+              }
               className="text-xs"
             >
               {getConflictTypeLabel(conflict.conflictType)}

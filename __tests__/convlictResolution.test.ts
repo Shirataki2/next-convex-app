@@ -3,4 +3,4 @@ return await ctx.runMutation(api.conflictResolution.checkForConflicts, {
   workspaceId,
   expectedVersion: 1,
   proposedChanges: { title: "更新されたタイトル" },
-}); 
+});

@@ -107,13 +107,15 @@ export function ConflictResolutionDialog({
 }: ConflictResolutionDialogProps) {
   const { resolveTaskConflict, isResolvingConflict } =
     useConflictResolution(workspaceId);
-  const [selectedResolution, setSelectedResolution] = useState<"force_save" | "merge" | "discard" | "reload" | null>(
-    null
-  );
+  const [selectedResolution, setSelectedResolution] = useState<
+    "force_save" | "merge" | "discard" | "reload" | null
+  >(null);
 
   const suggestions = getConflictSuggestions(conflict.conflictType);
 
-  const handleResolve = async (resolution: "force_save" | "merge" | "discard" | "reload") => {
+  const handleResolve = async (
+    resolution: "force_save" | "merge" | "discard" | "reload"
+  ) => {
     try {
       await resolveTaskConflict(conflict.conflictId, resolution);
       onOpenChange(false);
@@ -158,7 +160,13 @@ export function ConflictResolutionDialog({
               <CardTitle className="text-sm flex items-center justify-between">
                 競合の詳細
                 <Badge
-                  variant={getConflictTypeColor(conflict.conflictType) as "default" | "secondary" | "destructive" | "outline"}
+                  variant={
+                    getConflictTypeColor(conflict.conflictType) as
+                      | "default"
+                      | "secondary"
+                      | "destructive"
+                      | "outline"
+                  }
                 >
                   {getConflictTypeLabel(conflict.conflictType)}
                 </Badge>

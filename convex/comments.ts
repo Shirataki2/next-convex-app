@@ -56,12 +56,12 @@ export const createComment = mutation({
     const workspace = await ctx.db.get(workspaceId);
     if (workspace) {
       const notificationTargets = new Set<string>();
-      
+
       // タスクの担当者に通知
       if (task.assigneeId && task.assigneeId !== userId) {
         notificationTargets.add(task.assigneeId);
       }
-      
+
       // ワークスペースのオーナーに通知（自分以外）
       if (workspace.ownerId !== userId) {
         notificationTargets.add(workspace.ownerId);
@@ -109,14 +109,20 @@ export const getTaskComments = action({
     const { taskId } = args;
 
     // コメントを取得
-    const comments = await ctx.runQuery(api.comments.getTaskCommentsInternal, { taskId });
+    const comments = await ctx.runQuery(api.comments.getTaskCommentsInternal, {
+      taskId,
+    });
 
     // ユーザー情報を取得
     const clerk = createClerkClient({
       secretKey: process.env.CLERK_SECRET_KEY!,
     });
 
-    const userIds = [...new Set(comments.map((comment: Doc<"taskComments">) => comment.userId))];
+    const userIds = [
+      ...new Set(
+        comments.map((comment: Doc<"taskComments">) => comment.userId)
+      ),
+    ];
     const userPromises = userIds.map((userId) =>
       clerk.users.getUser(userId).catch(() => null)
     );
@@ -222,7 +228,7 @@ export const getCommentCount = query({
       .query("taskComments")
       .withIndex("by_task", (q) => q.eq("taskId", args.taskId))
       .collect();
-    
+
     return comments.length;
   },
 });

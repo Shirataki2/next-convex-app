@@ -27,7 +27,12 @@ interface TaskCardProps {
   onTaskDetailClick?: (taskId: Id<"tasks">) => void;
 }
 
-export function TaskCard({ task, workspace, onTaskChange, onTaskDetailClick }: TaskCardProps) {
+export function TaskCard({
+  task,
+  workspace,
+  onTaskChange,
+  onTaskDetailClick,
+}: TaskCardProps) {
   const {
     attributes,
     listeners,

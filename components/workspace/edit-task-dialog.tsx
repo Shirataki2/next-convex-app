@@ -67,9 +67,11 @@ export function EditTaskDialog({
   const [open, setOpen] = React.useState(false);
   const { user } = useUser();
   const getWorkspaceMembers = useAction(api.tasks.getWorkspaceMembers);
-  const { lockTask, unlockTask } = useTaskLock(workspace?._id || "" as Id<"workspaces">);
+  const { lockTask, unlockTask } = useTaskLock(
+    workspace?._id || ("" as Id<"workspaces">)
+  );
   const { updateTaskSafely, currentConflicts } = useConflictResolution(
-    workspace?._id || "" as Id<"workspaces">
+    workspace?._id || ("" as Id<"workspaces">)
   );
 
   const [title, setTitle] = React.useState(task.title);
@@ -88,7 +90,8 @@ export function EditTaskDialog({
   const [isLoadingMembers, setIsLoadingMembers] = React.useState(false);
   const [taskVersion, setTaskVersion] = React.useState(0);
   const [conflictDialogOpen, setConflictDialogOpen] = React.useState(false);
-  const [pendingConflict, setPendingConflict] = React.useState<ConflictInfo | null>(null);
+  const [pendingConflict, setPendingConflict] =
+    React.useState<ConflictInfo | null>(null);
 
   // ワークスペースメンバー情報を取得
   React.useEffect(() => {
